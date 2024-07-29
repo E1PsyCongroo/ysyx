@@ -112,13 +112,24 @@ static int cmd_si(char *args) {
   if (arg) {
     char *endptr = NULL;
     execCount = strtoul(arg, &endptr, 10);
-    Assert(*endptr == '\0', "cmd si: invalid arg %s", arg);
+    Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg);
   }
   cpu_exec(execCount);
   return 0;
 }
 
 static int cmd_info(char *args) {
+  char *arg = strtok(NULL, " ");
+  Assert(arg, "cmd info: need arg r/w");
+  if (strcasecmp(arg, "r")) {
+    isa_reg_display();
+  }
+  else if (strcasecmp(arg, "w")) {
+
+  }
+  else {
+    Assert(false, "cmd info: invalid arg \"%s\"", arg);
+  }
   return 0;
 }
 
