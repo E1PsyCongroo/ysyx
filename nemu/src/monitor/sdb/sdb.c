@@ -42,17 +42,16 @@ static char* rl_gets() {
   return line_read;
 }
 
-static int cmd_c(char *args) {
-  cpu_exec(-1);
-  return 0;
-}
-
-
-static int cmd_q(char *args) {
-  return -1;
-}
-
 static int cmd_help(char *args);
+static int cmd_c(char *args);
+static int cmd_q(char *args);
+static int cmd_si(char *args);
+static int cmd_info(char *args);
+static int cmd_x(char *args);
+static int cmd_p(char *args);
+static int cmd_w(char *args);
+static int cmd_d(char *args);
+static int cmd_test(char *args);
 
 static struct {
   const char *name;
@@ -64,6 +63,13 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
+  { "si", "Lets the program pause after executing N instructions using single step execution, When N is not given, the default is 1", cmd_si },
+  { "info", "Print register status/watchpoint information", cmd_info },
+  { "x", "Finds the value of the expression EXPR, uses the result as the starting memory address, and outputs consecutive N 4 bytes in hexadecimal", cmd_x },
+  { "p", "Find the value of the expression EXPR, for EXPR supported operations", cmd_p },
+  { "w", "Suspend program execution when the value of expression EXPR changes", cmd_w },
+  { "d", "Deletes the watchpoint with ID N", cmd_d },
+  { "test", "build-in test", cmd_test },
 
 };
 
@@ -89,6 +95,116 @@ static int cmd_help(char *args) {
     }
     printf("Unknown command '%s'\n", arg);
   }
+  return 0;
+}
+
+static int cmd_c(char *args) {
+  cpu_exec(-1);
+  return 0;
+}
+
+static int cmd_q(char *args) {
+  nemu_state.state = NEMU_QUIT;
+  return -1;
+}
+
+static int cmd_si(char *args) {
+  char *arg = strtok(NULL, " ");
+  uint64_t exec_count = 1;
+  if (arg) {
+    Assert(sscanf(arg, "%" PRIu64, &exec_count), "cmd si: invalid arg \"%s\"", arg);
+  }
+  cpu_exec(exec_count);
+  return 0;
+}
+
+static int cmd_info(char *args) {
+  char *arg = strtok(NULL, " ");
+  Assert(arg, "cmd info: need arg r/w");
+  if (!strcasecmp(arg, "r")) {
+    isa_reg_display();
+  }
+  else if (!strcasecmp(arg, "w")) {
+
+  }
+  else {
+    panic("cmd info: invalid arg \"%s\"", arg);
+  }
+  return 0;
+}
+
+static int cmd_x(char *args) {
+  char *arg_watch_count = strtok(NULL, " ");
+  char *arg_addr_expr = strtok(NULL, "");
+  Assert(arg_watch_count && arg_addr_expr, "cmd x: need args [N] [EXPR]");
+
+  uint64_t watch_count;
+  Assert(sscanf(arg_watch_count, "%" PRIu64, &watch_count), "cmd si: invalid arg \"%s\"", arg_watch_count);
+  bool success = true;
+  paddr_t addr = expr(arg_addr_expr, &success);
+  Assert(success, "invalid expression: %s\n", arg_addr_expr);
+
+  for (uint64_t i = 0; i < watch_count; i++) {
+    if (i % 4 == 0) {
+      printf(ANSI_FMT(FMT_PADDR, ANSI_FG_BLUE)": ", addr);
+    }
+    word_t paddr_read(paddr_t addr, int len);
+    printf("0x%08x%7s", paddr_read(addr, 4), "");
+    addr += 4;
+    if (i % 4 == 3 || i == watch_count - 1) {
+      putchar('\n');
+    }
+  }
+  return 0;
+}
+
+static int cmd_p(char *args) {
+  char *arg = strtok(NULL, "");
+  bool success = true;
+  word_t result = expr(arg, &success);
+  if (success) {
+    printf("%d\n", result);
+  }
+  else {
+    printf(ANSI_FMT("invalid expresion\n", ANSI_FG_RED));
+  }
+  return 0;
+}
+
+static int cmd_w(char *args) {
+
+  return 0;
+}
+
+static int cmd_d(char *args) {
+
+  return 0;
+}
+
+static int cmd_test(char *args) {
+  char *arg = strtok(NULL, "");
+  char buf[65536];
+  int pass = 0, total = 0;
+  FILE *fp = fopen(arg, "r");
+  Assert(fp != NULL, "open \"%s\" fail", arg);
+  while (fgets(buf, 65536, fp)){
+    buf[strlen(buf)-1] = '\0';
+    total++;
+    char* argResult = strtok(buf, " ");
+    char* argExpr = strtok(NULL, "");
+    uint32_t expected, result;
+    bool success = true;
+    sscanf(argResult, "%" PRIu32, &expected);
+    result = (uint32_t)expr(argExpr, &success);
+    if (success && result == expected) { pass++; }
+    else {
+      printf("FAIL: expr:%s, expected:%u, result:%u\n", argExpr, expected, result);
+      fflush(stdout);
+      assert(0);
+    }
+  }
+  fclose(fp);
+  printf("PASS: %d/%d\n", pass, total);
   return 0;
 }
 
