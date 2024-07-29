@@ -185,14 +185,14 @@ static int cmd_test(char *args) {
   char buf[65536];
   int pass = 0, total = 0;
   FILE *fp = fopen(arg, "r");
-  assert(fp != NULL);
+  Assert(fp != NULL, "open \"%s\" fail", arg);
   while (fgets(buf, 65536, fp)){
     buf[strlen(buf)-1] = '\0';
     total++;
     char* argResult = strtok(buf, " ");
     char* argExpr = strtok(NULL, "");
     uint32_t expected, result;
-    bool success;
+    bool success = true;
     sscanf(argResult, "%" PRIu32, &expected);
     result = (uint32_t)expr(argExpr, &success);
     if (success && result == expected) { pass++; }
