@@ -112,7 +112,7 @@ static int cmd_si(char *args) {
   if (arg) {
     char *endptr = NULL;
     execCount = strtoul(arg, &endptr, 10);
-    Assert(*endptr != '\0', "invalid arg %s", arg);
+    Assert(*endptr == '\0', "cmd si: invalid arg %s", arg);
   }
   cpu_exec(execCount);
   return 0;
