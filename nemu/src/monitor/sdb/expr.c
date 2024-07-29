@@ -111,7 +111,8 @@ static bool make_token(char *e) {
             break;
           case TK_DEC: case TK_HEX:
             Assert(substr_len < 32, "token \"%.*s\" length overflow", substr_len, substr_start);
-            strncpy(tokens[nr_token++].str, substr_start, substr_len);
+            strncpy(tokens[nr_token].str, substr_start, substr_len);
+            tokens[nr_token++].str[substr_len] = '\0';
             break;
           default:
             panic("unknown token: %.*s", substr_len, substr_start);
