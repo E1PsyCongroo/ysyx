@@ -163,7 +163,7 @@ static int find_mainop(int p, int q) {
       break;
     case '+': case TK_EQ: case '-': case '*':
     case '/':
-      if (unmatch == 0 && op_priority[tokens[i].type] > cur_priority) {
+      if (unmatch == 0 && op_priority[tokens[i].type] >= cur_priority) {
         position = i;
         cur_priority = op_priority[tokens[i].type];
       }
