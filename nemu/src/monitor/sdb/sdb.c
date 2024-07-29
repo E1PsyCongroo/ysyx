@@ -144,10 +144,10 @@ static int cmd_x(char *args) {
   Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg_addr_expr);
   for (uint64_t i = 0; i < watch_count; i++) {
     if (i % 4 == 0) {
-      printf("%p:", (void *)addr);
+      printf("%p: ", (void *)addr);
     }
     word_t paddr_read(paddr_t addr, int len);
-    printf(" 0x%-20x", paddr_read(addr, 4));
+    printf("0x%08x\t", paddr_read(addr, 4));
     addr += 4;
     if (i % 4 == 0 || i == watch_count - 1) {
       putchar('\n');
