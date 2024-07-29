@@ -151,7 +151,7 @@ static int op_priority[] = {
 static int find_mainop(int p, int q) {
   int unmatch = 0;
   int position = p;
-  int cur_priority = 15;
+  int cur_priority = 0;
   for (int i = p; i <= q; i++) {
     switch (tokens[i].type)
     {
@@ -159,7 +159,7 @@ static int find_mainop(int p, int q) {
       break;
     case '+': case TK_EQ: case '-': case '*':
     case '/':
-      if (op_priority[tokens[i].type] < cur_priority) {
+      if (op_priority[tokens[i].type] > cur_priority) {
         position = i;
         cur_priority = op_priority[tokens[i].type];
       }
