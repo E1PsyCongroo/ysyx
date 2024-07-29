@@ -134,12 +134,12 @@ static bool check_parentheses(int p, int q) {
   if (tokens[p].type != '(' || tokens[q].type != ')') {
     return false;
   }
-  int unmatch = 1;
-  for (int i = p + 1; i <= q; i++) {
+  int unmatch = 0;
+  for (int i = p + 1; i < q; i++) {
     if (tokens[i].type == '(') { unmatch++; }
     else if (tokens[i].type == ')') {
-      unmatch--;
       if (unmatch == 0) { return false; }
+      unmatch--;
     }
   }
   return unmatch == 0;
