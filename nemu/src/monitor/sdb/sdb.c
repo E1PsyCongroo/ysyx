@@ -121,10 +121,10 @@ static int cmd_si(char *args) {
 static int cmd_info(char *args) {
   char *arg = strtok(NULL, " ");
   Assert(arg, "cmd info: need arg r/w");
-  if (strcasecmp(arg, "r")) {
+  if (!strcasecmp(arg, "r")) {
     isa_reg_display();
   }
-  else if (strcasecmp(arg, "w")) {
+  else if (!strcasecmp(arg, "w")) {
 
   }
   else {
