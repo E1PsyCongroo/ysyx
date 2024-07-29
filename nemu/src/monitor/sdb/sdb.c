@@ -147,9 +147,9 @@ static int cmd_x(char *args) {
       printf("%p:", (void *)addr);
     }
     word_t paddr_read(paddr_t addr, int len);
-    printf(" 0x%20x", paddr_read(addr, 4));
+    printf(" 0x%-20x", paddr_read(addr, 4));
     addr += 4;
-    if (i % 4 == 0) {
+    if (i % 4 == 0 || i == watch_count - 1) {
       putchar('\n');
     }
   }
