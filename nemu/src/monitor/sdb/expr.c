@@ -135,7 +135,7 @@ static bool check_parentheses(int p, int q) {
     return false;
   }
   int unmatch = 1;
-  for (int i = p + 1; i < q; i++) {
+  for (int i = p + 1; i <= q; i++) {
     if (tokens[i].type == '(') { unmatch++; }
     else if (tokens[i].type == ')') {unmatch--; }
   }
