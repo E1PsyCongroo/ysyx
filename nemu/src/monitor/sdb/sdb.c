@@ -108,13 +108,13 @@ static int cmd_q(char *args) {
 
 static int cmd_si(char *args) {
   char *arg = strtok(NULL, " ");
-  uint64_t execCount = 1;
+  uint64_t exec_count = 1;
   if (arg) {
     char *endptr = NULL;
-    execCount = strtoul(arg, &endptr, 10);
+    exec_count = strtoul(arg, &endptr, 10);
     Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg);
   }
-  cpu_exec(execCount);
+  cpu_exec(exec_count);
   return 0;
 }
 
@@ -134,7 +134,25 @@ static int cmd_info(char *args) {
 }
 
 static int cmd_x(char *args) {
-
+  char *arg_watch_count = strtok(NULL, " ");
+  char *arg_addr_expr = strtok(NULL, "");
+  Assert(arg_watch_count && arg_addr_expr, "cmd x: need args [N] [EXPR]");
+  char *endptr = NULL;
+  uint64_t watch_count = strtoul(arg_watch_count, &endptr, 10);
+  Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg_watch_count);
+  uint64_t addr = strtoul(arg_addr_expr, &endptr, 16);
+  Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg_addr_expr);
+  for (uint64_t i = 0; i < watch_count; i++) {
+    if (i % 4 == 0) {
+      printf("%p:", (void *)addr);
+    }
+    word_t paddr_read(paddr_t addr, int len);
+    printf(" 0x%20x", paddr_read(addr, 4));
+    addr += 4;
+    if (i % 4 == 0) {
+      putchar('\n');
+    }
+  }
   return 0;
 }
 
