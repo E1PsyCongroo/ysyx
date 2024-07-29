@@ -160,7 +160,7 @@ static int cmd_x(char *args) {
 
 static int cmd_p(char *args) {
   char *arg = strtok(NULL, "");
-  bool success;
+  bool success = true;
   word_t result = expr(arg, &success);
   if (success) {
     printf("%d\n", result);
