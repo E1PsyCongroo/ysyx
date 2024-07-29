@@ -189,7 +189,8 @@ word_t eval(int p, int q, bool *success) {
     char *endptr = NULL;
     switch (tokens[p].type) {
     case TK_DEC:
-      result = strtoul(tokens[p].str, &endptr, 10);
+      sscanf(tokens[p].str, FMT_WORD, &result);
+      // result = strtoul(tokens[p].str, &endptr, 10);
       Assert(*endptr == '\0', "unknown token: \"%s\"", tokens[p].str);
       break;
     case TK_HEX:
