@@ -44,8 +44,8 @@ static struct rule {
   {"/", '/'},                       // div
   {"\\(", '('},                     // left bracket
   {"\\)", ')'},                     // right bracket
-  {"[0-9]+", TK_DEC},               // decimal number
   {"0[xX][0-9A-Fa-f]+", TK_HEX},    // hex number
+  {"[0-9]+", TK_DEC},               // decimal number
 };
 
 #define NR_REGEX ARRLEN(rules)
