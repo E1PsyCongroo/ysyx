@@ -196,7 +196,7 @@ word_t eval(int p, int q, bool *success) {
       break;
     case TK_HEX:
       Assert(
-        sscanf(tokens[p].str, FMT_WORD, &result),
+        sscanf(tokens[p].str, FMT_WORD_HEX, &result),
         "unknown token: \"%s\"", tokens[p].str
       );
       break;
