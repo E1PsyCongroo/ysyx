@@ -152,7 +152,7 @@ static int find_mainop(int p, int q) {
   int unmatch = 0;
   int position = p;
   int cur_priority = 15;
-  for (int i = p; i < q; i++) {
+  for (int i = p; i <= q; i++) {
     switch (tokens[i].type)
     {
     case TK_NOTYPE: case TK_HEX: case TK_DEC:
