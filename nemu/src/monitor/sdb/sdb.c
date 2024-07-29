@@ -112,9 +112,7 @@ static int cmd_si(char *args) {
   char *arg = strtok(NULL, " ");
   uint64_t exec_count = 1;
   if (arg) {
-    char *endptr = NULL;
-    exec_count = strtoul(arg, &endptr, 10);
-    Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg);
+    Assert(sscanf(arg, "%" PRIu64, &exec_count), "cmd si: invalid arg \"%s\"", arg);
   }
   cpu_exec(exec_count);
   return 0;
@@ -130,7 +128,7 @@ static int cmd_info(char *args) {
 
   }
   else {
-    Assert(false, "cmd info: invalid arg \"%s\"", arg);
+    panic("cmd info: invalid arg \"%s\"", arg);
   }
   return 0;
 }
@@ -140,15 +138,15 @@ static int cmd_x(char *args) {
   char *arg_addr_expr = strtok(NULL, "");
   Assert(arg_watch_count && arg_addr_expr, "cmd x: need args [N] [EXPR]");
 
-  char *endptr = NULL;
-  uint64_t watch_count = strtoul(arg_watch_count, &endptr, 10);
-  Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg_watch_count);
-  paddr_t addr = (paddr_t)strtoul(arg_addr_expr, &endptr, 16);
-  Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg_addr_expr);
+  uint64_t watch_count;
+  Assert(sscanf(arg_watch_count, "%" PRIx64, &watch_count), "cmd si: invalid arg \"%s\"", arg_watch_count);
+  bool success = true;
+  paddr_t addr = expr(arg_addr_expr, &success);
+  Assert(success, "invalid expression: %s\n", arg_addr_expr);
 
   for (uint64_t i = 0; i < watch_count; i++) {
     if (i % 4 == 0) {
-      printf(ANSI_FG_BLUE FMT_PADDR ANSI_NONE ": ", addr);
+      printf(ANSI_FMT(FMT_PADDR, ANSI_FG_BLUE)": ", addr);
     }
     word_t paddr_read(paddr_t addr, int len);
     printf("0x%08x%7s", paddr_read(addr, 4), "");
@@ -168,7 +166,7 @@ static int cmd_p(char *args) {
     printf("%d\n", result);
   }
   else {
-    printf(ANSI_BG_RED "invalid expresion\n" ANSI_NONE);
+    printf(ANSI_FMT("invalid expresion\n", ANSI_FG_RED));
   }
   return 0;
 }
