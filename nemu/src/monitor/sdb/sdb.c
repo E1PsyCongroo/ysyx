@@ -149,7 +149,7 @@ static int cmd_x(char *args) {
     word_t paddr_read(paddr_t addr, int len);
     printf("0x%08x\t", paddr_read(addr, 4));
     addr += 4;
-    if (i % 4 == 0 || i == watch_count - 1) {
+    if (i % 4 == 3 || i == watch_count - 1) {
       putchar('\n');
     }
   }
