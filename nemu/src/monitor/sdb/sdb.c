@@ -51,6 +51,7 @@ static int cmd_x(char *args);
 static int cmd_p(char *args);
 static int cmd_w(char *args);
 static int cmd_d(char *args);
+static int cmd_test(char *args);
 
 static struct {
   const char *name;
@@ -68,6 +69,7 @@ static struct {
   { "p", "Find the value of the expression EXPR, for EXPR supported operations", cmd_p },
   { "w", "Suspend program execution when the value of expression EXPR changes", cmd_w },
   { "d", "Deletes the watchpoint with ID N", cmd_d },
+  { "test", "build-in test", cmd_test },
 
 };
 
@@ -178,6 +180,32 @@ static int cmd_d(char *args) {
   return 0;
 }
 
+static int cmd_test(char *args) {
+  char *arg = strtok(NULL, "");
+  char buf[65536];
+  int pass = 0, total = 0;
+  FILE *fp = fopen(arg, "r");
+  assert(fp != NULL);
+  while (fgets(buf, 65536, fp)){
+    buf[strlen(buf)-1] = '\0';
+    total++;
+    char* argResult = strtok(buf, " ");
+    char* argExpr = strtok(NULL, "");
+    uint32_t expected, result;
+    bool success;
+    sscanf(argResult, "%" PRIu32, &expected);
+    result = (uint32_t)expr(argExpr, &success);
+    if (success && result == expected) { pass++; }
+    else {
+      printf("FAIL: expr:%s, expected:%u, result:%u\n", argExpr, expected, result);
+      fflush(stdout);
+      assert(0);
+    }
+  }
+  fclose(fp);
+  printf("PASS: %d/%d\n", pass, total);
+  return 0;
+}
 
 void sdb_set_batch_mode() {
   is_batch_mode = true;
