@@ -144,7 +144,7 @@ static int cmd_x(char *args) {
   Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg_addr_expr);
   for (uint64_t i = 0; i < watch_count; i++) {
     if (i % 4 == 0) {
-      printf(ANSI_FG_BLUE "%p: " ANSI_NONE, (void *)addr);
+      printf(ANSI_FG_BLUE "%p" ANSI_NONE ": ", (void *)addr);
     }
     word_t paddr_read(paddr_t addr, int len);
     printf("0x%08x%7s", paddr_read(addr, 4), "");
