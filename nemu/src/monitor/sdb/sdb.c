@@ -113,7 +113,7 @@ static int cmd_si(char *args) {
   uint64_t exec_count = 1;
   if (arg) {
     char *endptr = NULL;
-    exec_count = strtoull(arg, &endptr, 10);
+    exec_count = strtoul(arg, &endptr, 10);
     Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg);
   }
   cpu_exec(exec_count);
@@ -141,9 +141,9 @@ static int cmd_x(char *args) {
   Assert(arg_watch_count && arg_addr_expr, "cmd x: need args [N] [EXPR]");
 
   char *endptr = NULL;
-  uint64_t watch_count = strtoull(arg_watch_count, &endptr, 10);
+  uint64_t watch_count = strtoul(arg_watch_count, &endptr, 10);
   Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg_watch_count);
-  paddr_t addr = (paddr_t)strtoull(arg_addr_expr, &endptr, 16);
+  paddr_t addr = (paddr_t)strtoul(arg_addr_expr, &endptr, 16);
   Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg_addr_expr);
 
   for (uint64_t i = 0; i < watch_count; i++) {
