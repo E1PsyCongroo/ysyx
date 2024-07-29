@@ -44,7 +44,7 @@ static struct rule {
   {"/", '/'},                       // div
   {"\\(", '('},                     // left bracket
   {"\\)", ')'},                     // right bracket
-  {"\\d+", TK_DEC},                 // decimal number
+  {"[0-9]+", TK_DEC},               // decimal number
   {"0[xX][0-9A-Fa-f]+", TK_HEX},    // hex number
 };
 
