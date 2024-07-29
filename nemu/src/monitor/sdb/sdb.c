@@ -140,11 +140,11 @@ static int cmd_x(char *args) {
   char *endptr = NULL;
   uint64_t watch_count = strtoul(arg_watch_count, &endptr, 10);
   Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg_watch_count);
-  uint64_t addr = strtoul(arg_addr_expr, &endptr, 16);
+  paddr_t addr = (paddr_t)strtoul(arg_addr_expr, &endptr, 16);
   Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg_addr_expr);
   for (uint64_t i = 0; i < watch_count; i++) {
     if (i % 4 == 0) {
-      printf(ANSI_FG_BLUE "%p" ANSI_NONE ": ", (void *)addr);
+      printf(ANSI_FG_BLUE FMT_PADDR ANSI_NONE ": ", addr);
     }
     word_t paddr_read(paddr_t addr, int len);
     printf("0x%08x%7s", paddr_read(addr, 4), "");
