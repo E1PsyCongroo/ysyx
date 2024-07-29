@@ -42,18 +42,15 @@ static char* rl_gets() {
   return line_read;
 }
 
-static int cmd_c(char *args) {
-  cpu_exec(-1);
-  return 0;
-}
-
-
-static int cmd_q(char *args) {
-  nemu_state.state = NEMU_QUIT;
-  return -1;
-}
-
 static int cmd_help(char *args);
+static int cmd_c(char *args);
+static int cmd_q(char *args);
+static int cmd_si(char *args);
+static int cmd_info(char *args);
+static int cmd_x(char *args);
+static int cmd_p(char *args);
+static int cmd_w(char *args);
+static int cmd_d(char *args);
 
 static struct {
   const char *name;
@@ -65,6 +62,12 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
+  { "si", "Lets the program pause after executing N instructions using single step execution, When N is not given, the default is 1", cmd_si },
+  { "info", "Print register status/watchpoint information", cmd_info },
+  { "x", "Finds the value of the expression EXPR, uses the result as the starting memory address, and outputs consecutive N 4 bytes in hexadecimal", cmd_x },
+  { "p", "Find the value of the expression EXPR, for EXPR supported operations", cmd_p },
+  { "w", "Suspend program execution when the value of expression EXPR changes", cmd_w },
+  { "d", "Deletes the watchpoint with ID N", cmd_d },
 
 };
 
@@ -92,6 +95,53 @@ static int cmd_help(char *args) {
   }
   return 0;
 }
+
+static int cmd_c(char *args) {
+  cpu_exec(-1);
+  return 0;
+}
+
+static int cmd_q(char *args) {
+  nemu_state.state = NEMU_QUIT;
+  return -1;
+}
+
+static int cmd_si(char *args) {
+  char *arg = strtok(NULL, " ");
+  uint64_t execCount = 1;
+  if (arg) {
+    char *endptr = NULL;
+    execCount = strtoul(arg, &endptr, 10);
+    Assert(*endptr != '\0', "invalid arg %s", arg);
+  }
+  cpu_exec(execCount);
+  return 0;
+}
+
+static int cmd_info(char *args) {
+  return 0;
+}
+
+static int cmd_x(char *args) {
+
+  return 0;
+}
+
+static int cmd_p(char *args) {
+
+  return 0;
+}
+
+static int cmd_w(char *args) {
+
+  return 0;
+}
+
+static int cmd_d(char *args) {
+
+  return 0;
+}
+
 
 void sdb_set_batch_mode() {
   is_batch_mode = true;
