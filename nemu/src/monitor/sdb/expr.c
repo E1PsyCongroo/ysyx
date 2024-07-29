@@ -74,7 +74,7 @@ typedef struct token {
   char str[32];
 } Token;
 
-static Token tokens[128] __attribute__((used)) = {};
+static Token tokens[32] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
 static bool make_token(char *e) {
@@ -187,15 +187,18 @@ word_t eval(int p, int q, bool *success) {
     *success = false;
   }
   else if (p == q) {
-    char *endptr = NULL;
     switch (tokens[p].type) {
     case TK_DEC:
-      result = strtoul(tokens[p].str, &endptr, 10);
-      Assert(*endptr == '\0', "unknown token: \"%s\"", tokens[p].str);
+      Assert(
+        sscanf(tokens[p].str, FMT_WORD_DEC, &result),
+        "unknown token: \"%s\"", tokens[p].str
+      );
       break;
     case TK_HEX:
-      result = strtoul(tokens[p].str, &endptr, 16);
-      Assert(*endptr == '\0', "unknown token: \"%s\"", tokens[p].str);
+      Assert(
+        sscanf(tokens[p].str, FMT_WORD, &result),
+        "unknown token: \"%s\"", tokens[p].str
+      );
       break;
     default:
       *success = false;

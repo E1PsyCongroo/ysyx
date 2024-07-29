@@ -167,6 +167,9 @@ static int cmd_p(char *args) {
   if (success) {
     printf("%d\n", result);
   }
+  else {
+    printf(ANSI_BG_RED "invalid expresion\n" ANSI_NONE);
+  }
   return 0;
 }
 
