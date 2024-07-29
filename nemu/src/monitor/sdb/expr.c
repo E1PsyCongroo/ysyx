@@ -22,7 +22,7 @@
 
 enum {
   TK_NOTYPE = 256, TK_EQ,
-
+  TK_DEC, TK_HEX
   /* TODO: Add more token types */
 
 };
@@ -36,9 +36,16 @@ static struct rule {
    * Pay attention to the precedence level of different rules.
    */
 
-  {" +", TK_NOTYPE},    // spaces
-  {"\\+", '+'},         // plus
-  {"==", TK_EQ},        // equal
+  {" +", TK_NOTYPE},                // spaces
+  {"\\+", '+'},                     // plus
+  {"==", TK_EQ},                    // equal
+  {"-", '-'},                       // minus
+  {"\\*", '*'},                     // mul
+  {"/", '/'},                       // div
+  {"(", '('},                       // left bracket
+  {")", ')'},                       // right bracket
+  {"\\d+", TK_DEC},                 // decimal number
+  {"0[xX][0-9A-Fa-f]+", TK_HEX},    // hex number
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -94,8 +101,20 @@ static bool make_token(char *e) {
          * of tokens, some extra actions should be performed.
          */
 
+        tokens[nr_token].type = rules[i].token_type;
         switch (rules[i].token_type) {
-          default: TODO();
+          case TK_NOTYPE:
+            break;
+          case '+': case TK_EQ: case '-': case '*':
+          case '/': case '(': case ')':
+            nr_token++;
+            break;
+          case TK_DEC: case TK_HEX:
+            Assert(substr_len < 32, "token \"%.*s\" length overflow", substr_len, substr_start);
+            strncpy(tokens[nr_token++].str, substr_start, substr_len);
+            break;
+          default:
+            panic("unknown token: %.*s", substr_len, substr_start);
         }
 
         break;
@@ -111,6 +130,98 @@ static bool make_token(char *e) {
   return true;
 }
 
+static bool check_parentheses(int p, int q) {
+  if (tokens[p].type != '(' || tokens[q].type != ')') {
+    return false;
+  }
+  int unmatch = 1;
+  for (int i = p + 1; i < q; i++) {
+    if (tokens[i].type == '(') { unmatch++; }
+    else if (tokens[i].type == ')') {unmatch--; }
+  }
+  return unmatch == 0;
+}
+
+static int op_priority[] = {
+  [TK_EQ] = 7,
+  ['+'] = 4, ['-'] = 4,
+  ['*'] = 3, ['/'] = 3
+};
+
+static int find_mainop(int p, int q) {
+  int unmatch = 0;
+  int position = p;
+  int cur_priority = 15;
+  for (int i = p; i < q; i++) {
+    switch (tokens[i].type)
+    {
+    case TK_NOTYPE: case TK_HEX: case TK_DEC:
+      break;
+    case '+': case TK_EQ: case '-': case '*':
+    case '/':
+      if (op_priority[tokens[i].type] < cur_priority) {
+        position = i;
+        cur_priority = op_priority[tokens[i].type];
+      }
+    case '(':
+      unmatch++;
+      break;
+    case ')':
+      unmatch--;
+      break;
+    default: TODO();
+    }
+  }
+  return position;
+}
+
+word_t eval(int p, int q, bool *success) {
+  word_t result = 0;
+  if (!*success) { return 0; }
+  if (p > q) {
+    *success = false;
+  }
+  else if (p == q) {
+    char *endptr = NULL;
+    switch (tokens[p].type) {
+    case TK_DEC:
+      result = strtoul(tokens[p].str, &endptr, 10);
+      Assert(*endptr == '\0', "unknown token: \"%s\"", tokens[p].str);
+      break;
+    case TK_HEX:
+      result = strtoul(tokens[p].str, &endptr, 16);
+      Assert(*endptr == '\0', "unknown token: \"%s\"", tokens[p].str);
+      break;
+    default:
+      *success = false;
+    }
+  }
+  else if (check_parentheses(p, q)) {
+    result = eval(p + 1, q - 1, success);
+  }
+  else {
+    int mainop_position = find_mainop(p, q);
+    word_t val1 = eval(p, mainop_position - 1, success);
+    word_t val2 = eval(mainop_position + 1, q, success);
+    switch (tokens[mainop_position].type) {
+    case '+':
+      result = val1 + val2;
+      break;
+    case '-':
+      result = val1 - val2;
+      break;
+    case '*':
+      result = val1 * val2;
+      break;
+    case '/':
+      Assert(val2 != 0, "divide by zero");
+      result = val1 / val2;
+      break;
+    default: panic("unknown op: %d", tokens[mainop_position].type);
+    }
+  }
+  return result;
+}
 
 word_t expr(char *e, bool *success) {
   if (!make_token(e)) {
@@ -119,7 +230,6 @@ word_t expr(char *e, bool *success) {
   }
 
   /* TODO: Insert codes to evaluate the expression. */
-  TODO();
 
-  return 0;
+  return eval(0, nr_token-1, success);
 }

@@ -137,11 +137,13 @@ static int cmd_x(char *args) {
   char *arg_watch_count = strtok(NULL, " ");
   char *arg_addr_expr = strtok(NULL, "");
   Assert(arg_watch_count && arg_addr_expr, "cmd x: need args [N] [EXPR]");
+
   char *endptr = NULL;
   uint64_t watch_count = strtoul(arg_watch_count, &endptr, 10);
   Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg_watch_count);
   paddr_t addr = (paddr_t)strtoul(arg_addr_expr, &endptr, 16);
   Assert(*endptr == '\0', "cmd si: invalid arg \"%s\"", arg_addr_expr);
+
   for (uint64_t i = 0; i < watch_count; i++) {
     if (i % 4 == 0) {
       printf(ANSI_FG_BLUE FMT_PADDR ANSI_NONE ": ", addr);
@@ -157,7 +159,12 @@ static int cmd_x(char *args) {
 }
 
 static int cmd_p(char *args) {
-
+  char *arg = strtok(NULL, "");
+  bool success;
+  word_t result = expr(arg, &success);
+  if (success) {
+    printf("%d\n", result);
+  }
   return 0;
 }
 
