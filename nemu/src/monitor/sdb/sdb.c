@@ -164,7 +164,7 @@ static int cmd_p(char *args) {
   bool success = true;
   word_t result = expr(arg, &success);
   if (success) {
-    printf("%d\n", result);
+    printf(FMT_WORD FMT_WORD_DEC "\n", result, result);
   }
   else {
     printf(ANSI_FMT("invalid expresion\n", ANSI_FG_RED));
