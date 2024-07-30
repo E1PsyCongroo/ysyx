@@ -54,10 +54,10 @@ static struct rule {
   {"0[xX][0-9A-Fa-f]+", TK_HEX},          // hex number
   {"[0-9]+", TK_DEC},                     // decimal number
   {"\\$[$a-zA-Z]+[a-zA-Z0-9]*", TK_REG},  // register
-  {"<", '<'},                             // less then
-  {">", '>'},                             // greater then
   {"<=", TK_LE},                          // less then or equal
   {">=", TK_GE},                          // greater then or equal
+  {"<", '<'},                             // less then
+  {">", '>'},                             // greater then
 };
 
 #define NR_REGEX ARRLEN(rules)
