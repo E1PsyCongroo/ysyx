@@ -125,7 +125,7 @@ static int cmd_info(char *args) {
     isa_reg_display();
   }
   else if (!strcasecmp(arg, "w")) {
-
+    watchpoint_display();
   }
   else {
     panic("cmd info: invalid arg \"%s\"", arg);
@@ -160,10 +160,11 @@ static int cmd_x(char *args) {
 
 static int cmd_p(char *args) {
   char *arg = strtok(NULL, "");
+  Assert(arg, "cmd p: need arg expr");
   bool success = true;
   word_t result = expr(arg, &success);
   if (success) {
-    printf("%d\n", result);
+    printf(FMT_WORD " " FMT_WORD_DEC "\n", result, result);
   }
   else {
     printf(ANSI_FMT("invalid expresion\n", ANSI_FG_RED));
@@ -172,12 +173,22 @@ static int cmd_p(char *args) {
 }
 
 static int cmd_w(char *args) {
-
+  char *expr = strtok(NULL, "");
+  Assert(expr, "cmd w: need arg expr");
+  if (!add_wp(expr)) {
+    printf(ANSI_FMT("invalid expresion\n", ANSI_FG_RED));
+  }
   return 0;
 }
 
 static int cmd_d(char *args) {
-
+  char *arg = strtok(NULL, "");
+  Assert(arg, "cmd d: need arg NO");
+  int no;
+  Assert(sscanf(arg, "%d", &no), "cmd d: invalid arg \"%s\"", arg);
+  if (!delete_wp(no)) {
+    printf(ANSI_FMT("unknown watchpoint \"%d\"\n", ANSI_FG_RED), no);
+  }
   return 0;
 }
 

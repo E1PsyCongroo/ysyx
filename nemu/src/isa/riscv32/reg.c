@@ -24,11 +24,23 @@ const char *regs[] = {
 };
 
 void isa_reg_display() {
+  printf("%-8s  0x%-16x  %d\n", "pc", cpu.pc, cpu.pc);
   for (int i = 0; i < MUXDEF(CONFIG_RVE, 16, 32); i++) {
     printf("%-8s  0x%-16x  %d\n", reg_name(i), gpr(i), gpr(i));
   }
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
+  *success = false;
+  for (int i = 0; i < MUXDEF(CONFIG_RVE, 16, 32); i++) {
+    if (!strcmp(s, reg_name(i))) {
+      *success = true;
+      return gpr(i);
+    }
+  }
+  if (!strcmp(s, "pc")) {
+    *success = true;
+    return cpu.pc;
+  }
   return 0;
 }
