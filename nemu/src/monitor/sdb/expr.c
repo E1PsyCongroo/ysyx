@@ -26,6 +26,7 @@ enum {
   TK_NEQ, TK_AND,
   TK_NEG, TK_DEREF,
   TK_REG, TK_OR,
+  TK_LE, TK_GE,
   /* TODO: Add more token types */
 
 };
@@ -53,6 +54,10 @@ static struct rule {
   {"0[xX][0-9A-Fa-f]+", TK_HEX},          // hex number
   {"[0-9]+", TK_DEC},                     // decimal number
   {"\\$[$a-zA-Z]+[a-zA-Z0-9]*", TK_REG},  // register
+  {"<", '<'},                             // less then
+  {">", '>'},                             // greater then
+  {"<=", TK_LE},                          // less then or equal
+  {">=", TK_GE},                          // greater then or equal
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -114,7 +119,8 @@ static bool make_token(char *e) {
             break;
           case '+': case TK_EQ: case '-': case '*':
           case '/': case '(': case ')': case TK_AND:
-          case TK_OR: case TK_NEQ:
+          case TK_OR: case TK_NEQ: case '<': case '>':
+          case TK_LE: case TK_GE:
             nr_token++;
             break;
           case TK_DEC: case TK_HEX: case TK_REG:
@@ -158,6 +164,7 @@ static int op_priority[] = {
   [TK_OR] = 12,
   [TK_AND] = 11,
   [TK_EQ] = 7, [TK_NEG] = 7,
+  ['<'] = 6, ['>'] = 6, [TK_GE] = 6, [TK_LE] = 6,
   ['+'] = 4, ['-'] = 4,
   ['*'] = 3, ['/'] = 3,
   [TK_NEG] = 2, [TK_DEREF] = 2,
@@ -175,6 +182,7 @@ static int find_mainop(int p, int q) {
       break;
     case '+': case TK_EQ: case '-': case '*':
     case '/': case TK_NEQ: case TK_AND: case TK_OR:
+    case '<': case '>': case TK_GE: case TK_LE:
       if (unmatch == 0 && op_priority[tokens[i].type] >= cur_priority) {
         position = i;
         cur_priority = op_priority[tokens[i].type];
@@ -265,6 +273,18 @@ word_t eval(int p, int q, bool *success) {
     case TK_OR:
       result = val1 || val2;
       break;
+    case '<':
+      result = val1 < val2;
+      break;
+    case '>':
+      result = val1 > val2;
+      break;
+    case TK_GE:
+      result = val1 >= val2;
+      break;
+    case TK_LE:
+      result = val1 <= val2;
+      break;
     default: panic("unknown op: %d", tokens[mainop_position].type);
     }
   }
@@ -275,6 +295,7 @@ static bool is_op(int index) {
   switch (tokens[index].type) {
   case '+': case '-': case '*': case '/':
   case TK_OR: case TK_EQ: case TK_NEQ: case TK_AND:
+  case '<': case '>': case TK_LE: case TK_GE:
     return true;
   }
   return false;
