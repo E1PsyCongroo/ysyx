@@ -118,9 +118,14 @@ config CC_DEBUG
   bool "Enable debug information"
   default n
 
-config CC_ASAN
+config CC_ADDRASAN
   depends on MODE_SYSTEM
   bool "Enable address sanitizer"
+  default n
+
+config CC_UBASAN
+  depends on MODE_SYSTEM
+  bool "Enable undefined sanitizer"
   default n
 endmenu
 
