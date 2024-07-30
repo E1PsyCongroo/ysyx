@@ -113,7 +113,8 @@ bool scan_wp(void) {
     word_t new_val = expr(wp->expr, &success);
     if (new_val != wp->pre_val) {
       printf("watchpoint %d: %s\n", wp->NO, wp->expr);
-      printf("Old value = " FMT_WORD "\nNew value = " FMT_WORD "\n", wp->pre_val, new_val);
+      printf("Old value: " FMT_WORD FMT_WORD_DEC "\nNew value: " FMT_WORD FMT_WORD_DEC"\n",
+            wp->pre_val, wp->pre_val, new_val, new_val);
       wp->pre_val = new_val;
       change = true;
     }
