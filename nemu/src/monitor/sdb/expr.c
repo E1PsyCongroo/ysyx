@@ -260,7 +260,7 @@ word_t eval(int p, int q, bool *success) {
 }
 
 static bool is_op(int index) {
-  switch (index) {
+  switch (tokens[index].type) {
   case '+': case '-': case '*': case '/':
   case TK_OR: case TK_EQ: case TK_NEQ: case TK_AND:
     return true;
