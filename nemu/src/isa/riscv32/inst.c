@@ -21,6 +21,18 @@
 #define R(i) gpr(i)
 #define Mr vaddr_read
 #define Mw vaddr_write
+#define DIV(src1, src2) ( \
+  ((src2) != 0) ? ((((src1) == INT32_MIN) && ((src2) == -1)) ? INT32_MIN : ((src1) / (src2))) : -1 \
+)
+#define DIVU(src1, src2) ( \
+  ((src2) != 0) ? ((src1) / (src2)) : -1 \
+)
+#define REM(src1, src2) ( \
+  ((src2) != 0) ? ((((src1) == INT32_MIN) && ((src2) == -1)) ? 0 : ((src1) % (src2))) : (src1) \
+)
+#define REMU(src1, src2) ( \
+  ((src2) != 0) ? ((src1) % (src2)) : (src1) \
+)
 
 enum {
   TYPE_R, TYPE_I, TYPE_S, TYPE_B, TYPE_U,
@@ -109,6 +121,16 @@ static int decode_exec(Decode *s) {
   // INSTPAT("??????? ????? ????? 000 ????? 00011 11", fence  , I, );
   // INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , I, s->dnpc = ECALL(MUXDEF(CONFIG_RVE, R(15), R(17)), s->pc); IFDEF(CONFIG_ETRACE, etrace(s->isa.inst.val, s->pc, MUXDEF(CONFIG_RVE, R(15), R(17)))));
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
+
+  /* RV32M Standard Extension */
+  INSTPAT("0000001 ????? ????? 000 ????? 01100 11", mul    , R, R(rd) = src1 * src2);
+  INSTPAT("0000001 ????? ????? 001 ????? 01100 11", mulh   , R, R(rd) = ((int64_t)SEXT(src1, 32) * (int64_t)SEXT(src2, 32)) >> 32);
+  INSTPAT("0000001 ????? ????? 010 ????? 01100 11", mulhsu , R, R(rd) = ((int64_t)SEXT(src1, 32) * (int64_t)src2) >> 32);
+  INSTPAT("0000001 ????? ????? 011 ????? 01100 11", mulhu  , R, R(rd) = ((uint64_t)src1 * (uint64_t)src2) >> 32);
+  INSTPAT("0000001 ????? ????? 100 ????? 01100 11", div    , R, R(rd) = DIV((sword_t)src1, (sword_t)src2));
+  INSTPAT("0000001 ????? ????? 101 ????? 01100 11", divu   , R, R(rd) = DIVU(src1, src2));
+  INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, R(rd) = REM((sword_t)src1, (sword_t)src2));
+  INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, R(rd) = REMU(src1, src2));
 
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
   INSTPAT_END();
