@@ -139,7 +139,7 @@ static int cmd_x(char *args) {
   Assert(arg_watch_count && arg_addr_expr, "cmd x: need args [N] [EXPR]");
 
   uint64_t watch_count;
-  Assert(sscanf(arg_watch_count, "%" PRIx64, &watch_count), "cmd si: invalid arg \"%s\"", arg_watch_count);
+  Assert(sscanf(arg_watch_count, "%" PRIu64, &watch_count), "cmd si: invalid arg \"%s\"", arg_watch_count);
   bool success = true;
   paddr_t addr = expr(arg_addr_expr, &success);
   Assert(success, "invalid expression: %s\n", arg_addr_expr);
