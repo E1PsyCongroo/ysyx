@@ -125,7 +125,7 @@ static int cmd_info(char *args) {
     isa_reg_display();
   }
   else if (!strcasecmp(arg, "w")) {
-
+    watchpoint_display();
   }
   else {
     panic("cmd info: invalid arg \"%s\"", arg);

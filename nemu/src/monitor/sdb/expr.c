@@ -253,6 +253,18 @@ word_t eval(int p, int q, bool *success) {
       Assert(val2 != 0, "divide by zero");
       result = val1 / val2;
       break;
+    case TK_EQ:
+      result = val1 == val2;
+      break;
+    case TK_NEQ:
+      result = val1 != val2;
+      break;
+    case TK_AND:
+      result = val1 && val2;
+      break;
+    case TK_OR:
+      result = val1 || val2;
+      break;
     default: panic("unknown op: %d", tokens[mainop_position].type);
     }
   }
