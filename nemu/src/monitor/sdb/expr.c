@@ -117,7 +117,7 @@ static bool make_token(char *e) {
           case TK_OR: case TK_NEQ:
             nr_token++;
             break;
-          case TK_DEC: case TK_HEX: case TK_REG:
+          case TK_DEC: case TK_HEX:
             Assert(substr_len < 32, "token \"%.*s\" length overflow", substr_len, substr_start);
             strncpy(tokens[nr_token].str, substr_start, substr_len);
             tokens[nr_token++].str[substr_len] = '\0';
@@ -213,7 +213,7 @@ word_t eval(int p, int q, bool *success) {
       );
       break;
     case TK_REG:
-      result = isa_reg_str2val(tokens[p].str, success);
+      result = isa_reg_str2val(tokens[p].str + 1, success);
       break;
     default:
       *success = false;
