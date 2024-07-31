@@ -131,7 +131,7 @@ class Lab7 extends Module {
 
   state := MuxLookup(state, idle)(Seq(
     idle -> Mux(ready, pressed, idle),
-    pressed -> Mux(ready && data === "hF0".U, release, pressed),
+    pressed -> Mux(ready && data === "h0F".U, release, pressed),
     release -> Mux(ready && data === codeReg, idle, release)
   ))
 
