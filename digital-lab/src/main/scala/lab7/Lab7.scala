@@ -135,7 +135,7 @@ class Lab7 extends Module {
     release -> Mux(ready && data === codeReg, idle, release)
   ))
 
-  nextdata_n := state === idle
+  nextdata_n := ~ready
 
   val sevSegDecoder = Seq.fill(6)(Module(new SevenSegDecoder))
   sevSegDecoder(0).io.sw := Mux(state === pressed, codeReg(3, 0), 0.U)
