@@ -39,7 +39,7 @@ class ps2Keyboard extends Module {
   when (rising) {
     when (count === 10.U) {
       when (buffer(0) === 0.U && io.ps2Data.asBool && (buffer.asUInt(9, 1).xorR)) {
-        fifo(wPtr) := buffer.asUInt(8, 1)
+        fifo(wPtr) := Reverse(buffer.asUInt(8, 1))
         wPtr := wPtr + 1.U
         readyReg := true.B
         overflowReg := overflowReg | (rPtr === (wPtr + 1.U))

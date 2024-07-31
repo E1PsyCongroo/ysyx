@@ -1,4 +1,3 @@
-package scala3.lab1
 import chisel3._
 import circt.stage.ChiselStage
 import chisel3.util._
