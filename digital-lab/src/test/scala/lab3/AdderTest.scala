@@ -8,9 +8,8 @@ import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-
 class AdderTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
-  behavior of "Adder"
+  behavior.of("Adder")
   it should "work correctly for all inputs" in {
     test(new Adder(4)) { c =>
       for (i <- -8 to 7) {

@@ -7,7 +7,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class Lab1Test extends AnyFlatSpec with ChiselScalatestTester {
-  behavior of "Lab1"
+  behavior.of("Lab1")
   it should "select correct input" in {
     test(new Lab1) { dut =>
       dut.io.X0.poke(0.U)
@@ -25,4 +25,3 @@ class Lab1Test extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
 }
-
