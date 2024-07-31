@@ -54,7 +54,8 @@ clean:
 $(BUILD_DIR)/$(PRJ)_auto_bind.cpp: $(CONSTR_DIR)/$(PRJ).nxdc
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
-$(VSRCS): verilog
+$(VSRCS): $(CHISELSRCS)
+	@make verilog
 
 $(BUILD_DIR)/$(PRJ): $(VSRCS) $(BUILD_DIR)/$(PRJ)_auto_bind.cpp $(CSRCS) $(NVBOARD_ARCHIVE)
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
