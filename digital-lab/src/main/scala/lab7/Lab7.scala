@@ -39,7 +39,8 @@ class ps2Keyboard extends Module {
   when (rising) {
     when (count === 10.U) {
       when (buffer(0) === 0.U && io.ps2Data.asBool && (buffer.asUInt(9, 1).xorR)) {
-        fifo(wPtr) := Reverse(buffer.asUInt(8, 1))
+        // fifo(wPtr) := Reverse(buffer.asUInt(8, 1))
+        fifo(wPtr) := buffer.asUInt(8, 1)
         wPtr := wPtr + 1.U
         readyReg := true.B
         overflowReg := overflowReg | (rPtr === (wPtr + 1.U))
@@ -131,7 +132,7 @@ class Lab7 extends Module {
 
   state := MuxLookup(state, idle)(Seq(
     idle -> Mux(ready, pressed, idle),
-    pressed -> Mux(ready && data === "h0F".U, release, pressed),
+    pressed -> Mux(ready && data === "hF0".U, release, pressed),
     release -> Mux(ready && data === codeReg, idle, release)
   ))
 
