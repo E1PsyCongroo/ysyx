@@ -13,7 +13,7 @@ CSRCS 													+= $(shell find $(CSRC_DIR) -type f -name "*.c" -or -name "*.
 
 # verilator flags
 VERILATOR 											:= verilator
-VERILATOR_CFLAGS 								?= -MMD --build -cc -O3 --x-assign fast --x-initial fast --noassert --trace
+VERILATOR_CFLAGS 								?= --MMD --build -sv --cc -O3 --x-assign fast --x-initial fast --noassert --trace
 
 # rules for NVBoard
 include $(NVBOARD_HOME)/scripts/nvboard.mk
