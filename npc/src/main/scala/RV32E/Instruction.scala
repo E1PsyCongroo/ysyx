@@ -10,3 +10,7 @@ object InstructionType extends ChiselEnum {
 object ImmType extends ChiselEnum {
   val ImmI, ImmS, ImmB, ImmU, ImmJ = Value
 }
+
+object ALUType extends ChiselEnum {
+  val aluAdd, aluSub, aluSll, aluSlt, aluSltu, aluBout, aluXor, aluSrl, aluSra, aluOr, aluAnd = Value
+}
