@@ -18,8 +18,15 @@ class ALUControlIO extends ALUControlOutput {
   val aluCtr = Input(UInt(4.W))
 }
 
-object ALUOutSel extends ChiselEnum {
-  val selectAdder, selectShift, selectSlt, selectB, selectXor, selectOr, selectAnd = Value
+object ALUOutSel {
+  val selectAdder = "b000".U(3.W)
+  val selectShift1 = "b001".U(3.W)
+  val selectSlt = "b010".U(3.W)
+  val selectB = "b011".U(3.W)
+  val selectXor = "b100".U(3.W)
+  val selectShift2 = "b101".U(3.W)
+  val selectOr = "b110".U(3.W)
+  val selectAnd = "b111".U(3.W)
 }
 import ALUOutSel._
 
@@ -37,17 +44,7 @@ class ALUControl extends Module {
     def name: String = "ALU Control"
     def chiselType: ALUControlOutput = new ALUControlOutput
     def genTable(op: ALUControlPattern): BitPat = {
-      val aluSel = op.aluCtr2_0.rawString match {
-        case "000" => BitPat(selectAdder.litValue.U(3.W))
-        case "001" => BitPat(selectShift.litValue.U(3.W))
-        case "010" => BitPat(selectSlt.litValue.U(3.W))
-        case "011" => BitPat(selectB.litValue.U(3.W))
-        case "100" => BitPat(selectXor.litValue.U(3.W))
-        case "101" => BitPat(selectShift.litValue.U(3.W))
-        case "110" => BitPat(selectOr.litValue.U(3.W))
-        case "111" => BitPat(selectAnd.litValue.U(3.W))
-        case _ => BitPat.dontCare(3)
-      }
+      val aluSel = op.aluCtr2_0
       val isArith = op.aluCtr3
       val isLeft = op.aluCtr2_0(2).rawString match {
         case "0" => BitPat("b1".U(1.W))
@@ -85,21 +82,21 @@ class ALUControl extends Module {
   io.isSub := decodeResult.isSub
 }
 
-class ALUIO(width: Int = 32) extends Bundle {
+class ALUIO(xlen: Int = 32) extends Bundle {
   val aluCtr = Input(UInt(4.W))
-  val inA = Input(UInt(width.W))
-  val inB = Input(UInt(width.W))
-  val aluOut = Output(UInt(width.W))
+  val inA = Input(UInt(xlen.W))
+  val inB = Input(UInt(xlen.W))
+  val aluOut = Output(UInt(xlen.W))
   val less = Output(Bool())
   val zero = Output(Bool())
 }
 
-class ALU(width: Int = 32) extends Module {
-  val io = IO(new ALUIO(width))
+class ALU(xlen: Int = 32) extends Module {
+  val io = IO(new ALUIO(xlen))
 
   val aluControl = Module(new ALUControl)
-  val adder = Module(new Adder(width))
-  val barrelShift = Module(new BarrelShift(width))
+  val adder = Module(new Adder(xlen))
+  val barrelShift = Module(new BarrelShift(xlen))
 
   aluControl.io.aluCtr := io.aluCtr
 
@@ -115,24 +112,25 @@ class ALU(width: Int = 32) extends Module {
   val less =  Mux(
     aluControl.io.isUnsigned,
     adder.io.carry ^ aluControl.io.isSub,
-    adder.io.overflow ^ adder.io.result(width-1).asBool
+    adder.io.overflow ^ adder.io.result(xlen-1).asBool
   )
   val zero = adder.io.zero
   val adderOut = adder.io.result.asUInt
   val shiftOut = barrelShift.io.out
-  val sltOut = 0.U((width-1).W) ## less.asUInt
+  val sltOut = 0.U((xlen-1).W) ## less.asUInt
   val BOut = io.inB
   val xorOut = io.inA ^ io.inB
   val orOut = io.inA | io.inB
   val andOut = io.inA & io.inB
   val aluOut = MuxLookup(aluControl.io.aluSel, adderOut)(Seq(
-    selectAdder.litValue.U -> adderOut,
-    selectShift.litValue.U -> shiftOut,
-    selectSlt.litValue.U -> sltOut,
-    selectB.litValue.U -> BOut,
-    selectXor.litValue.U -> xorOut,
-    selectOr.litValue.U -> orOut,
-    selectAnd.litValue.U -> andOut
+    selectAdder -> adderOut,
+    selectShift1 -> shiftOut,
+    selectSlt -> sltOut,
+    selectB -> BOut,
+    selectXor -> xorOut,
+    selectShift2 -> shiftOut,
+    selectOr -> orOut,
+    selectAnd -> andOut
   ))
 
   io.aluOut := aluOut
