@@ -101,6 +101,8 @@ class ALU(width: Int = 32) extends Module {
   val adder = Module(new Adder(width))
   val barrelShift = Module(new BarrelShift(width))
 
+  aluControl.io.aluCtr := io.aluCtr
+
   adder.io.addSub := aluControl.io.isSub
   adder.io.ina := io.inA.asSInt
   adder.io.inb := io.inB.asSInt
