@@ -43,21 +43,21 @@ static int keep_width_writer(CWriter writer, char *str, int write_len, FormatOpt
 static int num_writer(CWriter writer, const char *num, int num_len, FormatOptions *format);
 
 /* parser funciton */
-static int flag_parser(FormatOptions *format, const char **fmt, va_list *args);
-static int width_parser(FormatOptions *format, const char **fmt, va_list *args);
-static int precision_parser(FormatOptions *format, const char **fmt, va_list *args);
-static int length_parser(FormatOptions *format, const char **fmt, va_list *args);
-static int conversion_parser(FormatOptions *format, const char **fmt, va_list *args);
+static int flag_parser(FormatOptions *format, const char **fmt, va_list args);
+static int width_parser(FormatOptions *format, const char **fmt, va_list args);
+static int precision_parser(FormatOptions *format, const char **fmt, va_list args);
+static int length_parser(FormatOptions *format, const char **fmt, va_list args);
+static int conversion_parser(FormatOptions *format, const char **fmt, va_list args);
 
 /* format funciton */
-static int format_char(CWriter writer, FormatOptions *format, va_list *args);
-static int format_integer(CWriter writer, FormatOptions *format, va_list *args);
-static int format_float(CWriter writer, FormatOptions *format, va_list *args);
-static int format_pointer(CWriter writer, FormatOptions *format, va_list *args);
+static int format_char(CWriter writer, FormatOptions *format, va_list args);
+static int format_integer(CWriter writer, FormatOptions *format, va_list args);
+static int format_float(CWriter writer, FormatOptions *format, va_list args);
+static int format_pointer(CWriter writer, FormatOptions *format, va_list args);
 
 static struct {
   int stage;
-  int (*handle)(FormatOptions *format, const char **fmt, va_list *args);
+  int (*handle)(FormatOptions *format, const char **fmt, va_list args);
 } handle_table[] = {
   { FLAG, flag_parser },
   { WIDTH, width_parser },
@@ -68,7 +68,7 @@ static struct {
 
 #define TABLELEN (sizeof handle_table / sizeof handle_table[0])
 
-static int flag_parser(FormatOptions *format, const char **fmt, va_list *args) {
+static int flag_parser(FormatOptions *format, const char **fmt, va_list args) {
   int doing = 1;
   while (**fmt && doing) {
     switch (**fmt) {
@@ -87,9 +87,9 @@ static int flag_parser(FormatOptions *format, const char **fmt, va_list *args) {
   return **fmt;
 }
 
-static int width_parser(FormatOptions *format, const char **fmt, va_list *args) {
+static int width_parser(FormatOptions *format, const char **fmt, va_list args) {
   if (**fmt == '*') {
-    format->width = va_arg(*args, int);
+    format->width = va_arg(args, int);
     if (format->width < 0) {
       format->width = -format->width;
       format->justify = 1;
@@ -107,11 +107,11 @@ static int width_parser(FormatOptions *format, const char **fmt, va_list *args) 
   return **fmt;
 }
 
-static int precision_parser(FormatOptions *format, const char **fmt, va_list *args) {
+static int precision_parser(FormatOptions *format, const char **fmt, va_list args) {
   if (**fmt == '.') {
     (*fmt)++;
     if (**fmt == '*') {
-      int prec = va_arg(*args, int);
+      int prec = va_arg(args, int);
       format->precision = (prec > 0) ? prec : format->precision;
       (*fmt)++;
     }
@@ -131,7 +131,7 @@ static int precision_parser(FormatOptions *format, const char **fmt, va_list *ar
   return **fmt;
 }
 
-static int length_parser(FormatOptions *format, const char **fmt, va_list *args) {
+static int length_parser(FormatOptions *format, const char **fmt, va_list args) {
   switch (**fmt) {
   case 'h':
     if (*(*fmt + 1) == 'h') {
@@ -167,7 +167,7 @@ static int length_parser(FormatOptions *format, const char **fmt, va_list *args)
   return **fmt;
 }
 
-static int conversion_parser(FormatOptions *format, const char **fmt, va_list *args)
+static int conversion_parser(FormatOptions *format, const char **fmt, va_list args)
 {
   const char valid[] = "%csdioxXufFeEaAgGnp";
   int invalid_flag = 1;
@@ -203,7 +203,7 @@ static int conversion_parser(FormatOptions *format, const char **fmt, va_list *a
   return 1;
 }
 
-static FormatOptions format_parser(const char **fmt, int *success, va_list *args) {
+static FormatOptions format_parser(const char **fmt, int *success, va_list args) {
   FormatOptions format = {
       .justify = 0,
       .sign = 0,
@@ -222,18 +222,18 @@ static FormatOptions format_parser(const char **fmt, int *success, va_list *args
   return format;
 }
 
-static int format_char(CWriter writer, FormatOptions *format, va_list *args) {
+static int format_char(CWriter writer, FormatOptions *format, va_list args) {
   int count = 0;
   if (format->zero || format->prefix) { return -1; }
   switch (format->conversion) {
   case 'c': {
-    unsigned char ch = va_arg(*args, int);
+    unsigned char ch = va_arg(args, int);
     buffer[0] = ch;
     count += keep_width_writer(writer, buffer, 1, format, ' ');
     break;
   }
   case 's': {
-    char *str = va_arg(*args, char *);
+    char *str = va_arg(args, char *);
     size_t length = strlen(str);
     if (format->precision < 0) {
       count += keep_width_writer(writer, str, length, format, ' ');
@@ -249,20 +249,20 @@ static int format_char(CWriter writer, FormatOptions *format, va_list *args) {
   return count;
 }
 
-static int format_integer(CWriter writer, FormatOptions *format, va_list *args) {
+static int format_integer(CWriter writer, FormatOptions *format, va_list args) {
   int num_len = 0;
   switch (format->conversion) {
   case 'd': case 'i': {
     int64_t num = 0;
     switch (format->length) {
-    case SHORTSHORT: num= (signed char)va_arg(*args, int);  break;
-    case SHORT: num = (short)va_arg(*args, int);            break;
-    case DEFAULT: num = va_arg(*args, int);                 break;
-    case LONG: num = va_arg(*args, long);                   break;
-    case LONGLONG: num = va_arg(*args, long long);          break;
-    case MAXIMUMINT: num = va_arg(*args, intmax_t);         break;
-    case SIZE: num = va_arg(*args, ssize_t);                break;
-    case POINTERSUB: num = va_arg(*args, ptrdiff_t);        break;
+    case SHORTSHORT: num= (signed char)va_arg(args, int);  break;
+    case SHORT: num = (short)va_arg(args, int);            break;
+    case DEFAULT: num = va_arg(args, int);                 break;
+    case LONG: num = va_arg(args, long);                   break;
+    case LONGLONG: num = va_arg(args, long long);          break;
+    case MAXIMUMINT: num = va_arg(args, intmax_t);         break;
+    case SIZE: num = va_arg(args, ssize_t);                break;
+    case POINTERSUB: num = va_arg(args, ptrdiff_t);        break;
     default: return -1;
     }
     if (format->prefix) { return -1; }
@@ -273,14 +273,14 @@ static int format_integer(CWriter writer, FormatOptions *format, va_list *args) 
   case 'o': case 'x': case 'X': case 'u': {
     uint64_t num = 0;
     switch (format->length) {
-    case SHORTSHORT: num= (unsigned char)va_arg(*args, int);  break;
-    case SHORT: num = (unsigned short)va_arg(*args, int);     break;
-    case DEFAULT: num = va_arg(*args, unsigned int);          break;
-    case LONG: num = va_arg(*args, unsigned long);            break;
-    case LONGLONG: num = va_arg(*args, unsigned long long);   break;
-    case MAXIMUMINT: num = va_arg(*args, uintmax_t);          break;
-    case SIZE: num = va_arg(*args, size_t);                   break;
-    case POINTERSUB: num = va_arg(*args, size_t);             break;
+    case SHORTSHORT: num= (unsigned char)va_arg(args, int);  break;
+    case SHORT: num = (unsigned short)va_arg(args, int);     break;
+    case DEFAULT: num = va_arg(args, unsigned int);          break;
+    case LONG: num = va_arg(args, unsigned long);            break;
+    case LONGLONG: num = va_arg(args, unsigned long long);   break;
+    case MAXIMUMINT: num = va_arg(args, uintmax_t);          break;
+    case SIZE: num = va_arg(args, size_t);                   break;
+    case POINTERSUB: num = va_arg(args, size_t);             break;
     default: return -1;
     }
     if (format->space || format->sign) { return -1; }
@@ -307,12 +307,12 @@ static int format_integer(CWriter writer, FormatOptions *format, va_list *args) 
   return num_writer(writer, buffer, num_len, format);
 }
 
-static int format_float(CWriter writer, FormatOptions *format, va_list *args) {
+static int format_float(CWriter writer, FormatOptions *format, va_list args) {
   panic("Not implemented");
 }
 
-static int format_pointer(CWriter writer, FormatOptions *format, va_list *args) {
-  void *ptr = va_arg(*args, void*);
+static int format_pointer(CWriter writer, FormatOptions *format, va_list args) {
+  void *ptr = va_arg(args, void*);
   int count = utohs((size_t)ptr, buffer, 0);
   writer('0');
   writer('x');
@@ -322,7 +322,7 @@ static int format_pointer(CWriter writer, FormatOptions *format, va_list *args) 
   return count+2;
 }
 
-static int vprintf(CWriter writer, const char *fmt, va_list *args) {
+static int vprintf(CWriter writer, const char *fmt, va_list args) {
   int count = 0;
   while (*fmt) {
     if (*fmt == '%') {
@@ -373,17 +373,14 @@ static int vprintf(CWriter writer, const char *fmt, va_list *args) {
 int printf(const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
-  int count = vprintf(putch, fmt, &args);
+  int count = vprintf(putch, fmt, args);
   va_end(args);
   return count;
 }
 
 int vsprintf(char *out, const char *fmt, va_list ap) {
-  va_list args;
-  va_copy(args, ap);
   set_dest(&out);
-  int count = vprintf(write_ch, fmt, &args);
-  va_end(args);
+  int count = vprintf(write_ch, fmt, ap);
   return count;
 }
 
