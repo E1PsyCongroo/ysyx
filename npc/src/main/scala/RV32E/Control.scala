@@ -191,22 +191,22 @@ object BrControlField extends DecodeField[ControlPattern, UInt] {
   def genTable(op: ControlPattern): BitPat = {
     import Instruction.InstricitonMap._
     import BrType._
-    val dontCare = BitPat(brNone.litValue.U)
+    val dontCare = BitPat.dontCare(BrType.getWidth)
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => instrType match {
         case InstructionType.JType => op.opcode match {
           case JAL.opcode => BitPat(brJ.litValue.U)
           case JALR.opcode => BitPat(brJr.litValue.U)
-          case _ => dontCare
+          case _ => BitPat(brNone.litValue.U)
         }
         case InstructionType.BType => op.funct3 match {
           case BEQ.funct3 => BitPat(brEq.litValue.U)
           case BNE.funct3 => BitPat(brNe.litValue.U)
           case BLT.funct3 | BLTU.funct3 => BitPat(brLt.litValue.U)
           case BGE.funct3 | BGEU.funct3 => BitPat(brGe.litValue.U)
-          case _ => dontCare
+          case _ => BitPat(brNone.litValue.U)
         }
-        case _ => dontCare
+        case _ => BitPat(brNone.litValue.U)
       }
       case None => dontCare
     }
