@@ -40,6 +40,7 @@ class MemControl extends Module {
 
   val wmask = WireDefault(0.U(4.W))
   val mem = Module(new Mem)
+  mem.io.clock := clock
   mem.io.valid := io.valid
   mem.io.raddr := io.raddr
   val rdata = mem.io.rdata
