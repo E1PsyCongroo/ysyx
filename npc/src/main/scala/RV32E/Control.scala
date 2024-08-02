@@ -105,7 +105,7 @@ object ImmControlField extends DecodeField[ControlPattern, UInt] {
     val dontCare = BitPat.dontCare(ImmType.getWidth)
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => Instruction.immTypeMap.get(instrType) match {
-        case Some(immType) => BitPat(immType.asUInt)
+        case Some(immType) => BitPat(immType.litValue.U)
         case None => dontCare
       }
       case None => dontCare
@@ -191,19 +191,19 @@ object BrControlField extends DecodeField[ControlPattern, UInt] {
   def genTable(op: ControlPattern): BitPat = {
     import Instruction.InstricitonMap._
     import BrType._
-    val dontCare = BitPat(brNone.asUInt)
+    val dontCare = BitPat(brNone.litValue.U)
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => instrType match {
         case InstructionType.JType => op.opcode match {
-          case JAL.opcode => BitPat(brJ.asUInt)
-          case JALR.opcode => BitPat(brJr.asUInt)
+          case JAL.opcode => BitPat(brJ.litValue.U)
+          case JALR.opcode => BitPat(brJr.litValue.U)
           case _ => dontCare
         }
         case InstructionType.BType => op.funct3 match {
-          case BEQ.funct3 => BitPat(brEq.asUInt)
-          case BNE.funct3 => BitPat(brNe.asUInt)
-          case BLT.funct3 | BLTU.funct3 => BitPat(brLt.asUInt)
-          case BGE.funct3 | BGEU.funct3 => BitPat(brGe.asUInt)
+          case BEQ.funct3 => BitPat(brEq.litValue.U)
+          case BNE.funct3 => BitPat(brNe.litValue.U)
+          case BLT.funct3 | BLTU.funct3 => BitPat(brLt.litValue.U)
+          case BGE.funct3 | BGEU.funct3 => BitPat(brGe.litValue.U)
           case _ => dontCare
         }
         case _ => dontCare
@@ -264,10 +264,10 @@ object ALUASrcControlField extends DecodeField[ControlPattern, UInt] {
   def genTable(op: ControlPattern): BitPat = {
     val dontCare = BitPat.dontCare(ALUASrcFrom.getWidth)
     op.opcode match {
-      case Instruction.InstricitonMap.AUIPC => BitPat(ALUASrcFrom.fromPc.asUInt)
-      case Instruction.InstricitonMap.JAL => BitPat(ALUASrcFrom.fromPc.asUInt)
-      case Instruction.InstricitonMap.JALR => BitPat(ALUASrcFrom.fromPc.asUInt)
-      case _ => BitPat(ALUASrcFrom.fromRs1.asUInt)
+      case Instruction.InstricitonMap.AUIPC => BitPat(ALUASrcFrom.fromPc.litValue.U)
+      case Instruction.InstricitonMap.JAL => BitPat(ALUASrcFrom.fromPc.litValue.U)
+      case Instruction.InstricitonMap.JALR => BitPat(ALUASrcFrom.fromPc.litValue.U)
+      case _ => BitPat(ALUASrcFrom.fromRs1.litValue.U)
     }
   }
 }

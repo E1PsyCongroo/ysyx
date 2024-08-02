@@ -6,6 +6,5 @@ object Elaborate extends App {
     "disallowPackedArrays",
     "locationInfoStyle=wrapInAtSquareBracket"
   ).reduce(_ + "," + _))
-  println(RV32E.ALUASrcFrom.fromPc.asUInt.isLit)
-  // circt.stage.ChiselStage.emitSystemVerilogFile(new RV32E.Control(), args, firtoolOptions)
+  circt.stage.ChiselStage.emitSystemVerilogFile(new RV32E.Control(), args, firtoolOptions)
 }
