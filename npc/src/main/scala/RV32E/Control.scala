@@ -92,7 +92,6 @@ object Instruction {
     InstructionType.UType -> ImmType.ImmU,
     InstructionType.JType -> ImmType.ImmJ,
   )
-
 }
 
 object ImmControlField extends DecodeField[ControlPattern, UInt] {
@@ -336,7 +335,7 @@ class Control extends Module {
     Seq(
       // ImmControlField,
       RegWeControlField,
-      // ALUControlField,
+      ALUControlField,
       // BrControlField,
       // MemOpControlField,
       // MemWenControlField,
