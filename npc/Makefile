@@ -1,4 +1,4 @@
-PRJ 														:= RV32E
+PRJ 														:= RVCPU
 ABS_TOP 												:= $(NPC_HOME)
 BUILD_DIR 											:= $(ABS_TOP)/build
 OBJ_DIR 												:= $(BUILD_DIR)/obj_dir
