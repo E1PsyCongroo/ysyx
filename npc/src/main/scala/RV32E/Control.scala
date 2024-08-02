@@ -7,6 +7,7 @@ import chisel3.util.experimental.decode._
 import chisel3.experimental.BundleLiterals._
 
 import Instruction.InstructionType
+
 case class ControlPattern(
   val funct7: BitPat = BitPat.dontCare(7),
   val rs2: BitPat = BitPat.dontCare(5),
@@ -20,6 +21,19 @@ case class ControlPattern(
     funct3.getWidth == 3 && rd.getWidth == 5 && opcode.getWidth == 7
   )
   def bitPat: BitPat = funct7 ## rs2 ## rs1 ## funct3 ## rd ## opcode
+}
+
+object ControlPattern {
+  def apply(instruction: Instruction): ControlPattern = {
+    ControlPattern(
+      funct7 = instruction.funct7,
+      rs2 = instruction.rs2,
+      rs1 = instruction.rs1,
+      funct3 = instruction.funct3,
+      rd = instruction.rd,
+      opcode = instruction.opcode
+    )
+  }
 }
 
 object ImmControlField extends DecodeField[ControlPattern, UInt] {
@@ -243,7 +257,7 @@ class Control extends Module {
     LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTIU,
     XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
     SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK
-  )
+  ).map(ControlPattern.apply(_))
   val decodeTable = new DecodeTable(
     possiblePatterns,
     Seq(
