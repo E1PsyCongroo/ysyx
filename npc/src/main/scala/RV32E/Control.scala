@@ -98,11 +98,8 @@ object ImmControlField extends DecodeField[ControlPattern, UInt] {
   def name = "Imm Control Field"
   def chiselType: UInt = UInt(ImmType.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
-    Instruction.instrTypeMap.get(op.opcode) match {
-      case Some(instrType) => Instruction.immTypeMap.get(instrType) match {
-        case Some(immType) => BitPat(immType.litValue.U(width.W))
-        case None => dc
-      }
+    Instruction.immTypeMap.get(Instruction.instrTypeMap(op.opcode)) match {
+      case Some(immType) => BitPat(immType.litValue.U(width.W))
       case None => dc
     }
   }
@@ -112,17 +109,14 @@ object RegWeControlField extends DecodeField[ControlPattern, Bool] {
   def name = "Reg We Control Field"
   def chiselType: Bool = Bool()
   def genTable(op: ControlPattern): BitPat = {
-    Instruction.instrTypeMap.get(op.opcode) match {
-      case Some(instrType) => instrType match {
-        case InstructionType.RType => BitPat.Y(1)
-        case InstructionType.IType => BitPat.Y(1)
-        case InstructionType.SType => BitPat.N(1)
-        case InstructionType.BType => BitPat.N(1)
-        case InstructionType.UType => BitPat.Y(1)
-        case InstructionType.JType => BitPat.Y(1)
-        case _ => dc
-      }
-      case None => dc
+    Instruction.instrTypeMap(op.opcode) match {
+      case InstructionType.RType => BitPat.Y(1)
+      case InstructionType.IType => BitPat.Y(1)
+      case InstructionType.SType => BitPat.N(1)
+      case InstructionType.BType => BitPat.N(1)
+      case InstructionType.UType => BitPat.Y(1)
+      case InstructionType.JType => BitPat.Y(1)
+      case _ => dc
     }
   }
 }
@@ -134,46 +128,43 @@ object ALUControlField extends DecodeField[ControlPattern, UInt] {
     import Instruction.InstricitonMap._
     import InstructionType._
     import ALUOp._
-    Instruction.instrTypeMap.get(op.opcode) match {
-      case Some(instrType) => instrType match {
-        case RType => op.funct3 match {
-          case ADD.funct3 => op.funct7 match {
-            case ADD.funct7 => aluAdd
-            case SUB.funct7 => aluSub
-            case _ => dc
-          }
-          case SLL.funct3 => aluSll
-          case SLT.funct3 => aluSlt
-          case SLTU.funct3 => aluSltu
-          case XOR.funct3 => aluXor
-          case SRL.funct3 => aluSrl
-          case SRA.funct3 => aluSra
-          case OR.funct3 => aluOr
-          case AND.funct3 => aluAnd
+    Instruction.instrTypeMap(op.opcode) match {
+      case RType => op.funct3 match {
+        case ADD.funct3 => op.funct7 match {
+          case ADD.funct7 => aluAdd
+          case SUB.funct7 => aluSub
           case _ => dc
         }
-        case IType => op.funct3 match {
-          case ADDI.funct3 => aluAdd
-          case SLLI.funct3 => aluSll
-          case SLTI.funct3 => aluSlt
-          case SLTIU.funct3 => aluSltu
-          case XORI.funct3 => aluXor
-          case SRLI.funct3 => aluSrl
-          case SRAI.funct3 => aluSra
-          case ORI.funct3 => aluOr
-          case ANDI.funct3 => aluAnd
-          case _ => dc
-        }
-        case SType => aluAdd
-        case BType => aluSub
-        case UType => op.opcode match {
-          case LUI.opcode => aluBout
-          case AUIPC.opcode => aluAdd
-          case _ => dc
-        }
-        case JType => aluAdd
+        case SLL.funct3 => aluSll
+        case SLT.funct3 => aluSlt
+        case SLTU.funct3 => aluSltu
+        case XOR.funct3 => aluXor
+        case SRL.funct3 => aluSrl
+        case SRA.funct3 => aluSra
+        case OR.funct3 => aluOr
+        case AND.funct3 => aluAnd
+        case _ => dc
       }
-      case None => dc
+      case IType => op.funct3 match {
+        case ADDI.funct3 => aluAdd
+        case SLLI.funct3 => aluSll
+        case SLTI.funct3 => aluSlt
+        case SLTIU.funct3 => aluSltu
+        case XORI.funct3 => aluXor
+        case SRLI.funct3 => aluSrl
+        case SRAI.funct3 => aluSra
+        case ORI.funct3 => aluOr
+        case ANDI.funct3 => aluAnd
+        case _ => dc
+      }
+      case SType => aluAdd
+      case BType => aluSub
+      case UType => op.opcode match {
+        case LUI.opcode => aluBout
+        case AUIPC.opcode => aluAdd
+        case _ => dc
+      }
+      case JType => aluAdd
     }
   }
 }
@@ -185,23 +176,20 @@ object BrControlField extends DecodeField[ControlPattern, UInt] {
   def chiselType: UInt = UInt(BrType.getWidth.W)
   override def default: BitPat = BitPat(brNone.litValue.U(width.W))
   def genTable(op: ControlPattern): BitPat = {
-    Instruction.instrTypeMap.get(op.opcode) match {
-      case Some(instrType) => instrType match {
-        case InstructionType.JType => op.opcode match {
-          case JAL.opcode => BitPat(brJ.litValue.U(width.W))
-          case JALR.opcode => BitPat(brJr.litValue.U(width.W))
-          case _ => default
-        }
-        case InstructionType.BType => op.funct3 match {
-          case BEQ.funct3 => BitPat(brEq.litValue.U(width.W))
-          case BNE.funct3 => BitPat(brNe.litValue.U(width.W))
-          case BLT.funct3 | BLTU.funct3 => BitPat(brLt.litValue.U(width.W))
-          case BGE.funct3 | BGEU.funct3 => BitPat(brGe.litValue.U(width.W))
-          case _ => default
-        }
+    Instruction.instrTypeMap(op.opcode) match {
+      case InstructionType.JType => op.opcode match {
+        case JAL.opcode => BitPat(brJ.litValue.U(width.W))
+        case JALR.opcode => BitPat(brJr.litValue.U(width.W))
         case _ => default
       }
-      case None => dc
+      case InstructionType.BType => op.funct3 match {
+        case BEQ.funct3 => BitPat(brEq.litValue.U(width.W))
+        case BNE.funct3 => BitPat(brNe.litValue.U(width.W))
+        case BLT.funct3 | BLTU.funct3 => BitPat(brLt.litValue.U(width.W))
+        case BGE.funct3 | BGEU.funct3 => BitPat(brGe.litValue.U(width.W))
+        case _ => default
+      }
+      case _ => default
     }
   }
 }
@@ -242,12 +230,9 @@ object MemWenControlField extends DecodeField[ControlPattern, Bool] {
   def name: String = "MemWen Control Field"
   def chiselType: Bool = Bool()
   def genTable(op: ControlPattern): BitPat = {
-    Instruction.instrTypeMap.get(op.opcode) match {
-      case Some(instrType) => instrType match {
-        case InstructionType.SType => BitPat.Y(1)
-        case _ => BitPat.N(1)
-      }
-      case None => dc
+    Instruction.instrTypeMap(op.opcode) match {
+      case InstructionType.SType => BitPat.Y(1)
+      case _ => BitPat.N(1)
     }
   }
 }
@@ -272,18 +257,15 @@ object ALUBSrcControlField extends DecodeField[ControlPattern, UInt] {
   def name: String = "ALU Bsrc Control Field"
   def chiselType: UInt = UInt(ALUBSrcFrom.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
-    Instruction.instrTypeMap.get(op.opcode) match {
-      case Some(instrType) => instrType match {
-        case RType | BType => BitPat(fromRs2.litValue.U(width.W))
-        case IType => op.opcode match {
-          case Instruction.InstricitonMap.JALR => BitPat(from4.litValue.U(width.W))
-          case _ => BitPat(fromImm.litValue.U(width.W))
-        }
-        case SType | UType => BitPat(fromImm.litValue.U(width.W))
-        case JType => BitPat(from4.litValue.U(width.W))
-        case _ => dc
+    Instruction.instrTypeMap(op.opcode) match {
+      case RType | BType => BitPat(fromRs2.litValue.U(width.W))
+      case IType => op.opcode match {
+        case Instruction.InstricitonMap.JALR => BitPat(from4.litValue.U(width.W))
+        case _ => BitPat(fromImm.litValue.U(width.W))
       }
-      case None => dc
+      case SType | UType => BitPat(fromImm.litValue.U(width.W))
+      case JType => BitPat(from4.litValue.U(width.W))
+      case _ => dc
     }
   }
 }
@@ -293,12 +275,9 @@ object WBSrcControlField extends DecodeField[ControlPattern, UInt] {
   def chiselType: UInt = UInt(WBSrcFrom.getWidth.W)
   override def default: BitPat = BitPat(WBSrcFrom.fromALU.litValue.U(width.W))
   def genTable(op: ControlPattern): BitPat = {
-    Instruction.instrTypeMap.get(op.opcode) match {
-      case Some(instrType) => instrType match {
-        case InstructionType.SType => BitPat(WBSrcFrom.fromMem.litValue.U(width.W))
-        case _ => default
-      }
-      case None => dc
+    Instruction.instrTypeMap(op.opcode) match {
+      case InstructionType.SType => BitPat(WBSrcFrom.fromMem.litValue.U(width.W))
+      case _ => default
     }
   }
 }
