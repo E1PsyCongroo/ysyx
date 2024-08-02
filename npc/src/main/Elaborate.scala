@@ -6,5 +6,11 @@ object Elaborate extends App {
     "disallowPackedArrays",
     "locationInfoStyle=wrapInAtSquareBracket"
   ).reduce(_ + "," + _))
-  circt.stage.ChiselStage.emitSystemVerilogFile(new RVCPU.RVCPU(), args, firtoolOptions)
+  val top = new RVCPU.RVCPU(
+    xlen       = 32,
+    extentionE = true,
+    extentionC = false,
+    PCReset   = BigInt("0x8000_0000")
+  )
+  circt.stage.ChiselStage.emitSystemVerilogFile(top, args, firtoolOptions)
 }
