@@ -326,15 +326,15 @@ class Control extends Module {
   import Instruction.InstricitonMap._
 
   val possiblePatterns = Seq(
-    LUI, AUIPC, JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU,
+    // LUI, AUIPC, JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU,
     LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTIU,
     XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
-    SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK
+    // SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK
   )
   val decodeTable = new DecodeTable(
     possiblePatterns,
     Seq(
-      // ImmControlField,
+      ImmControlField,
       RegWeControlField,
       ALUControlField,
       BrControlField,
@@ -346,8 +346,7 @@ class Control extends Module {
     )
   )
   val decodeResult = decodeTable.decode(io.instr)
-  // io.immType      := decodeResult(ImmControlField)
-  io.immType := DontCare
+  io.immType      := decodeResult(ImmControlField)
   io.regWe        := decodeResult(RegWeControlField)
   io.aluASrc      := decodeResult(ALUASrcControlField)
   io.aluBSrc      := decodeResult(ALUBSrcControlField)
