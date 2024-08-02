@@ -258,7 +258,7 @@ object MemWenControlField extends DecodeField[ControlPattern, Bool] {
   }
 }
 
-object ALUAsrcControlField extends DecodeField[ControlPattern, UInt] {
+object ALUASrcControlField extends DecodeField[ControlPattern, UInt] {
   def name: String = "ALU Asrc Control Field"
   def chiselType: UInt = UInt(ALUASrcFrom.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
@@ -272,7 +272,7 @@ object ALUAsrcControlField extends DecodeField[ControlPattern, UInt] {
   }
 }
 
-object ALUBsrcControlField extends DecodeField[ControlPattern, UInt] {
+object ALUBSrcControlField extends DecodeField[ControlPattern, UInt] {
   def name: String = "ALU Bsrc Control Field"
   def chiselType: UInt = UInt(ALUBSrcFrom.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
@@ -317,7 +317,7 @@ class Control extends Module {
     possiblePatterns,
     Seq(
       ImmControlField, RegWeControlField, ALUControlField, BrControlField, MemOpControlField,
-      MemWenControlField, ALUAsrcControlField, ALUBsrcControlFeild, WBSrcControlField
+      MemWenControlField, ALUASrcControlField, ALUBSrcControlFeild, WBSrcControlField
     )
   )
   val decodeResult = decodeTable.decode(io.instr)
