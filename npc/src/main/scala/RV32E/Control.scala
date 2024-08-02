@@ -5,7 +5,6 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
 import chisel3.experimental.BundleLiterals._
-import _root_.RV32E.ALUOp.aluSltu
 
 case class ControlPattern(
   val funct7: BitPat = BitPat.dontCare(7),
@@ -44,7 +43,7 @@ object Instruction {
     val SW      = ControlPattern(opcode = BitPat("b0100011"), funct3 = BitPat("b010"))
     val ADDI    = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b000"))
     val SLTI    = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b010"))
-    val SLTUI   = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b011"))
+    val SLTIU   = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b011"))
     val XORI    = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b100"))
     val ORI     = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b110"))
     val ANDI    = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b111"))
@@ -162,7 +161,7 @@ object ALUControlField extends DecodeField[ControlPattern, UInt] {
           case ADDI.funct3 => aluAdd
           case SLLI.funct3 => aluSll
           case SLTI.funct3 => aluSlt
-          case SLTUI.funct3 => aluSltu
+          case SLTIU.funct3 => aluSltu
           case XORI.funct3 => aluXor
           case SRLI.funct3 => aluSrl
           case SRAI.funct3 => aluSra
@@ -328,7 +327,7 @@ class Control extends Module {
 
   val possiblePatterns = Seq(
     LUI, AUIPC, JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU,
-    LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTUI,
+    LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTIU,
     XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
     SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK
   )
