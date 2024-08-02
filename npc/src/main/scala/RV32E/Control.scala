@@ -284,7 +284,7 @@ object ALUBsrcControlField extends DecodeField[ControlPattern, UInt] {
 object WBSrcControlField extends DecodeField[ControlPattern, UInt] {
   def name: String = "Write Back Control Feild"
   def chiselType: UInt = UInt(WBSrcFrom.getWidth.W)
-  def genTable(op: ControlPattern): BitPat {
+  def genTable(op: ControlPattern): BitPat = {
     val dontCare = BitPat.dontCare(WBSrcFrom.getWidth)
     dontCare
   }
