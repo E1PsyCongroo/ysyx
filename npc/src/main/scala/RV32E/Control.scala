@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
 import chisel3.experimental.BundleLiterals._
+import _root_.RV32E.MemOp.getWidth
 
 case class ControlPattern(
   val funct7: BitPat = BitPat.dontCare(7),
@@ -101,8 +102,8 @@ object ImmControlField extends DecodeField[ControlPattern, UInt] {
     val dontCare = BitPat.dontCare(3)
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => Instruction.immTypeMap.get(instrType) match {
-        case Some(immType) => BitPat(immType.litValue.U)
-        case None => BitPat("b????")
+        case Some(immType) => BitPat(immType.litValue.U(ImmType.getWidth.W))
+        case None => dontCare
       }
       case None => dontCare
     }
