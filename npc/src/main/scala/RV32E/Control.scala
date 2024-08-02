@@ -300,7 +300,7 @@ class ControlIO extends Bundle {
   val brType = Output(UInt(BrType.getWidth.W))
   val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
   val memWe = Output(Bool())
-  val memOp = Output(MemOp.getWidth.W)
+  val memOp = Output(UInt(MemOp.getWidth.W))
 }
 
 class Control extends Module {
@@ -317,7 +317,7 @@ class Control extends Module {
     possiblePatterns,
     Seq(
       ImmControlField, BrControlFeild, MemOpControlFeild, RegWeControlFeild, MemWenControlField,
-      ALUAsrcControlFeild, ALUBsrcControlFeild, WBSrcControlField, ALUControlField
+      ALUAsrcControlField, ALUBsrcControlFeild, WBSrcControlField, ALUControlField
     )
   )
   val decodeResult = decodeTable.decode(io.instr)
