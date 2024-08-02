@@ -99,13 +99,12 @@ object ImmControlField extends DecodeField[ControlPattern, UInt] {
   def name = "Imm Control Field"
   def chiselType: UInt = UInt(ImmType.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
-    val dontCare = BitPat.dontCare(ImmType.getWidth)
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => Instruction.immTypeMap.get(instrType) match {
-        case Some(immType) => BitPat(immType.litValue.U(ImmType.getWidth.W))
-        case None => dontCare
+        case Some(immType) => BitPat(immType.litValue.U(width))
+        case None => dc
       }
-      case None => dontCare
+      case None => dc
     }
   }
 }
@@ -192,18 +191,18 @@ object BrControlField extends DecodeField[ControlPattern, UInt] {
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => instrType match {
         case InstructionType.JType => op.opcode match {
-          case JAL.opcode => BitPat(brJ.litValue.U)
-          case JALR.opcode => BitPat(brJr.litValue.U)
-          case _ => BitPat(brNone.litValue.U)
+          case JAL.opcode => BitPat(brJ.litValue.U(width))
+          case JALR.opcode => BitPat(brJr.litValue.U(width))
+          case _ => BitPat(brNone.litValue.U(width))
         }
         case InstructionType.BType => op.funct3 match {
-          case BEQ.funct3 => BitPat(brEq.litValue.U)
-          case BNE.funct3 => BitPat(brNe.litValue.U)
-          case BLT.funct3 | BLTU.funct3 => BitPat(brLt.litValue.U)
-          case BGE.funct3 | BGEU.funct3 => BitPat(brGe.litValue.U)
-          case _ => BitPat(brNone.litValue.U)
+          case BEQ.funct3 => BitPat(brEq.litValue.U(width))
+          case BNE.funct3 => BitPat(brNe.litValue.U(width))
+          case BLT.funct3 | BLTU.funct3 => BitPat(brLt.litValue.U(width))
+          case BGE.funct3 | BGEU.funct3 => BitPat(brGe.litValue.U(width))
+          case _ => BitPat(brNone.litValue.U(width))
         }
-        case _ => BitPat(brNone.litValue.U)
+        case _ => BitPat(brNone.litValue.U(width))
       }
       case None => dontCare
     }
@@ -261,10 +260,10 @@ object ALUASrcControlField extends DecodeField[ControlPattern, UInt] {
   def genTable(op: ControlPattern): BitPat = {
     val dontCare = BitPat.dontCare(ALUASrcFrom.getWidth)
     op.opcode match {
-      case Instruction.InstricitonMap.AUIPC => BitPat(ALUASrcFrom.fromPc.litValue.U)
-      case Instruction.InstricitonMap.JAL => BitPat(ALUASrcFrom.fromPc.litValue.U)
-      case Instruction.InstricitonMap.JALR => BitPat(ALUASrcFrom.fromPc.litValue.U)
-      case _ => BitPat(ALUASrcFrom.fromRs1.litValue.U)
+      case Instruction.InstricitonMap.AUIPC => BitPat(ALUASrcFrom.fromPc.litValue.U(width))
+      case Instruction.InstricitonMap.JAL => BitPat(ALUASrcFrom.fromPc.litValue.U(width))
+      case Instruction.InstricitonMap.JALR => BitPat(ALUASrcFrom.fromPc.litValue.U(width))
+      case _ => BitPat(ALUASrcFrom.fromRs1.litValue.U(width))
     }
   }
 }
@@ -278,13 +277,13 @@ object ALUBSrcControlField extends DecodeField[ControlPattern, UInt] {
     import ALUBSrcFrom._
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => instrType match {
-        case RType | BType => BitPat(fromRs2.litValue.U)
+        case RType | BType => BitPat(fromRs2.litValue.U(width))
         case IType => op.opcode match {
-          case Instruction.InstricitonMap.JALR => BitPat(from4.litValue.U)
-          case _ => BitPat(fromImm.litValue.U)
+          case Instruction.InstricitonMap.JALR => BitPat(from4.litValue.U(width))
+          case _ => BitPat(fromImm.litValue.U(width))
         }
-        case SType | UType => BitPat(fromImm.litValue.U)
-        case JType => BitPat(from4.litValue.U)
+        case SType | UType => BitPat(fromImm.litValue.U(width))
+        case JType => BitPat(from4.litValue.U(width))
         case _ => dontCare
       }
       case None => dontCare
@@ -299,8 +298,8 @@ object WBSrcControlField extends DecodeField[ControlPattern, UInt] {
     val dontCare = BitPat.dontCare(WBSrcFrom.getWidth)
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => instrType match {
-        case InstructionType.SType => BitPat(WBSrcFrom.fromMem.litValue.U)
-        case _ => BitPat(WBSrcFrom.fromALU.litValue.U)
+        case InstructionType.SType => BitPat(WBSrcFrom.fromMem.litValue.U(width))
+        case _ => BitPat(WBSrcFrom.fromALU.litValue.U(width))
       }
       case None => dontCare
     }
