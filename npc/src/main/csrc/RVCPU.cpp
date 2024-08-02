@@ -1,5 +1,5 @@
 // #include <nvboard.h>
-#include <paddr.h>
+#include "paddr.h"
 #include <VRVCPU.h>
 
 static TOP_NAME dut;
