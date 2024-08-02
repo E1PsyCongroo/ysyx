@@ -100,7 +100,7 @@ object ImmControlField extends DecodeField[ControlPattern, UInt] {
   def genTable(op: ControlPattern): BitPat = {
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => Instruction.immTypeMap.get(instrType) match {
-        case Some(immType) => BitPat(immType.litValue.U(this.width))
+        case Some(immType) => BitPat(immType.litValue.U(width.W))
         case None => dc
       }
       case None => dc
@@ -183,20 +183,20 @@ object BrControlField extends DecodeField[ControlPattern, UInt] {
   import BrType._
   def name: String = "Branch Control Field"
   def chiselType: UInt = UInt(BrType.getWidth.W)
-  override def default: BitPat = BitPat(brNone.litValue.U(this.width))
+  override def default: BitPat = BitPat(brNone.litValue.U(width.W))
   def genTable(op: ControlPattern): BitPat = {
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => instrType match {
         case InstructionType.JType => op.opcode match {
-          case JAL.opcode => BitPat(brJ.litValue.U(this.width))
-          case JALR.opcode => BitPat(brJr.litValue.U(this.width))
+          case JAL.opcode => BitPat(brJ.litValue.U(width.W))
+          case JALR.opcode => BitPat(brJr.litValue.U(width.W))
           case _ => default
         }
         case InstructionType.BType => op.funct3 match {
-          case BEQ.funct3 => BitPat(brEq.litValue.U(this.width))
-          case BNE.funct3 => BitPat(brNe.litValue.U(this.width))
-          case BLT.funct3 | BLTU.funct3 => BitPat(brLt.litValue.U(this.width))
-          case BGE.funct3 | BGEU.funct3 => BitPat(brGe.litValue.U(this.width))
+          case BEQ.funct3 => BitPat(brEq.litValue.U(width.W))
+          case BNE.funct3 => BitPat(brNe.litValue.U(width.W))
+          case BLT.funct3 | BLTU.funct3 => BitPat(brLt.litValue.U(width.W))
+          case BGE.funct3 | BGEU.funct3 => BitPat(brGe.litValue.U(width.W))
           case _ => default
         }
         case _ => default
@@ -252,12 +252,12 @@ object MemWenControlField extends DecodeField[ControlPattern, Bool] {
 object ALUASrcControlField extends DecodeField[ControlPattern, UInt] {
   def name: String = "ALU Asrc Control Field"
   def chiselType: UInt = UInt(ALUASrcFrom.getWidth.W)
-  override def default: BitPat = BitPat(ALUASrcFrom.fromRs1.litValue.U(this.width))
+  override def default: BitPat = BitPat(ALUASrcFrom.fromRs1.litValue.U(width.W))
   def genTable(op: ControlPattern): BitPat = {
     op.opcode match {
-      case Instruction.InstricitonMap.AUIPC => BitPat(ALUASrcFrom.fromPc.litValue.U(this.width))
-      case Instruction.InstricitonMap.JAL => BitPat(ALUASrcFrom.fromPc.litValue.U(this.width))
-      case Instruction.InstricitonMap.JALR => BitPat(ALUASrcFrom.fromPc.litValue.U(this.width))
+      case Instruction.InstricitonMap.AUIPC => BitPat(ALUASrcFrom.fromPc.litValue.U(width.W))
+      case Instruction.InstricitonMap.JAL => BitPat(ALUASrcFrom.fromPc.litValue.U(width.W))
+      case Instruction.InstricitonMap.JALR => BitPat(ALUASrcFrom.fromPc.litValue.U(width.W))
       case _ => default
     }
   }
@@ -271,13 +271,13 @@ object ALUBSrcControlField extends DecodeField[ControlPattern, UInt] {
   def genTable(op: ControlPattern): BitPat = {
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => instrType match {
-        case RType | BType => BitPat(fromRs2.litValue.U(this.width))
+        case RType | BType => BitPat(fromRs2.litValue.U(width.W))
         case IType => op.opcode match {
-          case Instruction.InstricitonMap.JALR => BitPat(from4.litValue.U(this.width))
-          case _ => BitPat(fromImm.litValue.U(this.width))
+          case Instruction.InstricitonMap.JALR => BitPat(from4.litValue.U(width.W))
+          case _ => BitPat(fromImm.litValue.U(width.W))
         }
-        case SType | UType => BitPat(fromImm.litValue.U(this.width))
-        case JType => BitPat(from4.litValue.U(this.width))
+        case SType | UType => BitPat(fromImm.litValue.U(width.W))
+        case JType => BitPat(from4.litValue.U(width.W))
         case _ => dc
       }
       case None => dc
@@ -288,11 +288,11 @@ object ALUBSrcControlField extends DecodeField[ControlPattern, UInt] {
 object WBSrcControlField extends DecodeField[ControlPattern, UInt] {
   def name: String = "Write Back Control Feild"
   def chiselType: UInt = UInt(WBSrcFrom.getWidth.W)
-  override def default: BitPat = BitPat(WBSrcFrom.fromALU.litValue.U(this.width))
+  override def default: BitPat = BitPat(WBSrcFrom.fromALU.litValue.U(width.W))
   def genTable(op: ControlPattern): BitPat = {
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => instrType match {
-        case InstructionType.SType => BitPat(WBSrcFrom.fromMem.litValue.U(this.width))
+        case InstructionType.SType => BitPat(WBSrcFrom.fromMem.litValue.U(width.W))
         case _ => default
       }
       case None => dc
@@ -318,10 +318,10 @@ class Control extends Module {
   import Instruction.InstricitonMap._
 
   val possiblePatterns = Seq(
-    // LUI, AUIPC, JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU,
-    // LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTIU,
-    // XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
-    // SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK
+    LUI, AUIPC, JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU,
+    LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTIU,
+    XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
+    SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK
   )
   val decodeTable = new DecodeTable(
     possiblePatterns,
