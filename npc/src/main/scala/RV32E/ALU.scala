@@ -1,4 +1,4 @@
-package RV32E
+package RVCPU
 
 import circt.stage.ChiselStage
 import chisel3._

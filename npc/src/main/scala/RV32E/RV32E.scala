@@ -1,4 +1,4 @@
-package RV32E
+package RVCPU
 
 import circt.stage.ChiselStage
 import chisel3._
@@ -14,9 +14,9 @@ class EndControl extends BlackBox with HasBlackBoxResource {
   addResource("/EndControl.sv")
 }
 
-class RV32E extends Module {
+class RVCPU(xlen: Int, extentionE: Boolean) extends Module {
   val io = IO(new Bundle{
-
+    val pc = Output(UInt())
   })
 
 }
