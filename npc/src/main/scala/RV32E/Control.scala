@@ -219,9 +219,6 @@ object MemOpControlField extends DecodeField[ControlPattern, UInt] {
       case _ => dc
     }
   }
-  // def genTable(op: ControlPattern): BitPat = {
-  //   op.funct3
-  // }
 }
 
 object MemWenControlField extends DecodeField[ControlPattern, Bool] {
@@ -283,6 +280,18 @@ object WBSrcControlField extends DecodeField[ControlPattern, UInt] {
   }
 }
 
+object EndControlField extends DecodeField[ControlPattern, Bool] {
+  import Instruction.InstricitonMap._
+  def name: String = "End Control Feild"
+  def chiselType: Bool = Bool()
+  def genTable(op: ControlPattern): BitPat = {
+    op match {
+      case EBREAK => BitPat.Y(1)
+      case _ => BitPat.N(1)
+    }
+  }
+}
+
 class ControlIO extends Bundle {
   val instr = Input(UInt(32.W))
   val immType = Output(UInt(ImmType.getWidth.W))
@@ -294,6 +303,7 @@ class ControlIO extends Bundle {
   val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
   val memWe = Output(Bool())
   val memOp = Output(UInt(MemOp.getWidth.W))
+  val isEnd = Output(Bool())
 }
 
 class Control extends Module {
@@ -317,7 +327,8 @@ class Control extends Module {
       MemWenControlField,
       ALUASrcControlField,
       ALUBSrcControlField,
-      WBSrcControlField
+      WBSrcControlField,
+      EndControlField,
     )
   )
   val decodeResult = decodeTable.decode(io.instr)
@@ -330,4 +341,5 @@ class Control extends Module {
   io.wbSrc        := decodeResult(WBSrcControlField)
   io.memWe        := decodeResult(MemWenControlField)
   io.memOp        := decodeResult(MemOpControlField)
+  io.isEnd        := decodeResult(EndControlField)
 }
