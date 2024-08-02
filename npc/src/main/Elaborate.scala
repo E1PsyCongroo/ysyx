@@ -1,11 +1,11 @@
 object Elaborate extends App {
-  val firtoolOptions = Array("--split-verilog", "--lowering-options=" + List(
+  val firtoolOptions = Array("--lowering-options=" + List(
     // make yosys happy
     // see https://github.com/llvm/circt/blob/main/docs/VerilogGeneration.md
     "disallowLocalVariables",
     "disallowPackedArrays",
     "locationInfoStyle=wrapInAtSquareBracket"
-  ).reduce(_ + "," + _))
+  ).mkString(","))
   println(firtoolOptions.toSeq)
   circt.stage.ChiselStage.emitSystemVerilogFile(
     new RVCPU.RVCPU(
