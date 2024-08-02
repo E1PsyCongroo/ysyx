@@ -313,13 +313,14 @@ class Control extends Module {
     XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
     SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK
   )
-  val decodeTable = new DecodeTable(
-    possiblePatterns,
-    Seq(
-      ImmControlField//, RegWeControlField, ALUControlField, BrControlField, MemOpControlField,
-      //MemWenControlField, ALUASrcControlField, ALUBSrcControlField, WBSrcControlField
-    )
-  )
+  // val decodeTable = new DecodeTable(
+  //   possiblePatterns,
+  //   Seq(
+  //     ImmControlField, RegWeControlField, ALUControlField, BrControlField, MemOpControlField,
+  //     MemWenControlField, ALUASrcControlField, ALUBSrcControlField, WBSrcControlField
+  //   )
+  // )
+  val decodeTable = new DecodeTable(possiblePatterns, Seq(ImmControlField))
   val decodeResult = decodeTable.decode(io.instr)
   io.immType      := decodeResult(ImmControlField)
   // io.regWe        := decodeResult(RegWeControlField)
