@@ -29,7 +29,7 @@ $(shell mkdir -p $(BUILD_DIR))
 test:
 	mill -i $(PRJ).test
 
-verilog: $(CHISELSRCS)
+verilog:
 	$(call git_commit, "generate verilog")
 	mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR)
 
