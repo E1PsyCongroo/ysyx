@@ -1,5 +1,5 @@
 PRJ 														:= RV32E
-ABS_TOP 												:= $(shell pwd)
+ABS_TOP 												:= $(NPC_HOME)
 BUILD_DIR 											:= $(ABS_TOP)/build
 OBJ_DIR 												:= $(BUILD_DIR)/obj_dir
 SRC_DIR													:= $(ABS_TOP)/src/main
