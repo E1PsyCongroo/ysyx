@@ -24,6 +24,8 @@ include $(NVBOARD_HOME)/scripts/nvboard.mk
 INCFLAGS 												:= $(addprefix -I, $(INC_PATH))
 CXXFLAGS 												+= $(INCFLAGS)
 
+IMG 														?=
+
 $(shell mkdir -p $(BUILD_DIR))
 
 test:
@@ -67,7 +69,7 @@ $(BUILD_DIR)/$(PRJ): $(VSRCS) $(BUILD_DIR)/$(PRJ)_auto_bind.cpp $(CSRCS) $(NVBOA
 		--Mdir $(OBJ_DIR) --exe -o $(BUILD_DIR)/$(PRJ)
 
 sim: $(BUILD_DIR)/$(PRJ)
-	$^
+	$^ $(IMG)
 
 .PHONY: test help reformat checkformat clean sim
 .PRECIOUS: $(BUILD_DIR)/$(PRJ)_auto_bind.cpp $(BUILD_DIR)/$(PRJ) $(VSRCS)
