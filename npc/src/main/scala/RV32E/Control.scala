@@ -339,9 +339,9 @@ class Control extends Module {
       BrControlField,
       MemOpControlField,
       MemWenControlField,
-      // ALUASrcControlField,
-      // ALUBSrcControlField,
-      // WBSrcControlField
+      ALUASrcControlField,
+      ALUBSrcControlField,
+      WBSrcControlField
     )
   )
   val decodeResult = decodeTable.decode(io.instr)
