@@ -323,7 +323,7 @@ class Control extends Module {
       MemOpControlField,
       MemWenControlField,
       ALUASrcControlField,
-      ALUBSrcControlField,
+      // ALUBSrcControlField,
       // WBSrcControlField
     )
   )
@@ -331,7 +331,8 @@ class Control extends Module {
   io.immType      := decodeResult(ImmControlField)
   io.regWe        := decodeResult(RegWeControlField)
   io.aluASrc      := decodeResult(ALUASrcControlField)
-  io.aluBSrc      := decodeResult(ALUBSrcControlField)
+  // io.aluBSrc      := decodeResult(ALUBSrcControlField)
+  io.aluBSrc      := DontCare
   io.aluCtr       := decodeResult(ALUControlField)
   io.brType       := decodeResult(BrControlField)
   // io.wbSrc        := decodeResult(WBSrcControlField)
