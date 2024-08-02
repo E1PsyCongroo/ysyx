@@ -334,8 +334,8 @@ class Control extends Module {
   val decodeTable = new DecodeTable(
     possiblePatterns,
     Seq(
-      ImmControlField,
-      // RegWeControlField,
+      // ImmControlField,
+      RegWeControlField,
       // ALUControlField,
       // BrControlField,
       // MemOpControlField,
