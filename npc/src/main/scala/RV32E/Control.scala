@@ -260,7 +260,7 @@ object MemWenControlFeild extends DecodeField[ControlPattern, Bool] {
 
 object ALUAsrcControlFeild extends DecodeField[ControlPattern, UInt] {
   def name: String = "ALU Asrc Control Feild"
-  def chiselType: UInt = UInt(ALUAsrcFrom.getWidth.W)
+  def chiselType: UInt = UInt(ALUASrcFrom.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
     val dontCare = BitPat.dontCare(ALUASrcFrom.getWidth)
     op.opcode match {
