@@ -267,7 +267,7 @@ object ALUASrcControlField extends DecodeField[ControlPattern, UInt] {
       case Instruction.InstricitonMap.AUIPC => BitPat(ALUASrcFrom.fromPc.asUInt)
       case Instruction.InstricitonMap.JAL => BitPat(ALUASrcFrom.fromPc.asUInt)
       case Instruction.InstricitonMap.JALR => BitPat(ALUASrcFrom.fromPc.asUInt)
-      case _ => BitPat(ALUASrcFrom.fromRs1.litValue.U)
+      case _ => BitPat(ALUASrcFrom.fromRs1.asUInt)
     }
   }
 }
