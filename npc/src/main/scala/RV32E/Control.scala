@@ -99,7 +99,7 @@ object ImmControlField extends DecodeField[ControlPattern, UInt] {
   def name = "Imm Control Field"
   def chiselType: UInt = UInt(ImmType.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
-    val dontCare = BitPat.dontCare(3)
+    val dontCare = BitPat.dontCare(ImmType.getWidth.W)
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => Instruction.immTypeMap.get(instrType) match {
         case Some(immType) => BitPat(immType.litValue.U(ImmType.getWidth.W))
@@ -325,11 +325,10 @@ class Control extends Module {
   import Instruction.InstricitonMap._
 
   val possiblePatterns = Seq(
-    ADD, ADDI
-    // LUI, AUIPC, JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU,
-    // LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTIU,
-    // XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
-    // SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK
+    LUI, AUIPC, JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU,
+    LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTIU,
+    XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
+    SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK
   )
   val decodeTable = new DecodeTable(
     possiblePatterns,
