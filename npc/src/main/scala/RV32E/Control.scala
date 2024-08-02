@@ -243,9 +243,9 @@ object ALUASrcControlField extends DecodeField[ControlPattern, UInt] {
   override def default: BitPat = BitPat(ALUASrcFrom.fromRs1.litValue.U(width.W))
   def genTable(op: ControlPattern): BitPat = {
     op.opcode match {
-      case Instruction.InstricitonMap.AUIPC => BitPat(ALUASrcFrom.fromPc.litValue.U(width.W))
-      case Instruction.InstricitonMap.JAL => BitPat(ALUASrcFrom.fromPc.litValue.U(width.W))
-      case Instruction.InstricitonMap.JALR => BitPat(ALUASrcFrom.fromPc.litValue.U(width.W))
+      case Instruction.InstricitonMap.AUIPC.opcode => BitPat(ALUASrcFrom.fromPc.litValue.U(width.W))
+      case Instruction.InstricitonMap.JAL.opcode => BitPat(ALUASrcFrom.fromPc.litValue.U(width.W))
+      case Instruction.InstricitonMap.JALR.opcode => BitPat(ALUASrcFrom.fromPc.litValue.U(width.W))
       case _ => default
     }
   }
