@@ -20,7 +20,7 @@ class RVCPU(
   xlen: Int = 32,
   extentionE: Boolean = true,
   extentionC: Boolean = false,
-  PCReset: BigInt = BigInt("0x8000_0000")
+  PCReset: BigInt = BigInt("8000_0000", 16)
 ) extends Module {
   val io = IO(new Bundle{
     val inst = Input(UInt(if (extentionC) 16.W else 32.W))

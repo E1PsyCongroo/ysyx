@@ -10,7 +10,7 @@ object Elaborate extends App {
     xlen       = 32,
     extentionE = true,
     extentionC = false,
-    PCReset   = BigInt("0x8000_0000")
+    PCReset   = BigInt("8000_0000", 16)
   )
   circt.stage.ChiselStage.emitSystemVerilogFile(top, args, firtoolOptions)
 }
