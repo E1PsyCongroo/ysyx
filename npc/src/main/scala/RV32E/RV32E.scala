@@ -11,9 +11,8 @@ class EndControlIO extends Bundle {
   val reset = Input(Reset())
   val isEnd = Input(Bool())
 }
-class EndControl extends BlackBox with HasBlackBoxResource {
+class EndControl extends BlackBox {
   val io = IO(new EndControlIO)
-  addResource("/EndControl.sv")
 }
 
 class RVCPU(

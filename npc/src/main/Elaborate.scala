@@ -6,7 +6,6 @@ object Elaborate extends App {
     "disallowPackedArrays",
     "locationInfoStyle=wrapInAtSquareBracket"
   ).mkString(","))
-  println(firtoolOptions.toSeq)
   circt.stage.ChiselStage.emitSystemVerilogFile(
     new RVCPU.RVCPU(
       xlen       = 32,
