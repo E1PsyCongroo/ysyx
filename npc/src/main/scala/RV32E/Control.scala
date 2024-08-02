@@ -333,7 +333,7 @@ class Control extends Module {
   val decodeTable = new DecodeTable(
     possiblePatterns,
     Seq(
-      // ImmControlField,
+      ImmControlField,
       RegWeControlField,
       ALUControlField,
       BrControlField,
