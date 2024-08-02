@@ -102,7 +102,7 @@ object ImmControlField extends DecodeField[ControlPattern, UInt] {
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => Instruction.immTypeMap.get(instrType) match {
         case Some(immType) => BitPat(immType.litValue.U)
-        case None => BitPat(ImmType.ImmI.litOption.U)
+        case None => BitPat(ImmType.ImmI.litValue.U)
       }
       case None => dontCare
     }
