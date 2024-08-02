@@ -1,4 +1,5 @@
 // #include <nvboard.h>
+#include <isa.h>
 #include <paddr.h>
 #include <VRVCPU.h>
 
