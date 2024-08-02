@@ -5,6 +5,7 @@
 
 static TOP_NAME dut;
 bool isEnd = false;
+CPU_state cpu;
 
 // void nvboard_bind_all_pins(TOP_NAME* top);
 
