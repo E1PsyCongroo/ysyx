@@ -93,5 +93,6 @@ class RVCPU(
     WBSrcFrom.fromALU.asUInt -> ALU.io.aluOut,
     WBSrcFrom.fromMem.asUInt -> Mem.io.raddr,
   ))
+  RegFile.io.we       := Control.io.regWe
   RegFile.io.wd       := writeToReg
 }
