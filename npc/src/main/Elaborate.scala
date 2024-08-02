@@ -5,7 +5,6 @@ object Elaborate extends App {
     "disallowLocalVariables",
     "disallowPackedArrays",
     "locationInfoStyle=wrapInAtSquareBracket",
-    "split-verilog",
   ).reduce(_ + "," + _) + " --split-verilog")
   println(firtoolOptions.toSeq)
   circt.stage.ChiselStage.emitSystemVerilogFile(
