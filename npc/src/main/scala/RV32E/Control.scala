@@ -6,6 +6,7 @@ import chisel3.util._
 import chisel3.util.experimental.decode._
 import chisel3.experimental.BundleLiterals._
 
+import Instruction.InstructionType
 case class ControlPattern(
   val funct7: BitPat = BitPat.dontCare(7),
   val rs2: BitPat = BitPat.dontCare(5),
@@ -19,79 +20,6 @@ case class ControlPattern(
     funct3.getWidth == 3 && rd.getWidth == 5 && opcode.getWidth == 7
   )
   def bitPat: BitPat = funct7 ## rs2 ## rs1 ## funct3 ## rd ## opcode
-}
-
-object Instruction {
-  object InstricitonMap {
-    val LUI     = ControlPattern(opcode = BitPat("b0110111"))
-    val AUIPC   = ControlPattern(opcode = BitPat("b0010111"))
-    val JAL     = ControlPattern(opcode = BitPat("b1101111"))
-    val JALR    = ControlPattern(opcode = BitPat("b1100111"), funct3 = BitPat("b000"))
-    val BEQ     = ControlPattern(opcode = BitPat("b1100011"), funct3 = BitPat("b000"))
-    val BNE     = ControlPattern(opcode = BitPat("b1100011"), funct3 = BitPat("b001"))
-    val BLT     = ControlPattern(opcode = BitPat("b1100011"), funct3 = BitPat("b100"))
-    val BGE     = ControlPattern(opcode = BitPat("b1100011"), funct3 = BitPat("b101"))
-    val BLTU    = ControlPattern(opcode = BitPat("b1100011"), funct3 = BitPat("b110"))
-    val BGEU    = ControlPattern(opcode = BitPat("b1100011"), funct3 = BitPat("b111"))
-    val LB      = ControlPattern(opcode = BitPat("b0000011"), funct3 = BitPat("b000"))
-    val LH      = ControlPattern(opcode = BitPat("b0000011"), funct3 = BitPat("b001"))
-    val LW      = ControlPattern(opcode = BitPat("b0000011"), funct3 = BitPat("b010"))
-    val LBU     = ControlPattern(opcode = BitPat("b0000011"), funct3 = BitPat("b100"))
-    val LHU     = ControlPattern(opcode = BitPat("b0000011"), funct3 = BitPat("b101"))
-    val SB      = ControlPattern(opcode = BitPat("b0100011"), funct3 = BitPat("b000"))
-    val SH      = ControlPattern(opcode = BitPat("b0100011"), funct3 = BitPat("b001"))
-    val SW      = ControlPattern(opcode = BitPat("b0100011"), funct3 = BitPat("b010"))
-    val ADDI    = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b000"))
-    val SLTI    = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b010"))
-    val SLTIU   = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b011"))
-    val XORI    = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b100"))
-    val ORI     = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b110"))
-    val ANDI    = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b111"))
-    val SLLI    = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b001"), funct7 = BitPat("b0000000"))
-    val SRLI    = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b101"), funct7 = BitPat("b0000000"))
-    val SRAI    = ControlPattern(opcode = BitPat("b0010011"), funct3 = BitPat("b101"), funct7 = BitPat("b0100000"))
-    val ADD     = ControlPattern(opcode = BitPat("b0110011"), funct3 = BitPat("b000"), funct7 = BitPat("b0000000"))
-    val SUB     = ControlPattern(opcode = BitPat("b0110011"), funct3 = BitPat("b000"), funct7 = BitPat("b0100000"))
-    val SLL     = ControlPattern(opcode = BitPat("b0110011"), funct3 = BitPat("b001"), funct7 = BitPat("b0000000"))
-    val SLT     = ControlPattern(opcode = BitPat("b0110011"), funct3 = BitPat("b010"), funct7 = BitPat("b0000000"))
-    val SLTU    = ControlPattern(opcode = BitPat("b0110011"), funct3 = BitPat("b011"), funct7 = BitPat("b0000000"))
-    val XOR     = ControlPattern(opcode = BitPat("b0110011"), funct3 = BitPat("b100"), funct7 = BitPat("b0000000"))
-    val SRL     = ControlPattern(opcode = BitPat("b0110011"), funct3 = BitPat("b101"), funct7 = BitPat("b0000000"))
-    val SRA     = ControlPattern(opcode = BitPat("b0110011"), funct3 = BitPat("b101"), funct7 = BitPat("b0100000"))
-    val OR      = ControlPattern(opcode = BitPat("b0110011"), funct3 = BitPat("b110"), funct7 = BitPat("b0000000"))
-    val AND     = ControlPattern(opcode = BitPat("b0110011"), funct3 = BitPat("b111"), funct7 = BitPat("b0000000"))
-    val FENCE   = ControlPattern(opcode = BitPat("b0001111"), funct3 = BitPat("b000"))
-    val ECALL   = ControlPattern(
-      opcode = BitPat("b1110011"), funct3 = BitPat("b000"), funct7 = BitPat("b0000000"),
-      rs2 = BitPat("b00000"), rs1 = BitPat("b00000"), rd = BitPat("b00000")
-    )
-    val EBREAK  = ControlPattern(
-      opcode = BitPat("b1110011"), funct3 = BitPat("b000"), funct7 = BitPat("b0000000"),
-      rs2 = BitPat("b00001"), rs1 = BitPat("b00000"), rd = BitPat("b00000")
-    )
-  }
-
-  val instrTypeMap = Map(
-    BitPat("b0110111") -> InstructionType.UType,
-    BitPat("b0010111") -> InstructionType.UType,
-    BitPat("b1101111") -> InstructionType.JType,
-    BitPat("b1100111") -> InstructionType.IType,
-    BitPat("b1100011") -> InstructionType.BType,
-    BitPat("b0000011") -> InstructionType.IType,
-    BitPat("b0100011") -> InstructionType.SType,
-    BitPat("b0010011") -> InstructionType.IType,
-    BitPat("b0110011") -> InstructionType.RType,
-    BitPat("b0001111") -> InstructionType.IType,
-    BitPat("b1110011") -> InstructionType.IType,
-  )
-
-  val immTypeMap = Map(
-    InstructionType.IType -> ImmType.ImmI,
-    InstructionType.SType -> ImmType.ImmS,
-    InstructionType.BType -> ImmType.ImmB,
-    InstructionType.UType -> ImmType.ImmU,
-    InstructionType.JType -> ImmType.ImmJ,
-  )
 }
 
 object ImmControlField extends DecodeField[ControlPattern, UInt] {

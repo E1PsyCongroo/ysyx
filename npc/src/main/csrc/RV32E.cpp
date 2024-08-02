@@ -3,8 +3,13 @@
 #include <VRV32E.h>
 
 static TOP_NAME dut;
+bool isEnd = false;
 
 // void nvboard_bind_all_pins(TOP_NAME* top);
+
+extern "C" void sim_end() {
+  isEnd = true;
+}
 
 extern "C" word_t pmem_read(paddr_t raddr) {
   // 总是读取地址为`raddr & ~0x3u`的4字节返回

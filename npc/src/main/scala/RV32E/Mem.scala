@@ -2,8 +2,8 @@ package RV32E
 
 import chisel3._
 import chisel3.util._
-import MemOp._
 import chisel3.util.experimental.decode._
+import MemOp._
 
 class MemIO extends Bundle {
   val valid = Input(Bool())
@@ -19,6 +19,7 @@ class MemIO extends Bundle {
 class Mem extends BlackBox with HasBlackBoxResource {
   val io = IO(new MemIO{
     val clock = Input(Clock())
+    val reset = Input(Reset())
   } )
   addResource("/Mem.sv")
 }
@@ -41,6 +42,7 @@ class MemControl extends Module {
   val wmask = WireDefault(0.U(4.W))
   val mem = Module(new Mem)
   mem.io.clock := clock
+  mem.io.reset := reset
   mem.io.valid := io.valid
   mem.io.raddr := io.raddr
   val rdata = mem.io.rdata
