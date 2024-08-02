@@ -316,18 +316,26 @@ class Control extends Module {
   val decodeTable = new DecodeTable(
     possiblePatterns,
     Seq(
-      ImmControlField, RegWeControlField, ALUControlField, BrControlField, MemOpControlField,
-      MemWenControlField, ALUASrcControlField, ALUBSrcControlField, WBSrcControlField
+      ImmControlField//, RegWeControlField, ALUControlField, BrControlField, MemOpControlField,
+      //MemWenControlField, ALUASrcControlField, ALUBSrcControlField, WBSrcControlField
     )
   )
   val decodeResult = decodeTable.decode(io.instr)
   io.immType      := decodeResult(ImmControlField)
-  io.regWe        := decodeResult(RegWeControlField)
-  io.aluASrc      := decodeResult(ALUASrcControlField)
-  io.aluBSrc      := decodeResult(ALUBSrcControlField)
-  io.aluCtr       := decodeResult(ALUControlField)
-  io.brType       := decodeResult(BrControlField)
-  io.wbSrc        := decodeResult(WBSrcControlField)
-  io.memWe        := decodeResult(MemWenControlField)
-  io.memOp        := decodeResult(MemOpControlField)
+  // io.regWe        := decodeResult(RegWeControlField)
+  // io.aluASrc      := decodeResult(ALUASrcControlField)
+  // io.aluBSrc      := decodeResult(ALUBSrcControlField)
+  // io.aluCtr       := decodeResult(ALUControlField)
+  // io.brType       := decodeResult(BrControlField)
+  // io.wbSrc        := decodeResult(WBSrcControlField)
+  // io.memWe        := decodeResult(MemWenControlField)
+  // io.memOp        := decodeResult(MemOpControlField)
+  io.regWe        := DontCare
+  io.aluASrc      := DontCare
+  io.aluBSrc      := DontCare
+  io.aluCtr       := DontCare
+  io.brType       := DontCare
+  io.wbSrc        := DontCare
+  io.memWe        := DontCare
+  io.memOp        := DontCare
 }
