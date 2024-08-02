@@ -7,7 +7,7 @@ object Elaborate extends App {
     "locationInfoStyle=wrapInAtSquareBracket",
     "split-verilog",
   ).reduce(_ + "," + _) + "--split-verilog")
-  println(firtoolOptions)
+  println(firtoolOptions.toString())
   // circt.stage.ChiselStage.emitSystemVerilogFile(
   //   new RVCPU.RVCPU(
   //     xlen       = 32,
