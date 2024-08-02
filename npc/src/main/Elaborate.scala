@@ -6,7 +6,7 @@ object Elaborate extends App {
     "disallowPackedArrays",
     "locationInfoStyle=wrapInAtSquareBracket",
     "split-verilog",
-  ).reduce(_ + "," + _) + "--split-verilog")
+  ).reduce(_ + "," + _) + " --split-verilog")
   println(firtoolOptions.toSeq)
   // circt.stage.ChiselStage.emitSystemVerilogFile(
   //   new RVCPU.RVCPU(
