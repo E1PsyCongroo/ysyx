@@ -85,6 +85,6 @@ class MemControl extends Module {
     memH.value.U -> Fill(16, lshift(15)) ## lshift(15, 0),
     memB.value.U -> Fill(24, lshift(7)) ## lshift(7, 0),
     memHu.value.U -> Fill(16, 0.U(1.W)) ## lshift(15, 0),
-    memBu.value.U > Fill(24, 0.U(1.W)) ## lshift(7, 0),
+    memBu.value.U -> Fill(24, 0.U(1.W)) ## lshift(7, 0),
   ))
 }
