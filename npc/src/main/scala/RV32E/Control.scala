@@ -336,7 +336,7 @@ class Control extends Module {
       // ImmControlField,
       RegWeControlField,
       ALUControlField,
-      // BrControlField,
+      BrControlField,
       // MemOpControlField,
       // MemWenControlField,
       // ALUASrcControlField,
