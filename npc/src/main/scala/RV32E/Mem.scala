@@ -20,7 +20,7 @@ class Mem extends BlackBox with HasBlackBoxResource {
   val io = IO(new MemIO{
     val clock = Input(Clock())
   } )
-  addResource("/Mem.sv")
+  addResource("Mem.sv")
 }
 
 class MemControlIO extends Bundle {
