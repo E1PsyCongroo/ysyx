@@ -317,17 +317,17 @@ class Control extends Module {
     possiblePatterns,
     Seq(
       ImmControlField, RegWeControlField, ALUControlField, BrControlField, MemOpControlField,
-      MemWenControlField, ALUASrcControlField, ALUBSrcControlFeild, WBSrcControlField
+      MemWenControlField, ALUASrcControlField, ALUBSrcControlField, WBSrcControlField
     )
   )
   val decodeResult = decodeTable.decode(io.instr)
   io.immType      := decodeResult(ImmControlField)
-  io.regWe        := decodeResult(RegWeControlFeild)
-  io.aluASrc      := decodeResult(ALUAsrcControlFeild)
-  io.aluBSrc      := decodeResult(ALUBsrcControlField)
+  io.regWe        := decodeResult(RegWeControlField)
+  io.aluASrc      := decodeResult(ALUASrcControlField)
+  io.aluBSrc      := decodeResult(ALUBSrcControlField)
   io.aluCtr       := decodeResult(ALUControlField)
   io.brType       := decodeResult(BrControlField)
   io.wbSrc        := decodeResult(WBSrcControlField)
   io.memWe        := decodeResult(MemWenControlField)
-  io.memOp        := decodeResult(MemOpControlFeild)
+  io.memOp        := decodeResult(MemOpControlField)
 }
