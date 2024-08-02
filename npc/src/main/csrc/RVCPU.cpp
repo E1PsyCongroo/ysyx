@@ -1,6 +1,6 @@
 // #include <nvboard.h>
 #include <paddr.h>
-#include <VRV32E.h>
+#include <VRVCPU.h>
 
 static TOP_NAME dut;
 bool isEnd = false;
