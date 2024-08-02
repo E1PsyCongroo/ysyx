@@ -25,7 +25,7 @@ class Mem extends BlackBox with HasBlackBoxResource {
 
 class MemControlIO extends Bundle {
   val valid = Input(Bool())
-  val memOp = Input(UInt(3.W))
+  val memOp = Input(UInt(MemOp.getWidth.W))
 
   val raddr = Input(UInt(32.W))
   val rdata = Output(UInt(32.W))
@@ -53,6 +53,7 @@ class MemControl extends Module {
   case class MemControlPattern(
     val memOp: BitPat
   ) extends DecodePattern {
+    require(memOp.getWidth == MemOp.getWidth)
     def bitPat: BitPat = memOp
   }
 
@@ -82,7 +83,7 @@ class MemControl extends Module {
 
   val loffset = (io.raddr(1) << 4.U) | (io.raddr(0) << 3.U)
   val lshift = rdata >> loffset
-  io.rdata := MuxLookup(io.memOp, rdata)(Seq(
+  io.rdata := MuxLookup(io.memOp, lshift)(Seq(
     memH.value.U -> Fill(16, lshift(15)) ## lshift(15, 0),
     memB.value.U -> Fill(24, lshift(7)) ## lshift(7, 0),
     memHu.value.U -> Fill(16, 0.U(1.W)) ## lshift(15, 0),

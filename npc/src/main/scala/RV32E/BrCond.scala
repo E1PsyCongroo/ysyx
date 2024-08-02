@@ -23,10 +23,10 @@ class BrCond extends Module {
 
   io.PCBSrc := Mux(io.brType === brJr.litValue.U, true.B, false.B)
   io.PCASrc := MuxLookup(io.brType, false.B)(Seq(
-    brJ.litValue.U -> true.B,
-    brEq.litValue.U -> isEq,
-    brNe.litValue.U -> isNe,
-    brLt.litValue.U -> isLt,
-    brGe.litValue.U -> isGe,
+    brJ.asUInt -> true.B,
+    brEq.asUInt -> isEq,
+    brNe.asUInt -> isNe,
+    brLt.asUInt -> isLt,
+    brGe.asUInt -> isGe,
   ))
 }
