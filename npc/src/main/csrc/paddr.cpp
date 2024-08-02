@@ -37,7 +37,7 @@ static void out_of_bound(paddr_t addr) {
 }
 
 void init_mem() {
-  Log("physical memory area [" FMT_PADDR ", " FMT_PADDR "]", PMEM_LEFT, PMEM_RIGHT);
+  printf("physical memory area [" FMT_PADDR ", " FMT_PADDR "]", PMEM_LEFT, PMEM_RIGHT);
 }
 
 word_t paddr_read(paddr_t addr, int len) {
