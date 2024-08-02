@@ -46,3 +46,7 @@ object ALUASrcFrom extends ChiselEnum {
 object ALUBSrcFrom extends ChiselEnum {
   val fromRs2, fromImm, from4 = Value
 }
+
+object WBSrcFrom extends ChiselEnum {
+  val fromALU, fromMem = Value
+}

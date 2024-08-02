@@ -98,8 +98,8 @@ object Instruction {
 
 }
 
-object ImmControlFeild extends DecodeField[ControlPattern, UInt] {
-  def name = "Imm Control Feild"
+object ImmControlField extends DecodeField[ControlPattern, UInt] {
+  def name = "Imm Control Field"
   def chiselType: UInt = UInt(ImmType.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
     val dontCare = BitPat.dontCare(ImmType.getWidth)
@@ -113,8 +113,8 @@ object ImmControlFeild extends DecodeField[ControlPattern, UInt] {
   }
 }
 
-object RegWeControlFeild extends DecodeField[ControlPattern, Bool] {
-  def name = "Reg We Control Feild"
+object RegWeControlField extends DecodeField[ControlPattern, Bool] {
+  def name = "Reg We Control Field"
   def chiselType: Bool = Bool()
   def genTable(op: ControlPattern): BitPat = {
     val dontCare = BitPat.dontCare(1)
@@ -133,8 +133,8 @@ object RegWeControlFeild extends DecodeField[ControlPattern, Bool] {
   }
 }
 
-object ALUControlFeild extends DecodeField[ControlPattern, UInt] {
-  def name = "ALU Control Feild"
+object ALUControlField extends DecodeField[ControlPattern, UInt] {
+  def name = "ALU Control Field"
   def chiselType: UInt = UInt(ALUOp.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
     import Instruction.InstricitonMap._
@@ -185,8 +185,8 @@ object ALUControlFeild extends DecodeField[ControlPattern, UInt] {
   }
 }
 
-object BrControlFeild extends DecodeField[ControlPattern, UInt] {
-  def name: String = "Branch Control Feild"
+object BrControlField extends DecodeField[ControlPattern, UInt] {
+  def name: String = "Branch Control Field"
   def chiselType: UInt = UInt(BrType.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
     import Instruction.InstricitonMap._
@@ -213,8 +213,8 @@ object BrControlFeild extends DecodeField[ControlPattern, UInt] {
   }
 }
 
-object MemOpControlFeild extends DecodeField[ControlPattern, UInt] {
-  def name: String = "MemOp Control Feild"
+object MemOpControlField extends DecodeField[ControlPattern, UInt] {
+  def name: String = "MemOp Control Field"
   def chiselType: UInt = UInt(MemOp.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
     import Instruction.InstricitonMap._
@@ -243,8 +243,8 @@ object MemOpControlFeild extends DecodeField[ControlPattern, UInt] {
   }
 }
 
-object MemWenControlFeild extends DecodeField[ControlPattern, Bool] {
-  def name: String = "MemWen Control Feild"
+object MemWenControlField extends DecodeField[ControlPattern, Bool] {
+  def name: String = "MemWen Control Field"
   def chiselType: Bool = Bool()
   def genTable(op: ControlPattern): BitPat = {
     val dontCare = BitPat.dontCare(1)
@@ -258,23 +258,76 @@ object MemWenControlFeild extends DecodeField[ControlPattern, Bool] {
   }
 }
 
-object ALUAsrcControlFeild extends DecodeField[ControlPattern, UInt] {
-  def name: String = "ALU Asrc Control Feild"
+object ALUAsrcControlField extends DecodeField[ControlPattern, UInt] {
+  def name: String = "ALU Asrc Control Field"
   def chiselType: UInt = UInt(ALUASrcFrom.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
     val dontCare = BitPat.dontCare(ALUASrcFrom.getWidth)
     op.opcode match {
       case Instruction.InstricitonMap.AUIPC => BitPat(ALUASrcFrom.fromPc.asUInt)
+      case Instruction.InstricitonMap.JAL => BitPat(ALUASrcFrom.fromPc.asUInt)
+      case Instruction.InstricitonMap.JALR => BitPat(ALUASrcFrom.fromPc.asUInt)
       case _ => BitPat(ALUASrcFrom.fromRs1.asUInt)
     }
   }
 }
 
-object ALUBsrcControlFeild extends DecodeField[ControlPattern, UInt] {
- def name: String = "ALU Bsrc Control Feild"
- def chiselType: UInt = UInt(ALUBSrcFrom.getWidth.W)
- def genTable(op: ControlPattern): BitPat = {
-  val dontCare = BitPat.dontCare(ALUBSrcFrom.getWidth)
-  dontCare
- }
+object ALUBsrcControlField extends DecodeField[ControlPattern, UInt] {
+  def name: String = "ALU Bsrc Control Field"
+  def chiselType: UInt = UInt(ALUBSrcFrom.getWidth.W)
+  def genTable(op: ControlPattern): BitPat = {
+    val dontCare = BitPat.dontCare(ALUBSrcFrom.getWidth)
+    dontCare
+  }
+}
+
+object WBSrcControlField extends DecodeField[ControlPattern, UInt] {
+  def name: String = "Write Back Control Feild"
+  def chiselType: UInt = UInt(WBSrcFrom.getWidth.W)
+  def genTable(op: ControlPattern): BitPat {
+    val dontCare = BitPat.dontCare(WBSrcFrom.getWidth)
+    dontCare
+  }
+}
+
+class ControlIO extends Bundle {
+  val instr = Input(UInt(32.W))
+  val immType = Output(UInt(ImmType.getWidth.W))
+  val regWe = Output(Bool())
+  val aluASrc = Output(UInt(ALUASrcFrom.getWidth.W))
+  val aluBSrc = Output(UInt(ALUBSrcFrom.getWidth.W))
+  val aluCtr = Output(UInt(ALUOp.getWidth.W))
+  val brType = Output(UInt(BrType.getWidth.W))
+  val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
+  val memWe = Output(Bool())
+  val memOp = Output(MemOp.getWidth.W)
+}
+
+class Control extends Module {
+  val io = IO(new ControlIO)
+  import Instruction.InstricitonMap._
+
+  val possiblePatterns = Seq(
+    LUI, AUIPC, JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU,
+    LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTUI,
+    XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
+    SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK
+  )
+  val decodeTable = new DecodeTable(
+    possiblePatterns,
+    Seq(
+      ImmControlField, BrControlFeild, MemOpControlFeild, RegWeControlFeild, MemWenControlField,
+      ALUAsrcControlFeild, ALUBsrcControlFeild, WBSrcControlField, ALUControlField
+    )
+  )
+  val decodeResult = decodeTable.decode(io.instr)
+  io.immType      := decodeResult(ImmControlField)
+  io.regWe        := decodeResult(RegWeControlFeild)
+  io.aluASrc      := decodeResult(ALUAsrcControlFeild)
+  io.aluBSrc      := decodeResult(ALUBsrcControlField)
+  io.aluCtr       := decodeResult(ALUControlField)
+  io.brType       := decodeResult(BrControlField)
+  io.wbSrc        := decodeResult(WBSrcControlField)
+  io.memWe        := decodeResult(MemWenControlField)
+  io.memOp        := decodeResult(MemOpControlFeild)
 }
