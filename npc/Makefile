@@ -22,6 +22,7 @@ VERILATOR_CFLAGS 								?= --MMD --build -sv --cc -O3 --x-assign fast --x-initi
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 # rules for verilator
+INC_PATH												+= $(CSRC_DIR)
 INCFLAGS 												:= $(addprefix -I, $(INC_PATH))
 CXXFLAGS 												+= $(INCFLAGS)
 
