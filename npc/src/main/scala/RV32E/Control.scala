@@ -6,7 +6,6 @@ import chisel3.util._
 import chisel3.util.experimental.decode._
 import chisel3.experimental.BundleLiterals._
 import _root_.RV32E.ALUOp.aluSltu
-import chisel3.internal.sourceinfo.InstTransform
 
 case class ControlPattern(
   val funct7: BitPat = BitPat.dontCare(7),
@@ -277,7 +276,21 @@ object ALUBSrcControlField extends DecodeField[ControlPattern, UInt] {
   def chiselType: UInt = UInt(ALUBSrcFrom.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
     val dontCare = BitPat.dontCare(ALUBSrcFrom.getWidth)
-    dontCare
+    import InstructionType._
+    import ALUBSrcFrom._
+    Instruction.instrTypeMap.get(op.opcode) match {
+      case Some(instrType) => instrType match {
+        case RType | BType => BitPat(fromRs2.litValue.U)
+        case IType => op.opcode match {
+          case Instruction.InstricitonMap.JALR => BitPat(from4.litValue.U)
+          case _ => BitPat(fromImm.litValue.U)
+        }
+        case SType | UType => BitPat(fromImm.litValue.U)
+        case JType => BitPat(from4.litValue.U)
+        case _ => dontCare
+      }
+      case None => dontCare
+    }
   }
 }
 
@@ -286,7 +299,13 @@ object WBSrcControlField extends DecodeField[ControlPattern, UInt] {
   def chiselType: UInt = UInt(WBSrcFrom.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
     val dontCare = BitPat.dontCare(WBSrcFrom.getWidth)
-    dontCare
+    Instruction.instrTypeMap.get(op.opcode) match {
+      case Some(instrType) => instrType match {
+        case InstructionType.SType => BitPat(WBSrcFrom.fromMem.litValue.U)
+        case _ => BitPat(WBSrcFrom.fromALU.litValue.U)
+      }
+      case None => dontCare
+    }
   }
 }
 
@@ -331,12 +350,10 @@ class Control extends Module {
   io.immType      := decodeResult(ImmControlField)
   io.regWe        := decodeResult(RegWeControlField)
   io.aluASrc      := decodeResult(ALUASrcControlField)
-  // io.aluBSrc      := decodeResult(ALUBSrcControlField)
-  io.aluBSrc      := DontCare
+  io.aluBSrc      := decodeResult(ALUBSrcControlField)
   io.aluCtr       := decodeResult(ALUControlField)
   io.brType       := decodeResult(BrControlField)
-  // io.wbSrc        := decodeResult(WBSrcControlField)
-  io.wbSrc        := DontCare
+  io.wbSrc        := decodeResult(WBSrcControlField)
   io.memWe        := decodeResult(MemWenControlField)
   io.memOp        := decodeResult(MemOpControlField)
 }
