@@ -326,7 +326,7 @@ class Control extends Module {
   import Instruction.InstricitonMap._
 
   val possiblePatterns = Seq(
-    ADD
+    ADD, ADDI
     // LUI, AUIPC, JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU,
     // LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTIU,
     // XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
