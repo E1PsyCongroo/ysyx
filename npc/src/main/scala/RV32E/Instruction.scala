@@ -27,7 +27,7 @@ object ALUOp {
 }
 
 object BrType extends ChiselEnum {
-  val brJr, brJ, brEq, brNe, brLt, brGe, brNone = Value
+  val brNone, brJr, brJ, brEq, brNe, brLt, brGe = Value
 }
 
 object MemOp {
@@ -37,4 +37,12 @@ object MemOp {
   val memW = BitPat("b010")
   val memBu = BitPat("b100")
   val memHu = BitPat("b101")
+}
+
+object ALUASrcFrom extends ChiselEnum {
+  val fromRs1, fromPc = Value
+}
+
+object ALUBSrcFrom extends ChiselEnum {
+  val fromRs2, fromImm, from4 = Value
 }

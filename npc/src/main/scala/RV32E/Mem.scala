@@ -57,8 +57,8 @@ class MemControl extends Module {
     def bitPat: BitPat = memOp
   }
 
-  object MemControlFeild extends DecodeField[MemControlPattern, UInt] {
-    def name = "Mem Control"
+  object WmaskFeild extends DecodeField[MemControlPattern, UInt] {
+    def name = "Wmask Feild"
     def chiselType: UInt = UInt(4.W)
     def genTable(op: MemControlPattern): BitPat = {
       op.bitPat(1, 0).rawString match {
@@ -76,8 +76,8 @@ class MemControl extends Module {
     MemControlPattern(memHu),
     MemControlPattern(memBu),
   )
-  val decodeTable = new DecodeTable(possiblePatterns, Seq(MemControlFeild))
-  val mask = decodeTable.decode(io.memOp)(MemControlFeild)
+  val decodeTable = new DecodeTable(possiblePatterns, Seq(WmaskFeild))
+  val mask = decodeTable.decode(io.memOp)(WmaskFeild)
 
   wmask := mask << io.waddr(1, 0)
 

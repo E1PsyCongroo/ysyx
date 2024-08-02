@@ -6,6 +6,7 @@ import chisel3.util._
 import chisel3.util.experimental.decode._
 import chisel3.experimental.BundleLiterals._
 import _root_.RV32E.ALUOp.aluSltu
+import chisel3.internal.sourceinfo.InstTransform
 
 case class ControlPattern(
   val funct7: BitPat = BitPat.dontCare(7),
@@ -138,45 +139,46 @@ object ALUControlFeild extends DecodeField[ControlPattern, UInt] {
   def genTable(op: ControlPattern): BitPat = {
     import Instruction.InstricitonMap._
     import InstructionType._
+    import ALUOp._
     val dontCare = BitPat.dontCare(ALUOp.getWidth)
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => instrType match {
         case RType => op.funct3 match {
           case ADD.funct3 => op.funct7 match {
-            case ADD.funct7 => ALUOp.aluAdd
-            case SUB.funct7 => ALUOp.aluSub
+            case ADD.funct7 => aluAdd
+            case SUB.funct7 => aluSub
             case _ => dontCare
           }
-          case SLL.funct3 => ALUOp.aluSll
-          case SLT.funct3 => ALUOp.aluSlt
-          case SLTU.funct3 => ALUOp.aluSltu
-          case XOR.funct3 => ALUOp.aluXor
-          case SRL.funct3 => ALUOp.aluSrl
-          case SRA.funct3 => ALUOp.aluSra
-          case OR.funct3 => ALUOp.aluOr
-          case AND.funct3 => ALUOp.aluAnd
+          case SLL.funct3 => aluSll
+          case SLT.funct3 => aluSlt
+          case SLTU.funct3 => aluSltu
+          case XOR.funct3 => aluXor
+          case SRL.funct3 => aluSrl
+          case SRA.funct3 => aluSra
+          case OR.funct3 => aluOr
+          case AND.funct3 => aluAnd
           case _ => dontCare
         }
         case IType => op.funct3 match {
-          case ADDI.funct3 => ALUOp.aluAdd
-          case SLLI.funct3 => ALUOp.aluSll
-          case SLTI.funct3 => ALUOp.aluSlt
-          case SLTUI.funct3 => ALUOp.aluSltu
-          case XORI.funct3 => ALUOp.aluXor
-          case SRLI.funct3 => ALUOp.aluSrl
-          case SRAI.funct3 => ALUOp.aluSra
-          case ORI.funct3 => ALUOp.aluOr
-          case ANDI.funct3 => ALUOp.aluAnd
+          case ADDI.funct3 => aluAdd
+          case SLLI.funct3 => aluSll
+          case SLTI.funct3 => aluSlt
+          case SLTUI.funct3 => aluSltu
+          case XORI.funct3 => aluXor
+          case SRLI.funct3 => aluSrl
+          case SRAI.funct3 => aluSra
+          case ORI.funct3 => aluOr
+          case ANDI.funct3 => aluAnd
           case _ => dontCare
         }
-        case SType => ALUOp.aluAdd
-        case BType => ALUOp.aluSub
+        case SType => aluAdd
+        case BType => aluSub
         case UType => op.opcode match {
-          case LUI.opcode => ALUOp.aluBout
-          case AUIPC.opcode => ALUOp.aluAdd
+          case LUI.opcode => aluBout
+          case AUIPC.opcode => aluAdd
           case _ => dontCare
         }
-        case JType => ALUOp.aluAdd
+        case JType => aluAdd
       }
       case None => dontCare
     }
@@ -187,9 +189,9 @@ object BrControlFeild extends DecodeField[ControlPattern, UInt] {
   def name: String = "Branch Control Feild"
   def chiselType: UInt = UInt(BrType.getWidth.W)
   def genTable(op: ControlPattern): BitPat = {
-    val dontCare = BitPat.dontCare(BrType.getWidth)
     import Instruction.InstricitonMap._
     import BrType._
+    val dontCare = BitPat(brNone.asUInt)
     Instruction.instrTypeMap.get(op.opcode) match {
       case Some(instrType) => instrType match {
         case InstructionType.JType => op.opcode match {
@@ -209,4 +211,70 @@ object BrControlFeild extends DecodeField[ControlPattern, UInt] {
       case None => dontCare
     }
   }
+}
+
+object MemOpControlFeild extends DecodeField[ControlPattern, UInt] {
+  def name: String = "MemOp Control Feild"
+  def chiselType: UInt = UInt(MemOp.getWidth.W)
+  def genTable(op: ControlPattern): BitPat = {
+    import Instruction.InstricitonMap._
+    import MemOp._
+    val dontCare = BitPat.dontCare(MemOp.getWidth)
+    Instruction.instrTypeMap.get(op.opcode) match {
+      case Some(instrType) => instrType match {
+        case InstructionType.IType => op.funct3 match {
+          case LB.funct3 => memB
+          case LH.funct3 => memH
+          case LW.funct3 => memW
+          case LBU.funct3 => memB
+          case LHU.funct3 => memB
+          case _ => dontCare
+        }
+        case InstructionType.SType => op.funct3 match {
+          case SB.funct3 => memB
+          case SH.funct3 => memH
+          case SW.funct3 => memW
+          case _ => dontCare
+        }
+        case _ => dontCare
+      }
+      case None => dontCare
+    }
+  }
+}
+
+object MemWenControlFeild extends DecodeField[ControlPattern, Bool] {
+  def name: String = "MemWen Control Feild"
+  def chiselType: Bool = Bool()
+  def genTable(op: ControlPattern): BitPat = {
+    val dontCare = BitPat.dontCare(1)
+    Instruction.instrTypeMap.get(op.opcode) match {
+      case Some(instrType) => instrType match {
+        case InstructionType.SType => BitPat.Y(1)
+        case _ => BitPat.N(1)
+      }
+      case None => dontCare
+    }
+  }
+}
+
+object ALUAsrcControlFeild extends DecodeField[ControlPattern, UInt] {
+  def name: String = "ALU Asrc Control Feild"
+  def chiselType: UInt = UInt(ALUAsrcFrom.getWidth.W)
+  def genTable(op: ControlPattern): BitPat = {
+    val dontCare = BitPat.dontCare(ALUASrcFrom.getWidth)
+    op.opcode match {
+      case Instruction.InstricitonMap.AUIPC => BitPat(ALUASrcFrom.fromPc.asUInt)
+      case _ => BitPat(ALUASrcFrom.fromRs1.asUInt)
+    }
+  }
+}
+
+object ALUBsrcControlFeild extends DecodeField[ControlPattern, UInt] {
+ def name: String = "ALU Bsrc Control Feild"
+ def chiselType: UInt = UInt(ALUBSrcFrom.getWidth.W)
+ def genTable(op: ControlPattern): BitPat = {
+  val dontCare = BitPat.dontCare(ALUBSrcFrom.getWidth)
+  dontCare
+ }
 }

@@ -21,7 +21,6 @@ class BrCond extends Module {
   val isLt = io.less
   val isGe = !io.less
 
-  io.PCBSrc := Mux(io.brType === brJr.litValue.U, true.B, false.B)
   io.PCASrc := MuxLookup(io.brType, false.B)(Seq(
     brJ.asUInt -> true.B,
     brEq.asUInt -> isEq,
@@ -29,4 +28,5 @@ class BrCond extends Module {
     brLt.asUInt -> isLt,
     brGe.asUInt -> isGe,
   ))
+  io.PCBSrc := Mux(io.brType === brJr.asUInt, false.B, true.B)
 }
