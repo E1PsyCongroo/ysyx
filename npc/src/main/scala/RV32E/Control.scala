@@ -206,8 +206,8 @@ object MemOpControlField extends DecodeField[ControlPattern, UInt] {
         case LB.funct3 => memB
         case LH.funct3 => memH
         case LW.funct3 => memW
-        case LBU.funct3 => memB
-        case LHU.funct3 => memB
+        case LBU.funct3 => memBu
+        case LHU.funct3 => memHu
         case _ => dc
       }
       case SType => op.funct3 match {
