@@ -5,6 +5,7 @@ OBJ_DIR 												:= $(BUILD_DIR)/obj_dir
 SRC_DIR													:= $(ABS_TOP)/src/main
 VSRC_DIR 												:= $(SRC_DIR)/vsrc
 CSRC_DIR 												:= $(SRC_DIR)/csrc
+RESOURCES_DIR										:= $(SRC_DIR)/resources
 CONSTR_DIR											:= $(SRC_DIR)/constr
 CHISEL_SRC_DIR									:= $(SRC_DIR)/scala
 
@@ -56,7 +57,7 @@ clean:
 $(BUILD_DIR)/$(PRJ)_auto_bind.cpp: $(CONSTR_DIR)/$(PRJ).nxdc
 	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
-$(VSRCS): $(CHISELSRCS)
+$(VSRCS): $(CHISELSRCS) $(RESOURCES_DIR)/*
 	@make verilog
 
 $(BUILD_DIR)/$(PRJ): $(VSRCS) $(BUILD_DIR)/$(PRJ)_auto_bind.cpp $(CSRCS) $(NVBOARD_ARCHIVE)
