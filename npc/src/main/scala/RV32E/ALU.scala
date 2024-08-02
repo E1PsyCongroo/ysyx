@@ -40,6 +40,12 @@ class ALUControl extends Module {
     def bitPat: BitPat = aluCtr3 ## aluCtr2_0
   }
 
+  object ALUControlPattern {
+    def apply(aluCtr: BitPat): ALUControlPattern = {
+      ALUControlPattern(aluCtr3 = aluCtr(3), aluCtr2_0 = aluCtr(2, 0))
+    }
+  }
+
   object ALUControlField extends DecodeField[ALUControlPattern, ALUControlOutput] {
     def name: String = "ALU Control"
     def chiselType: ALUControlOutput = new ALUControlOutput
@@ -58,17 +64,17 @@ class ALUControl extends Module {
   }
 
   val possiblePatterns = Seq(
-    ALUControlPattern(aluCtr3 = BitPat(0.U(1.W)), aluCtr2_0 = BitPat("b000".U(3.W))),
-    ALUControlPattern(aluCtr3 = BitPat(1.U(1.W)), aluCtr2_0 = BitPat("b000".U(3.W))),
-    ALUControlPattern(aluCtr2_0 = BitPat("b001".U(3.W))),
-    ALUControlPattern(aluCtr3 = BitPat(0.U(1.W)), aluCtr2_0 = BitPat("b010".U(3.W))),
-    ALUControlPattern(aluCtr3 = BitPat(1.U(1.W)), aluCtr2_0 = BitPat("b010".U(3.W))),
-    ALUControlPattern(aluCtr2_0 = BitPat("b011".U(3.W))),
-    ALUControlPattern(aluCtr2_0 = BitPat("b100".U(3.W))),
-    ALUControlPattern(aluCtr3 = BitPat(0.U(1.W)), aluCtr2_0 = BitPat("b101".U(3.W))),
-    ALUControlPattern(aluCtr3 = BitPat(1.U(1.W)), aluCtr2_0 = BitPat("b101".U(3.W))),
-    ALUControlPattern(aluCtr2_0 = BitPat("b110".U(3.W))),
-    ALUControlPattern(aluCtr2_0 = BitPat("b111".U(3.W))),
+    ALUControlPattern(ALUOp.aluAdd),
+    ALUControlPattern(ALUOp.aluSub),
+    ALUControlPattern(ALUOp.aluSll),
+    ALUControlPattern(ALUOp.aluSlt),
+    ALUControlPattern(ALUOp.aluSltu),
+    ALUControlPattern(ALUOp.aluBout),
+    ALUControlPattern(ALUOp.aluXor),
+    ALUControlPattern(ALUOp.aluSrl),
+    ALUControlPattern(ALUOp.aluSra),
+    ALUControlPattern(ALUOp.aluOr),
+    ALUControlPattern(ALUOp.aluAnd),
   )
 
   val decodeTable = new DecodeTable(possiblePatterns, Seq(ALUControlField))
