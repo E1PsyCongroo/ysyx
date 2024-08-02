@@ -19,11 +19,11 @@
 #include <cstdint>
 #include <cinttypes>
 #include <cstdbool>
-#include <string.h>
+#include <cstring>
 
 #include <macro.h>
-#include <assert.h>
-#include <stdlib.h>
+#include <cassert>
+#include <cstdlib>
 
 #if CONFIG_MBASE + CONFIG_MSIZE > 0x100000000ul
 #define PMEM64 1
