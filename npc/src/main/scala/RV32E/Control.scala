@@ -334,7 +334,7 @@ class Control extends Module {
   val decodeTable = new DecodeTable(
     possiblePatterns,
     Seq(
-      ImmControlField,
+      // ImmControlField,
       RegWeControlField,
       ALUControlField,
       BrControlField,
@@ -346,7 +346,8 @@ class Control extends Module {
     )
   )
   val decodeResult = decodeTable.decode(io.instr)
-  io.immType      := decodeResult(ImmControlField)
+  // io.immType      := decodeResult(ImmControlField)
+  io.immType := DontCare
   io.regWe        := decodeResult(RegWeControlField)
   io.aluASrc      := decodeResult(ALUASrcControlField)
   io.aluBSrc      := decodeResult(ALUBSrcControlField)
