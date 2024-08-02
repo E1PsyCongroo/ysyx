@@ -11,11 +11,12 @@ case class Instruction(
   val funct3: BitPat = BitPat.dontCare(3),
   val rd: BitPat = BitPat.dontCare(5),
   val opcode: BitPat
-){
+) extends DecodePattern {
   require(
     funct7.getWidth == 7 && rs2.getWidth == 5 && rs1.getWidth == 5 &&
     funct3.getWidth == 3 && rd.getWidth == 5 && opcode.getWidth == 7
   )
+  def bitPat: BitPat = funct7 ## rs2 ## rs1 ## funct3 ## rd ## opcode
 }
 
 object Instruction {
