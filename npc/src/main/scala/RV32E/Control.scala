@@ -211,27 +211,30 @@ object MemOpControlField extends DecodeField[ControlPattern, UInt] {
   import MemOp._
   def name: String = "MemOp Control Field"
   def chiselType: UInt = UInt(MemOp.getWidth.W)
+  // def genTable(op: ControlPattern): BitPat = {
+  //   Instruction.instrTypeMap.get(op.opcode) match {
+  //     case Some(instrType) => instrType match {
+  //       case InstructionType.IType => op.funct3 match {
+  //         case LB.funct3 => memB
+  //         case LH.funct3 => memH
+  //         case LW.funct3 => memW
+  //         case LBU.funct3 => memB
+  //         case LHU.funct3 => memB
+  //         case _ => dc
+  //       }
+  //       case InstructionType.SType => op.funct3 match {
+  //         case SB.funct3 => memB
+  //         case SH.funct3 => memH
+  //         case SW.funct3 => memW
+  //         case _ => dc
+  //       }
+  //       case _ => dc
+  //     }
+  //     case None => dc
+  //   }
+  // }
   def genTable(op: ControlPattern): BitPat = {
-    Instruction.instrTypeMap.get(op.opcode) match {
-      case Some(instrType) => instrType match {
-        case InstructionType.IType => op.funct3 match {
-          case LB.funct3 => memB
-          case LH.funct3 => memH
-          case LW.funct3 => memW
-          case LBU.funct3 => memB
-          case LHU.funct3 => memB
-          case _ => dc
-        }
-        case InstructionType.SType => op.funct3 match {
-          case SB.funct3 => memB
-          case SH.funct3 => memH
-          case SW.funct3 => memW
-          case _ => dc
-        }
-        case _ => dc
-      }
-      case None => dc
-    }
+    op.funct3
   }
 }
 
