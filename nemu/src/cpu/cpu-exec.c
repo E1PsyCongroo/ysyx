@@ -30,6 +30,20 @@ uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 
+#ifdef CONFIG_IRINGBUF
+struct {
+  char buf[CONFIG_IRINGBUF_SIZE][128];
+  int ptr;
+  int capacity;
+} i_ring_buf = {};
+
+static void print_i_ring_buf() {
+  for (int i = 0; i < i_ring_buf.capacity; i++) {
+    printf("%6s%s\n", i_ring_buf.ptr - 1 == i ? "  --> " : "", i_ring_buf.buf[i]);
+  }
+}
+#endif
+
 void device_update();
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
@@ -70,6 +84,11 @@ static void exec_once(Decode *s, vaddr_t pc) {
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
       MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst.val, ilen);
+#ifdef CONFIG_IRINGBUF
+  if (i_ring_buf.capacity < CONFIG_IRINGBUF_SIZE) { i_ring_buf.capacity++; }
+  strcpy(i_ring_buf.buf[i_ring_buf.ptr], s->logbuf);
+  i_ring_buf.ptr = (i_ring_buf.ptr + 1) % CONFIG_IRINGBUF_SIZE;
+#endif
 #endif
 }
 
@@ -96,6 +115,7 @@ static void statistic() {
 void assert_fail_msg() {
   isa_reg_display();
   statistic();
+  IFDEF(CONFIG_IRINGBUF, print_i_ring_buf());
 }
 
 /* Simulate how the CPU works. */
