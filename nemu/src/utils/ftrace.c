@@ -80,7 +80,7 @@ char* trace_func(word_t dnpc) {
 }
 
 void ftrace(uint32_t instruction, word_t pc, word_t dnpc) {
-  static char *current_func = NULL;
+  static char *current_func = "_start";
   static int num_space = 0;
   char *trace_name = trace_func(dnpc);
   uint32_t opcode = BITS(instruction, 6, 0);
