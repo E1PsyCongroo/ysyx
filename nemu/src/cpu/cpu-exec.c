@@ -50,7 +50,16 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
   if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
 #endif
+#ifdef CONFIG_IRINGBUF
+  if (i_ring_buf.capacity < CONFIG_IRINGBUF_SIZE) { i_ring_buf.capacity++; }
+  strcpy(i_ring_buf.buf[i_ring_buf.ptr], _this->logbuf);
+  i_ring_buf.ptr = (i_ring_buf.ptr + 1) % CONFIG_IRINGBUF_SIZE;
+#endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
+#ifdef CONFIG_FTRACE
+  void ftrace(uint32_t instruction, word_t pc, word_t dnpc);
+  ftrace(_this->isa.inst.val, _this->pc, dnpc);
+#endif
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 #ifdef CONFIG_WATCHPOINT
   bool scan_wp(void);
@@ -84,11 +93,6 @@ static void exec_once(Decode *s, vaddr_t pc) {
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
       MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst.val, ilen);
-#ifdef CONFIG_IRINGBUF
-  if (i_ring_buf.capacity < CONFIG_IRINGBUF_SIZE) { i_ring_buf.capacity++; }
-  strcpy(i_ring_buf.buf[i_ring_buf.ptr], s->logbuf);
-  i_ring_buf.ptr = (i_ring_buf.ptr + 1) % CONFIG_IRINGBUF_SIZE;
-#endif
 #endif
 }
 
