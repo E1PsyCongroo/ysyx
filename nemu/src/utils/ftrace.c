@@ -66,6 +66,7 @@ void init_ftrace(const char* elf_file) {
       tp++;
     }
   }
+  Log("The elf is %s, function table size = %zd", elf_file, func_table_size);
 }
 
 char* trace_func(word_t dnpc) {
