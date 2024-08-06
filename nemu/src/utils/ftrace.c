@@ -1,5 +1,6 @@
 #include <elf.h>
 #include <common.h>
+#include <memory/paddr.h>
 
 typedef struct {
   char *fname;
@@ -10,6 +11,10 @@ typedef struct {
 static FunctionTable *func_table = NULL;
 static size_t func_table_size = 0;
 static char *elf_str = NULL;
+static char *current_func = NULL;
+
+char* trace_func(word_t dnpc);
+void ftrace(uint32_t instruction, word_t pc, word_t dnpc);
 
 void init_ftrace(const char* elf_file) {
   if (elf_file == NULL) { return; }
@@ -66,6 +71,7 @@ void init_ftrace(const char* elf_file) {
       tp++;
     }
   }
+  current_func = trace_func(RESET_VECTOR);
   Log("The elf is %s, function table size = %zd", elf_file, func_table_size);
 }
 
@@ -80,7 +86,6 @@ char* trace_func(word_t dnpc) {
 }
 
 void ftrace(uint32_t instruction, word_t pc, word_t dnpc) {
-  static char *current_func = "_start";
   static int num_space = 0;
   char *trace_name = trace_func(dnpc);
   uint32_t opcode = BITS(instruction, 6, 0);
