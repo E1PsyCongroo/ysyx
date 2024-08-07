@@ -46,11 +46,10 @@ void rvcpu_init(void){
   contextp->traceEverOn(true);
   rvcpu.trace(tfp, 99);
   tfp->open("./wave/rvcpu.vcd");
-  rvcpu.clock = 0;
-  rvcpu_reset(10);
+  rvcpu.clock = 1;
+  rvcpu_reset(10, 0);
   for (int i = 0; i < 10; i++) {
-    printf("pc: %#x, next_pc: %#x\n",rvcpu.rootp->RVCPU__DOT__PC, rvcpu.rootp->RVCPU__DOT___PCnext_T);
-    rvcpu_single_cycle();
+    printf("pc:%#x\n",rvcpu.io_pc);
   }
 }
 
@@ -65,7 +64,7 @@ void rvcpu_single_cycle(void) {
   contextp->timeInc(1); tfp->dump(contextp->time());
 }
 
-void rvcpu_reset(int n) {
+void rvcpu_reset(int n, uint32_t init_inst) {
   rvcpu.reset = 1;
   while (n -- > 0) rvcpu_single_cycle();
   rvcpu.reset = 0;
