@@ -26,7 +26,7 @@ class RVCPU(
     val pc = Output(UInt(xlen.W))
   })
   val PCnext      = Wire(UInt(xlen.W))
-  val PC          = RegNext(PCnext, PCReset.U(xlen.W))
+  val PC          = RegNext(PCnext)
   val Mem         = Module(new MemControl)
   val RegFile     = Module(new RegFile(xlen, if (extentionE) 4 else 5))
   val ImmGen      = Module(new ImmGen(xlen))
