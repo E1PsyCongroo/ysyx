@@ -40,8 +40,8 @@ void pmem_write(paddr_t waddr, word_t wdata, char wmask) {
 
 void rvcpu_init(void){
   Verilated::traceEverOn(true);
-  rvcpu = new VRVCPU;
   contextp = new VerilatedContext;
+  rvcpu = new VRVCPU {contextp};
   tfp = new VerilatedVcdC;
   contextp->traceEverOn(true);
   rvcpu->trace(tfp, 5);
