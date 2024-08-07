@@ -13,7 +13,7 @@
 # See the Mulan PSL v2 for more details.
 #**************************************************************************************/
 
-SRCS-y += src/main/csrc/nemu-main.c
+SRCS-y += src/main/csrc/npc-main.c
 DIRS-y += src/main/csrc/cpu src/main/csrc/monitor src/main/csrc/utils
 DIRS-$(CONFIG_MODE_SYSTEM) += src/main/csrc/memory
 DIRS-BLACKLIST-$(CONFIG_TARGET_AM) += src/main/csrc/monitor/sdb

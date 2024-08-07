@@ -18,7 +18,9 @@ RESOURCES_DIR										:= $(SRC_DIR)/resources
 CONSTR_DIR											:= $(SRC_DIR)/constr
 CHISEL_SRC_DIR									:= $(SRC_DIR)/scala
 
-INC_PATH 												:= $(WORK_DIR)/include $(INC_PATH)
+VERILATOR_ROOT									:= /home/focused_xy/.conda/envs/ysyx/share/verilator
+VERILATOR_INC_PATH 							:= $(VERILATOR_ROOT)/include $(VERILATOR_ROOT)/include/vltstd
+INC_PATH 												:= $(WORK_DIR)/include $(VERILATOR_INC_PATH) $(OBJ_DIR) $(INC_PATH)
 BINARY   												:= $(BUILD_DIR)/$(NAME)$(SO)
 
 
@@ -46,13 +48,13 @@ VERILATOR 											:= verilator
 VERILATOR_CFLAGS 								?= --MMD --build --cc -O3 --x-assign fast --x-initial fast --noassert --trace
 
 # Verilating
-$(BUILD_DIR)/.stamp.verilog: $(CHISELSRCS)
+.stamp.verilog: $(CHISELSRCS)
 	$(call git_commit, "generate verilog")
 	@echo + VERILOG $(VSRC_DIR)
 	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR)
 	@touch $@
 
-$(BUILD_DIR)/lib$(PRJ).a: $(BUILD_DIR)/.stamp.verilator $(RESOURCES)
+$(OBJ_DIR)/lib$(PRJ).a: .stamp.verilog $(RESOURCES)
 	@echo + VERILATOR $(RESOURCES) $(VSRCS)
 	@mkdir -p $(OBJ_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
@@ -66,8 +68,8 @@ $(BUILD_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
 	@python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 CXXSRC += $(BUILD_DIR)/$(PRJ)_auto_bind.cc
-ARCHIVES += $(BUILD_DIR)/lib$(PRJ).a $(NVBOARD_ARCHIVE)
-OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
+ARCHIVES += $(OBJ_DIR)/lib$(PRJ).a $(NVBOARD_ARCHIVE)
+OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o) $(CXXSRC:%.cpp=$(OBJ_DIR)/%.o)
 
 # Compilation patterns
 $(OBJ_DIR)/%.o: %.c
@@ -82,6 +84,12 @@ $(OBJ_DIR)/%.o: %.cc
 	@$(CXX) $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
 	$(call call_fixdep, $(@:.o=.d), $@)
 
+$(OBJ_DIR)/%.o: %.cpp
+	@echo + CXX $<
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
+	$(call call_fixdep, $(@:.o=.d), $@)
+
 # Depencies
 -include $(OBJS:.o=.d)
 
@@ -91,13 +99,13 @@ $(OBJ_DIR)/%.o: %.cc
 
 app: $(BINARY)
 
-$(BINARY):: $(OBJS) $(ARCHIVES)
+$(BINARY):: $(ARCHIVES) $(OBJS)
 	@echo + LD $@
 	@$(LD) -o $@ $(OBJS) $(LDFLAGS) $(ARCHIVES) $(LIBS)
 
-verilog: $(BUILD_DIR)/.stamp.verilog
+verilog: .stamp.verilog
 
-verilator: $(BUILD_DIR)/lib$(PRJ).a
+verilator: $(OBJ_DIR)/lib$(PRJ).a
 
 clean:
 	-rm -rf $(BUILD_DIR)

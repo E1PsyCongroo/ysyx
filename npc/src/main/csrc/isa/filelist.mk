@@ -14,4 +14,4 @@
 #**************************************************************************************/
 
 INC_PATH += $(NPC_HOME)/src/main/csrc/isa/$(GUEST_ISA)/include
-DIRS-y += src/main/csrc/isa/$(GUEST_ISA)
+DIRS-y += src/main/csrc/isa/$(GUEST_ISA)-npc

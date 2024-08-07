@@ -1,18 +1,3 @@
-/***************************************************************************************
-* Copyright (c) 2014-2022 Zihao Yu, Nanjing University
-*
-* NEMU is licensed under Mulan PSL v2.
-* You can use this software according to the terms and conditions of the Mulan PSL v2.
-* You may obtain a copy of Mulan PSL v2 at:
-*          http://license.coscl.org.cn/MulanPSL2
-*
-* THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
-* EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
-* MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-*
-* See the Mulan PSL v2 for more details.
-***************************************************************************************/
-
 #include <isa.h>
 #include <cpu/cpu.h>
 #include <readline/readline.h>
@@ -33,7 +18,7 @@ static char* rl_gets() {
     line_read = NULL;
   }
 
-  line_read = readline("(nemu) ");
+  line_read = readline("(npc) ");
 
   if (line_read && *line_read) {
     add_history(line_read);
@@ -60,7 +45,7 @@ static struct {
 } cmd_table [] = {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
-  { "q", "Exit NEMU", cmd_q },
+  { "q", "Exit NPC", cmd_q },
 
   /* TODO: Add more commands */
   { "si", "Lets the program pause after executing N instructions using single step execution, When N is not given, the default is 1", cmd_si },
@@ -104,7 +89,7 @@ static int cmd_c(char *args) {
 }
 
 static int cmd_q(char *args) {
-  nemu_state.state = NEMU_QUIT;
+  npc_state.state = NPC_QUIT;
   return -1;
 }
 
