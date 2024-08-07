@@ -48,7 +48,7 @@ void rvcpu_init(void){
   rvcpu = new VRVCPU {contextp};
   tfp = new VerilatedVcdC;
   contextp->traceEverOn(true);
-  rvcpu->trace(tfp, 99);
+  rvcpu->trace(tfp, 5);
   tfp->open("./wave/rvcpu.vcd");
   rvcpu->clock = 0;
 
@@ -81,19 +81,19 @@ void rvcpu_exit(void){
 
 void rvcpu_single_cycle(void) {
   /* time up */
-  rvcpu->io_inst = vaddr_ifetch(rvcpu->io_pc, 4);
-  Log("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->io_pc, rvcpu->io_inst);
   rvcpu->clock = 1; rvcpu->eval();
-  Log("pc: " FMT_WORD ", npc: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->rootp->RVCPU__DOT___PCnext_T);
+  rvcpu->io_inst = vaddr_ifetch(rvcpu->io_pc, 4);
+  printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->io_pc, rvcpu->io_inst);
   contextp->timeInc(1); tfp->dump(contextp->time());
   /* time down */
   rvcpu->clock = 0;
   rvcpu->eval();
+  printf("pc: " FMT_WORD ", npc: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->rootp->RVCPU__DOT___PCnext_T);
   contextp->timeInc(1); tfp->dump(contextp->time());
 }
 
 void rvcpu_reset(int n) {
-  rvcpu->reset = 1; rvcpu->eval();
+  rvcpu->reset = 1;
   while (n -- > 0) rvcpu_single_cycle();
   rvcpu->reset = 0;
 }
