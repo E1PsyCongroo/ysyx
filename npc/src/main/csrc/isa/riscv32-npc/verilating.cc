@@ -44,13 +44,16 @@ void rvcpu_init(void){
   rvcpu = new VRVCPU {contextp};
   tfp = new VerilatedVcdC;
   contextp->traceEverOn(true);
-  rvcpu->trace(tfp, 0);
+  rvcpu->trace(tfp, 99);
   tfp->open("./wave/rvcpu.vcd");
   rvcpu->clock = 0;
 }
 
 void rvcpu_exit(void){
   tfp->close();
+  delete rvcpu;
+  delete contextp;
+  delete tfp;
 }
 
 void rvcpu_single_cycle(void) {
