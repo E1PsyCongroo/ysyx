@@ -16,12 +16,11 @@ class MemIO extends Bundle {
   val wmask = Input(UInt(4.W))
 }
 
-class Mem extends BlackBox with HasBlackBoxResource {
+class Mem extends BlackBox {
   val io = IO(new MemIO{
     val clock = Input(Clock())
     val reset = Input(Reset())
   } )
-  addResource("/Mem.sv")
 }
 
 class MemControlIO extends Bundle {

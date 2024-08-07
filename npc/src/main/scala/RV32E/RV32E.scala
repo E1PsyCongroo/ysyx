@@ -11,9 +11,8 @@ class EndControlIO extends Bundle {
   val reset = Input(Reset())
   val isEnd = Input(Bool())
 }
-class EndControl extends BlackBox with HasBlackBoxResource {
+class EndControl extends BlackBox {
   val io = IO(new EndControlIO)
-  addResource("/EndControl.sv")
 }
 
 class RVCPU(
@@ -91,7 +90,7 @@ class RVCPU(
   /* Write Back */
   val writeToReg = MuxLookup(Control.io.wbSrc, ALU.io.aluOut)(Seq(
     WBSrcFrom.fromALU.asUInt -> ALU.io.aluOut,
-    WBSrcFrom.fromMem.asUInt -> Mem.io.raddr,
+    WBSrcFrom.fromMem.asUInt -> Mem.io.rdata,
   ))
   RegFile.io.we       := Control.io.regWe
   RegFile.io.wd       := writeToReg
