@@ -55,11 +55,10 @@ VERILATOR_CFLAGS 								?= --MMD --build --cc -O3 --x-assign fast --x-initial f
 	@touch $@
 
 $(OBJ_DIR)/lib$(PRJ).a: .stamp.verilog $(RESOURCES)
-	@echo + VERILATOR $(RESOURCES) $(VSRCS) $(VSRC_DIR)/verilating.cc
+	@echo + VERILATOR $(RESOURCES) $(VSRCS)
 	@mkdir -p $(OBJ_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
-		--top-module $(PRJ) $(RESOURCES) $(VSRCS) $(VSRC_DIR)/verilating.cc \
-		$(addprefix -CFLAGS , $(INCLUDES)) $(addprefix -CFLAGS , $(CFLAGS)) \
+		--top-module $(PRJ) $(RESOURCES) $(VSRCS) \
 		--lib-create $(PRJ) --Mdir $(OBJ_DIR)
 
 # NVBOARD
