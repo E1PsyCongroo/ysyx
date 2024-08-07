@@ -46,7 +46,6 @@ LDFLAGS 												:= -O2 $(LDFLAGS)
 # Verilator flags
 VERILATOR 											:= verilator
 VERILATOR_CFLAGS 								?= --MMD --build --cc -O3 --x-assign fast --x-initial fast --noassert --trace
-LIBS														+= -lverilated -lverilated_vcd_c
 
 # Verilating
 .stamp.verilog: $(CHISELSRCS)
@@ -56,10 +55,11 @@ LIBS														+= -lverilated -lverilated_vcd_c
 	@touch $@
 
 $(OBJ_DIR)/lib$(PRJ).a: .stamp.verilog $(RESOURCES)
-	@echo + VERILATOR $(RESOURCES) $(VSRCS)
+	@echo + VERILATOR $(RESOURCES) $(VSRCS) $(VSRC_DIR)/verilating.cc
 	@mkdir -p $(OBJ_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
-		--top-module $(PRJ) $(RESOURCES) $(VSRCS) \
+		--top-module $(PRJ) $(RESOURCES) $(VSRCS) $(VSRC_DIR)/verilating.cc \
+		$(addprefix -CFLAGS , $(INCLUDES)) $(addprefix -CFLAGS , $(CFLAGS)) \
 		--lib-create $(PRJ) --Mdir $(OBJ_DIR)
 
 # NVBOARD

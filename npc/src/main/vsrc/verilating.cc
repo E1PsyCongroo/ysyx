@@ -7,8 +7,6 @@ extern "C" {
 #include <memory/paddr.h>
 #include <memory/vaddr.h>
 #include <cpu/cpu.h>
-#include "local-include/reg.h"
-#include "local-include/verilating.h"
 }
 
 extern "C"{
@@ -71,22 +69,22 @@ void rvcpu_reset(int n) {
 }
 
 void rvcpu_to_cpu(void) {
-  gpr(0) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_0;
-  gpr(1) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_1;
-  gpr(2) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_2;
-  gpr(3) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_3;
-  gpr(4) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_4;
-  gpr(5) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_5;
-  gpr(6) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_6;
-  gpr(7) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_7;
-  gpr(8) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_8;
-  gpr(9) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_9;
-  gpr(10) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_10;
-  gpr(11) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_11;
-  gpr(12) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_12;
-  gpr(13) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_13;
-  gpr(14) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_14;
-  gpr(15) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_15;
+  cpu.gpr[0] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_0;
+  cpu.gpr[1] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_1;
+  cpu.gpr[2] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_2;
+  cpu.gpr[3] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_3;
+  cpu.gpr[4] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_4;
+  cpu.gpr[5] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_5;
+  cpu.gpr[6] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_6;
+  cpu.gpr[7] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_7;
+  cpu.gpr[8] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_8;
+  cpu.gpr[9] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_9;
+  cpu.gpr[10] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_10;
+  cpu.gpr[11] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_11;
+  cpu.gpr[12] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_12;
+  cpu.gpr[13] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_13;
+  cpu.gpr[14] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_14;
+  cpu.gpr[15] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_15;
   cpu.pc = rvcpu->io_pc;
 }
 
