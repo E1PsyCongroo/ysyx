@@ -18,7 +18,9 @@ RESOURCES_DIR										:= $(SRC_DIR)/resources
 CONSTR_DIR											:= $(SRC_DIR)/constr
 CHISEL_SRC_DIR									:= $(SRC_DIR)/scala
 
-INC_PATH 												:= $(WORK_DIR)/include /home/focused_xy/.conda/envs/ysyx/share/verilator/include $(OBJ_DIR) $(INC_PATH)
+VERILATOR_ROOT									:= /home/focused_xy/.conda/envs/ysyx/share/verilator/
+VERILATOR_INC_PATH 							:= $(VERILATOR_ROOT)/include $(VERILATOR_ROOT)/include/vltstd
+INC_PATH 												:= $(WORK_DIR)/include $(VERILATOR_INC_PATH) $(OBJ_DIR) $(INC_PATH)
 BINARY   												:= $(BUILD_DIR)/$(NAME)$(SO)
 
 
@@ -58,7 +60,7 @@ $(BUILD_DIR)/lib$(PRJ).a: $(BUILD_DIR)/.stamp.verilog $(RESOURCES)
 	@mkdir -p $(OBJ_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(PRJ) $(RESOURCES) $(VSRCS) \
-		--Mdir $(OBJ_DIR)
+		--lib-create $(PRJ) --Mdir $(OBJ_DIR)
 
 # NVBOARD
 $(BUILD_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
@@ -67,7 +69,7 @@ $(BUILD_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
 	@python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 CXXSRC += $(BUILD_DIR)/$(PRJ)_auto_bind.cc
-ARCHIVES += $(BUILD_DIR)/lib$(PRJ).a $(NVBOARD_ARCHIVE)
+ARCHIVES += $(OBJ_DIR)/lib$(PRJ).a $(NVBOARD_ARCHIVE)
 OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
 
 # Compilation patterns
