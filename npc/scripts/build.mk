@@ -55,7 +55,7 @@ $(BUILD_DIR)/.stamp.verilog: $(CHISELSRCS)
 	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR)
 	@touch $@
 
-$(BUILD_DIR)/lib$(PRJ).a: $(BUILD_DIR)/.stamp.verilog $(RESOURCES)
+$(OBJ_DIR)/lib$(PRJ).a: $(BUILD_DIR)/.stamp.verilog $(RESOURCES)
 	@echo + VERILATOR $(RESOURCES) $(VSRCS)
 	@mkdir -p $(OBJ_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
