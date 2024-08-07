@@ -48,14 +48,13 @@ VERILATOR 											:= verilator
 VERILATOR_CFLAGS 								?= --MMD --build --cc -O3 --x-assign fast --x-initial fast --noassert --trace
 
 # Verilating
-$(BUILD_DIR)/.stamp.verilog: $(CHISELSRCS)
+.stamp.verilog: $(CHISELSRCS)
 	$(call git_commit, "generate verilog")
 	@echo + VERILOG $(VSRC_DIR)
-	@mkdir -p $(BUILD_DIR)
 	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR)
 	@touch $@
 
-$(OBJ_DIR)/lib$(PRJ).a: $(BUILD_DIR)/.stamp.verilog $(RESOURCES)
+$(OBJ_DIR)/lib$(PRJ).a: .stamp.verilog $(RESOURCES)
 	@echo + VERILATOR $(RESOURCES) $(VSRCS)
 	@mkdir -p $(OBJ_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
@@ -98,7 +97,7 @@ $(BINARY):: $(ARCHIVES) $(OBJS)
 	@echo + LD $@
 	@$(LD) -o $@ $(OBJS) $(LDFLAGS) $(ARCHIVES) $(LIBS)
 
-verilog: $(BUILD_DIR)/.stamp.verilog
+verilog: .stamp.verilog
 
 verilator: $(BUILD_DIR)/lib$(PRJ).a
 

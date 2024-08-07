@@ -53,4 +53,4 @@ $(clean-tools):
 clean-tools: $(clean-tools)
 clean-all: clean distclean clean-tools
 
-.PHONY: run gdb run-env clean-tools clean-all $(clean-tools) test help reformat checkformat
+.PHONY: run gdb run-env clean-tools clean-all $(clean-tools) test mill-help reformat checkformat
