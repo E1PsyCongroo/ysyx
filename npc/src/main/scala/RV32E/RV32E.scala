@@ -107,7 +107,7 @@ class RVCPU(
     val pc = Output(UInt(xlen.W))
   })
   val PCnext      = Wire(UInt(xlen.W))
-  val PC          = RegNext(PCnext, PCReset.U(xlen.W))
+  val PC          = RegNext(PCnext)
   PCnext          := Mux(reset.asBool, PCReset.U, PC + 4.U);
   io.pc           := PCnext
 }
