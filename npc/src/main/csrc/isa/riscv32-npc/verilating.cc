@@ -37,7 +37,6 @@ void pmem_write(paddr_t waddr, word_t wdata, char wmask) {
   paddr_write(waddr & ~0x3u, 4, wdata & bit_mask);
 }
 
-
 void rvcpu_init(void){
   Verilated::traceEverOn(true);
   contextp = new VerilatedContext;
