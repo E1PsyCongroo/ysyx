@@ -16,5 +16,7 @@ int main(int argc, char *argv[]) {
   /* Start engine. */
   engine_start();
 
+  void rvcpu_exit(void);
+  rvcpu_exit();
   return is_exit_status_bad();
 }
