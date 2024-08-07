@@ -5,6 +5,7 @@
 extern "C" {
 #include <isa.h>
 #include <memory/paddr.h>
+#include <memory/vaddr.h>
 #include <cpu/cpu.h>
 #include "local-include/reg.h"
 #include "local-include/verilating.h"
@@ -46,12 +47,7 @@ void rvcpu_init(void){
   contextp->traceEverOn(true);
   rvcpu.trace(tfp, 99);
   tfp->open("./wave/rvcpu.vcd");
-  rvcpu.clock = 1;
-  rvcpu_reset(10, 0);
-  for (int i = 0; i < 10; i++) {
-    printf("pc:%#x, %#x, %#x\n",rvcpu.io_pc, rvcpu.rootp->RVCPU__DOT__PC, rvcpu.rootp->RVCPU__DOT___PCnext_T);
-    rvcpu_single_cycle();
-  }
+  rvcpu.clock = 0;
 }
 
 void rvcpu_exit(void){
@@ -59,13 +55,15 @@ void rvcpu_exit(void){
 }
 
 void rvcpu_single_cycle(void) {
-  rvcpu.clock = !rvcpu.clock; rvcpu.eval();
+  rvcpu.io_inst = vaddr_ifetch(rvcpu.io_pc, 4);
+  printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu.io_pc, rvcpu.io_inst);
+  rvcpu.clock = 1; rvcpu.eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
-  rvcpu.clock = !rvcpu.clock; rvcpu.eval();
+  rvcpu.clock = 0; rvcpu.eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
 }
 
-void rvcpu_reset(int n, uint32_t init_inst) {
+void rvcpu_reset(int n) {
   rvcpu.reset = 1;
   while (n -- > 0) rvcpu_single_cycle();
   rvcpu.reset = 0;

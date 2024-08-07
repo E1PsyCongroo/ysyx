@@ -14,7 +14,7 @@ static const uint32_t img [] = {
 
 static void restart() {
   rvcpu_init();
-  rvcpu_reset(10, vaddr_ifetch(RESET_VECTOR, 4));
+  rvcpu_reset(10);
   rvcpu_to_cpu();
 }
 
