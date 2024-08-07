@@ -7,6 +7,7 @@ extern "C" {
 #include <memory/paddr.h>
 #include <cpu/cpu.h>
 #include "local-include/reg.h"
+#include "local-include/verilating.h"
 }
 
 extern "C"{
@@ -46,6 +47,11 @@ void rvcpu_init(void){
   rvcpu.trace(tfp, 99);
   tfp->open("./wave/rvcpu.vcd");
   rvcpu.clock = 0;
+  rvcpu_reset(10);
+  for (int i = 0; i < 10; i++) {
+    rvcpu_single_cycle();
+    printf("pc: %u\n",rvcpu.io_pc);
+  }
 }
 
 void rvcpu_exit(void){
@@ -84,7 +90,6 @@ void rvcpu_to_cpu(void) {
   // gpr(14) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_14;
   // gpr(15) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_15;
   cpu.pc = rvcpu.io_pc;
-  printf("%u", rvcpu.io_pc);
 }
 
 }
