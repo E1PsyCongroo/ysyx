@@ -13,13 +13,13 @@ extern "C" {
 
 extern "C"{
 
-static VRVCPU rvcpu;
-static VerilatedContext* contextp = NULL;
-static VerilatedVcdC* tfp = NULL;
+static VRVCPU* rvcpu = nullptr;
+static VerilatedContext* contextp = nullptr;
+static VerilatedVcdC* tfp = nullptr;
 // void nvboard_bind_all_pins(TOP_NAME* top);
 
 void sim_end() {
-  set_npc_state(NPC_END, rvcpu.io_pc, 0);
+  set_npc_state(NPC_END, rvcpu->io_pc, 0);
 }
 
 word_t pmem_read(paddr_t raddr) {
@@ -42,12 +42,13 @@ void pmem_write(paddr_t waddr, word_t wdata, char wmask) {
 
 void rvcpu_init(void){
   Verilated::traceEverOn(true);
+  rvcpu = new VRVCPU;
   contextp = new VerilatedContext;
   tfp = new VerilatedVcdC;
   contextp->traceEverOn(true);
-  rvcpu.trace(tfp, 99);
+  rvcpu->trace(tfp, 99);
   tfp->open("./wave/rvcpu.vcd");
-  rvcpu.clock = 0;
+  rvcpu->clock = 0;
 }
 
 void rvcpu_exit(void){
@@ -55,38 +56,38 @@ void rvcpu_exit(void){
 }
 
 void rvcpu_single_cycle(void) {
-  rvcpu.io_inst = vaddr_ifetch(rvcpu.io_pc, 4);
-  printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu.io_pc, rvcpu.io_inst);
-  rvcpu.clock = 1; rvcpu.eval();
+  rvcpu->io_inst = vaddr_ifetch(rvcpu->io_pc, 4);
+  printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->io_pc, rvcpu->io_inst);
+  rvcpu->clock = 1; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
-  rvcpu.clock = 0; rvcpu.eval();
+  rvcpu->clock = 0; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
 }
 
 void rvcpu_reset(int n) {
-  rvcpu.reset = 1; rvcpu.eval();
+  rvcpu->reset = 1; rvcpu->eval();
   while (n -- > 0) rvcpu_single_cycle();
-  rvcpu.reset = 0; rvcpu.eval();
+  rvcpu->reset = 0; rvcpu->eval();
 }
 
 void rvcpu_to_cpu(void) {
-  gpr(0) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_0;
-  gpr(1) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_1;
-  gpr(2) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_2;
-  gpr(3) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_3;
-  gpr(4) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_4;
-  gpr(5) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_5;
-  gpr(6) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_6;
-  gpr(7) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_7;
-  gpr(8) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_8;
-  gpr(9) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_9;
-  gpr(10) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_10;
-  gpr(11) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_11;
-  gpr(12) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_12;
-  gpr(13) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_13;
-  gpr(14) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_14;
-  gpr(15) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_15;
-  cpu.pc = rvcpu.io_pc;
+  gpr(0) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_0;
+  gpr(1) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_1;
+  gpr(2) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_2;
+  gpr(3) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_3;
+  gpr(4) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_4;
+  gpr(5) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_5;
+  gpr(6) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_6;
+  gpr(7) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_7;
+  gpr(8) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_8;
+  gpr(9) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_9;
+  gpr(10) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_10;
+  gpr(11) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_11;
+  gpr(12) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_12;
+  gpr(13) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_13;
+  gpr(14) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_14;
+  gpr(15) = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_15;
+  cpu.pc = rvcpu->io_pc;
 }
 
 }
