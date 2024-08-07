@@ -44,7 +44,7 @@ void rvcpu_init(void){
   contextp = new VerilatedContext;
   tfp = new VerilatedVcdC;
   contextp->traceEverOn(true);
-  rvcpu->trace(tfp, 99);
+  rvcpu->trace(tfp, 5);
   tfp->open("./wave/rvcpu.vcd");
   rvcpu->clock = 0;
 }
