@@ -48,7 +48,6 @@ void rvcpu_init(void){
   rvcpu.trace(tfp, 99);
   tfp->open("./wave/rvcpu.vcd");
   rvcpu.clock = 0;
-  rvcpu.rootp->RVCPU__DOT__PC = RESET_VECTOR;
 }
 
 void rvcpu_exit(void){
@@ -56,6 +55,7 @@ void rvcpu_exit(void){
 }
 
 void rvcpu_single_cycle(void) {
+  printf("reset: %d\n", rvcpu.reset);
   printf("pc: " FMT_WORD ", ", rvcpu.io_pc);
   rvcpu.io_inst = vaddr_ifetch(rvcpu.io_pc, 4);
   printf("inst: " FMT_WORD "\n", rvcpu.io_inst);
