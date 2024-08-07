@@ -13,17 +13,23 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
-#include <isa.h>
-#include <cpu/difftest.h>
-#include "../local-include/reg.h"
+#ifndef __ISA_RISCV_H__
+#define __ISA_RISCV_H__
 
-bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
-  bool result = difftest_check_reg("pc", pc, ref_r->pc, cpu.pc);
-  for (int i = 0; i < MUXDEF(CONFIG_RVE, 16, 32) && result; i++) {
-    result = difftest_check_reg(reg_name(i), pc, ref_r->gpr[i], gpr(i));
-  }
-  return result;
-}
+#include <common.h>
 
-void isa_difftest_attach() {
-}
+typedef struct {
+  word_t gpr[MUXDEF(CONFIG_RVE, 16, 32)];
+  vaddr_t pc;
+} MUXDEF(CONFIG_RV64, riscv64_CPU_state, riscv32_CPU_state);
+
+// decode
+typedef struct {
+  union {
+    uint32_t val;
+  } inst;
+} MUXDEF(CONFIG_RV64, riscv64_ISADecodeInfo, riscv32_ISADecodeInfo);
+
+#define isa_mmu_check(vaddr, len, type) (MMU_DIRECT)
+
+#endif
