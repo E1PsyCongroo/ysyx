@@ -11,6 +11,7 @@ PRJ 														:= RVCPU
 WORK_DIR  											:= $(shell pwd)
 BUILD_DIR 											:= $(WORK_DIR)/build
 OBJ_DIR  												:= $(BUILD_DIR)/obj-$(NAME)$(SO)
+VERILATOR_DIR										:= $(OBJ_DIR)/verilator
 SRC_DIR													:= $(WORK_DIR)/src/main
 VSRC_DIR 												:= $(SRC_DIR)/vsrc
 CSRC_DIR 												:= $(SRC_DIR)/csrc
@@ -20,7 +21,7 @@ CHISEL_SRC_DIR									:= $(SRC_DIR)/scala
 
 VERILATOR_ROOT									:= /home/focused_xy/.conda/envs/ysyx/share/verilator
 VERILATOR_INC_PATH 							:= $(VERILATOR_ROOT)/include $(VERILATOR_ROOT)/include/vltstd
-INC_PATH 												:= $(WORK_DIR)/include $(VERILATOR_INC_PATH) $(OBJ_DIR) $(INC_PATH)
+INC_PATH 												:= $(WORK_DIR)/include $(VERILATOR_INC_PATH) $(VERILATOR_DIR) $(INC_PATH)
 BINARY   												:= $(BUILD_DIR)/$(NAME)$(SO)
 
 
@@ -59,7 +60,7 @@ $(OBJ_DIR)/lib$(PRJ).%: .stamp.verilog $(RESOURCES)
 	@mkdir -p $(OBJ_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(PRJ) $(RESOURCES) $(VSRCS) \
-		--lib-create $(PRJ) --Mdir $(OBJ_DIR)
+		--lib-create $(PRJ) --Mdir $(VERILATOR_DIR)
 
 # NVBOARD
 $(BUILD_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
