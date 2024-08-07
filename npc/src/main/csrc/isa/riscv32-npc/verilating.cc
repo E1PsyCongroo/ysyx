@@ -48,6 +48,10 @@ void rvcpu_init(void){
   rvcpu.trace(tfp, 99);
   tfp->open("./wave/rvcpu.vcd");
   rvcpu.clock = 0;
+  rvcpu.reset = 1;
+  rvcpu.clock = 1;
+  rvcpu.reset = 0;
+  rvcpu.clock = 0;
 }
 
 void rvcpu_exit(void){
