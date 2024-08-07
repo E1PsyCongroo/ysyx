@@ -1,5 +1,6 @@
 #include <VRVCPU.h>
 #include <VRVCPU___024root.h>
+#include <verilated_vcd_c.h>
 extern "C" {
 #include <isa.h>
 #include <memory/paddr.h>
@@ -10,6 +11,8 @@ extern "C" {
 extern "C"{
 
 static VRVCPU rvcpu;
+static VerilatedContext* contextp = NULL;
+static VerilatedVcdC* tfp = NULL;
 // void nvboard_bind_all_pins(TOP_NAME* top);
 
 void sim_end() {
@@ -34,9 +37,26 @@ void pmem_write(paddr_t waddr, word_t wdata, char wmask) {
   paddr_write(waddr & ~0x3u, 4, wdata & bit_mask);
 }
 
+
+void rvcpu_init(void){
+  Verilated::traceEverOn(true);
+  contextp = new VerilatedContext;
+  tfp = new VerilatedVcdC;
+  contextp->traceEverOn(true);
+  rvcpu.trace(tfp, 0);
+  tfp->open("./build/dump.vcd");
+  rvcpu.clock = 0;
+}
+
+void rvcpu_exit(void){
+  tfp->close();
+}
+
 void rvcpu_single_cycle(void) {
-  rvcpu.clock = 0; rvcpu.eval();
-  rvcpu.clock = 1; rvcpu.eval();
+  rvcpu.clock = !rvcpu.clock; rvcpu.eval();
+  contextp->timeInc(1); tfp->dump(contextp->time());
+  rvcpu.clock = !rvcpu.clock; rvcpu.eval();
+  contextp->timeInc(1); tfp->dump(contextp->time());
 }
 
 void rvcpu_reset(int n) {
