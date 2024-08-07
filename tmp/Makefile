@@ -25,7 +25,7 @@ SRCS-y            += $(shell find -L $(DIRS-y) -name "*.c")
 SRCS              = $(filter-out $(SRCS-BLACKLIST-y),$(SRCS-y))
 
 CXXSRC-BLACKLIST-y  += $(SRCS-BLACKLIST) $(shell find -L $(DIRS-BLACKLIST-y) -name "*.cc")
-CXXSRC-y            += $(shell find -L $(DIRS-y) -name "*.cc" -or -name "*.cpp")
+CXXSRC-y            += $(shell find -L $(DIRS-y) -name "*.cc")
 CXXSRC              = $(filter-out $(CXXSRC-BLACKLIST-y), $(CXXSRC-y))
 
 # Extract compiler and options from menuconfig

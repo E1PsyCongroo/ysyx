@@ -1,6 +1,7 @@
 #include <VRVCPU.h>
 #include <VRVCPU___024root.h>
 #include <verilated_vcd_c.h>
+
 extern "C" {
 #include <isa.h>
 #include <memory/paddr.h>
