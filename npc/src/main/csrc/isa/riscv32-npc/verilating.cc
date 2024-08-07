@@ -91,7 +91,7 @@ void rvcpu_single_cycle(void) {
 void rvcpu_reset(int n) {
   rvcpu->reset = 1; rvcpu->eval();
   while (n -- > 0) rvcpu_single_cycle();
-  rvcpu->reset = 0; rvcpu->eval();
+  rvcpu->reset = 0;
 }
 
 }
