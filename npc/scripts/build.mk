@@ -68,7 +68,7 @@ $(BUILD_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
 	@python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 CXXSRC += $(BUILD_DIR)/$(PRJ)_auto_bind.cc
-ARCHIVES += $(OBJ_DIR)/lib$(PRJ).a $(NVBOARD_ARCHIVE)
+ARCHIVES += $(OBJ_DIR)/lib$(PRJ).so $(NVBOARD_ARCHIVE)
 OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
 
 # Compilation patterns
