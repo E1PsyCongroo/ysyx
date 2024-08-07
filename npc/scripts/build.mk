@@ -18,7 +18,7 @@ RESOURCES_DIR										:= $(SRC_DIR)/resources
 CONSTR_DIR											:= $(SRC_DIR)/constr
 CHISEL_SRC_DIR									:= $(SRC_DIR)/scala
 
-INC_PATH 												:= $(WORK_DIR)/include $(OBJ_DIR) $(INC_PATH)
+INC_PATH 												:= $(WORK_DIR)/include /home/focused_xy/.conda/envs/ysyx/share/verilator/include $(OBJ_DIR) $(INC_PATH)
 BINARY   												:= $(BUILD_DIR)/$(NAME)$(SO)
 
 
@@ -57,7 +57,7 @@ $(BUILD_DIR)/lib$(PRJ).a: $(BUILD_DIR)/.stamp.verilog $(RESOURCES)
 	@mkdir -p $(OBJ_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(PRJ) $(RESOURCES) $(VSRCS) \
-		--lib-create $(PRJ) --Mdir $(OBJ_DIR)
+		--Mdir $(OBJ_DIR)
 
 # NVBOARD
 $(BUILD_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
