@@ -46,6 +46,7 @@ LDFLAGS 												:= -O2 $(LDFLAGS)
 # Verilator flags
 VERILATOR 											:= verilator
 VERILATOR_CFLAGS 								?= --MMD --build --cc -O3 --x-assign fast --x-initial fast --noassert --trace
+LIBS														+= -lverilated -lverilated_vcd_c
 
 # Verilating
 .stamp.verilog: $(CHISELSRCS)
