@@ -30,6 +30,7 @@ static void print_i_ring_buf() {
 #endif
 
 void device_update();
+void rvcpu_exit(void);
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
@@ -105,6 +106,7 @@ void assert_fail_msg() {
   isa_reg_display();
   statistic();
   IFDEF(CONFIG_IRINGBUF, print_i_ring_buf());
+  rvcpu_exit();
 }
 
 /* Simulate how the CPU works. */
