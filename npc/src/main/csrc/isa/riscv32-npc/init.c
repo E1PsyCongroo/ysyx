@@ -16,6 +16,7 @@ static void restart() {
   rvcpu_init();
   rvcpu_reset(10);
   rvcpu_to_cpu();
+  rvcpu_exit();
 }
 
 void init_isa() {
