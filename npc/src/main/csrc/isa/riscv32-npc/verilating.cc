@@ -42,7 +42,6 @@ void rvcpu_single_cycle(void) {
 void rvcpu_reset(int n) {
   rvcpu.reset = 1;
   while (n -- > 0) rvcpu_single_cycle();
-  printf("here\n");
   rvcpu.reset = 0;
 }
 
