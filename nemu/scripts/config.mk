@@ -1,3 +1,18 @@
+#***************************************************************************************
+# Copyright (c) 2014-2022 Zihao Yu, Nanjing University
+#
+# NEMU is licensed under Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#          http://license.coscl.org.cn/MulanPSL2
+#
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+#
+# See the Mulan PSL v2 for more details.
+#**************************************************************************************/
+
 COLOR_RED := $(shell echo "\033[1;31m")
 COLOR_END := $(shell echo "\033[0m")
 
@@ -7,9 +22,9 @@ $(warning $(COLOR_RED)To build the project, first run 'make menuconfig'.$(COLOR_
 endif
 
 Q            := @
-KCONFIG_PATH := $(NPC_HOME)/tools/kconfig
-FIXDEP_PATH  := $(NPC_HOME)/tools/fixdep
-Kconfig      := $(NPC_HOME)/Kconfig
+KCONFIG_PATH := $(NEMU_HOME)/tools/kconfig
+FIXDEP_PATH  := $(NEMU_HOME)/tools/fixdep
+Kconfig      := $(NEMU_HOME)/Kconfig
 rm-distclean += include/generated include/config .config .config.old
 silent := -s
 
