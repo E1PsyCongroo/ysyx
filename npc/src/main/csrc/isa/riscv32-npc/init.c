@@ -15,7 +15,6 @@ static const uint32_t img [] = {
 static void restart() {
   rvcpu_init();
   rvcpu_reset(10);
-  rvcpu_to_cpu();
 }
 
 void init_isa() {
