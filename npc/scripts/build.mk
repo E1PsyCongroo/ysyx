@@ -18,7 +18,7 @@ RESOURCES_DIR										:= $(SRC_DIR)/resources
 CONSTR_DIR											:= $(SRC_DIR)/constr
 CHISEL_SRC_DIR									:= $(SRC_DIR)/scala
 
-VERILATOR_ROOT									:= /home/focused_xy/.conda/envs/ysyx/share/verilator/
+VERILATOR_ROOT									:= /home/focused_xy/.conda/envs/ysyx/share/verilator
 VERILATOR_INC_PATH 							:= $(VERILATOR_ROOT)/include $(VERILATOR_ROOT)/include/vltstd
 INC_PATH 												:= $(WORK_DIR)/include $(VERILATOR_INC_PATH) $(OBJ_DIR) $(INC_PATH)
 BINARY   												:= $(BUILD_DIR)/$(NAME)$(SO)
