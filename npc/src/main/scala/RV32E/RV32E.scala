@@ -76,7 +76,7 @@ class EndControl extends BlackBox {
 //   BrCond.io.zero      := ALU.io.zero
 //   val PCASrc = Mux(BrCond.io.PCASrc, ImmGen.io.imm, 4.U)
 //   val PCBSrc = Mux(BrCond.io.PCBSrc, PC, RegFile.io.rd1)
-//   PCnext              := Mux(reset, PCReset.U, PCASrc + PCBSrc)
+//   PCnext              := Mux(reset.asBool, PCReset.U, PCASrc + PCBSrc)
 
 //   /* Memory */
 //   Mem.io.valid        := true.B
