@@ -59,8 +59,9 @@ void rvcpu_exit(void){
 }
 
 void rvcpu_single_cycle(void) {
+  printf("pc: " FMT_WORD ", ", rvcpu.io_pc);
   rvcpu.io_inst = vaddr_ifetch(rvcpu.io_pc, 4);
-  printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu.io_pc, rvcpu.io_inst);
+  printf("inst: " FMT_WORD "\n", rvcpu.io_inst);
   rvcpu.clock = 1; rvcpu.eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
   rvcpu.clock = 0; rvcpu.eval();
