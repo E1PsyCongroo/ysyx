@@ -55,9 +55,9 @@ VERILATOR_CFLAGS 								?= --MMD --build --cc -O3 --x-assign fast --x-initial f
 	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR)
 	@touch $@
 
-$(OBJ_DIR)/lib$(PRJ).%: .stamp.verilog $(RESOURCES)
+$(VERILATOR_DIR)/lib$(PRJ).%: .stamp.verilog $(RESOURCES)
 	@echo + VERILATOR $(RESOURCES) $(VSRCS)
-	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(VERILATOR_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(PRJ) $(RESOURCES) $(VSRCS) \
 		--lib-create $(PRJ) --Mdir $(VERILATOR_DIR)
@@ -69,7 +69,7 @@ $(BUILD_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
 	@python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 CXXSRC += $(BUILD_DIR)/$(PRJ)_auto_bind.cc
-ARCHIVES += $(OBJ_DIR)/lib$(PRJ).so $(NVBOARD_ARCHIVE)
+ARCHIVES += $(VERILATOR_DIR)/lib$(PRJ).so $(NVBOARD_ARCHIVE)
 OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
 
 # Compilation patterns
@@ -101,7 +101,7 @@ $(BINARY):: $(ARCHIVES) $(OBJS)
 
 verilog: .stamp.verilog
 
-verilator: $(OBJ_DIR)/lib$(PRJ).a
+verilator: $(VERILATOR_DIR)/lib$(PRJ).a
 
 clean:
 	-rm -rf $(BUILD_DIR)
