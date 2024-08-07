@@ -49,7 +49,7 @@ void rvcpu_init(void){
   rvcpu.clock = 1;
   rvcpu_reset(10, 0);
   for (int i = 0; i < 10; i++) {
-    printf("pc:%#x\n",rvcpu.io_pc);
+    printf("pc:%#x, clock:%x\n",rvcpu.io_pc, rvcpu.clock);
     rvcpu_single_cycle();
   }
 }
