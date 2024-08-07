@@ -99,7 +99,7 @@ $(BINARY):: $(ARCHIVES) $(OBJS)
 
 verilog: .stamp.verilog
 
-verilator: $(BUILD_DIR)/lib$(PRJ).a
+verilator: $(OBJ_DIR)/lib$(PRJ).a
 
 clean:
 	-rm -rf $(BUILD_DIR)
