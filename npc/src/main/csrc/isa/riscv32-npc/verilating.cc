@@ -5,6 +5,7 @@
 extern "C" {
 #include <isa.h>
 #include <memory/vaddr.h>
+#include <memory/paddr.h>
 #include <cpu/cpu.h>
 }
 
@@ -21,6 +22,7 @@ void sim_end() {
 
 word_t pmem_read(paddr_t raddr) {
   // 总是读取地址为`raddr & ~0x3u`的4字节返回
+  if (!in_pmem(raddr)) return 0;
   return vaddr_read(raddr & ~0x3u, 4);
 }
 
