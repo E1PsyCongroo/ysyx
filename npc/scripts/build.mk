@@ -25,6 +25,7 @@ BINARY   												:= $(BUILD_DIR)/$(NAME)$(SO)
 # project source
 VSRCS 													?= $(shell find $(VSRC_DIR) -type f -name "*.v" -or -name "*.sv")
 CHISELSRCS											?= $(shell find $(CHISEL_SRC_DIR) -type f -name "*.scala" -or -name "*.sc")
+RESOURCES												?= $(shell find $(RESOURCES_DIR) -type f -name "*.v" -or -name "*.sv")
 
 # rules for NVBoard
 include $(NVBOARD_HOME)/scripts/nvboard.mk
@@ -59,10 +60,10 @@ $(BUILD_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
 	@mkdir -p $(dir $@)
 	@python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
-$(BUILD_DIR)/.stamp.verilator: $(VSRCS)
+$(BUILD_DIR)/.stamp.verilator: $(VSRCS) $(RESOURCES)
 	@echo + VERILATOR $^
 	@mkdir -p $(OBJ_DIR)
-	$(VERILATOR) $(VERILATOR_CFLAGS) \
+	@$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(PRJ) $^ \
 		--Mdir $(OBJ_DIR)
 
