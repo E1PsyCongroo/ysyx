@@ -24,12 +24,12 @@ INC_PATH 												:= $(WORK_DIR)/include $(VERILATOR_INC_PATH) $(OBJ_DIR) $(I
 BINARY   												:= $(BUILD_DIR)/$(NAME)$(SO)
 
 
-# project source
+# Project sources
 VSRCS 													?= $(shell find $(VSRC_DIR) -type f -name "*.v" -or -name "*.sv")
 CHISELSRCS											?= $(shell find $(CHISEL_SRC_DIR) -type f -name "*.scala" -or -name "*.sc")
 RESOURCES												?= $(shell find $(RESOURCES_DIR) -type f -name "*.v" -or -name "*.sv")
 
-# rules for NVBoard
+# Rules for NVBoard
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 # Compilation flags
