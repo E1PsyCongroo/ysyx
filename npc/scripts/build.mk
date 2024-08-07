@@ -63,12 +63,12 @@ $(VERILATOR_DIR)/lib$(PRJ).%: .stamp.verilog $(RESOURCES)
 		--lib-create $(PRJ) --Mdir $(VERILATOR_DIR)
 
 # NVBOARD
-$(BUILD_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
+$(OBJ_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
 	@echo + AUTO-BIND $<
 	@mkdir -p $(dir $@)
 	@python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
-CXXSRC += $(BUILD_DIR)/$(PRJ)_auto_bind.cc
+CXXSRC += $(OBJ_DIR)/$(PRJ)_auto_bind.cc
 ARCHIVES += $(VERILATOR_DIR)/lib$(PRJ).so $(NVBOARD_ARCHIVE)
 OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
 
