@@ -23,6 +23,7 @@ void sim_end() {
 word_t pmem_read(paddr_t raddr) {
   // 总是读取地址为`raddr & ~0x3u`的4字节返回
   if (!in_pmem(raddr)) return 0;
+  printf("RVCPU read: " FMT_PADDR "\n", raddr);
   return vaddr_read(raddr & ~0x3u, 4);
 }
 
