@@ -76,7 +76,7 @@ class EndControl extends BlackBox {
 //   BrCond.io.zero      := ALU.io.zero
 //   val PCASrc = Mux(BrCond.io.PCASrc, ImmGen.io.imm, 4.U)
 //   val PCBSrc = Mux(BrCond.io.PCBSrc, PC, RegFile.io.rd1)
-//   PCnext              := PCASrc + PCBSrc
+//   PCnext              := Mux(reset, PCReset.U, PCASrc + PCBSrc)
 
 //   /* Memory */
 //   Mem.io.valid        := true.B
@@ -108,6 +108,6 @@ class RVCPU(
   })
   val PCnext      = Wire(UInt(xlen.W))
   val PC          = RegNext(PCnext, PCReset.U(xlen.W))
-  PCnext          := PC + 4.U;
+  PCnext          := Mux(reset.asBool, PCReset.U, PC + 4.U);
   io.pc           := PCnext
 }
