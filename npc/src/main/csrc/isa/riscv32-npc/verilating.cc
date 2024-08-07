@@ -50,7 +50,7 @@ void rvcpu_init(void){
   rvcpu_reset(10);
   for (int i = 0; i < 10; i++) {
     rvcpu_single_cycle();
-    printf("pc: %u\n",rvcpu.io_pc);
+    printf("pc: %#x\n",rvcpu.io_pc);
   }
 }
 
