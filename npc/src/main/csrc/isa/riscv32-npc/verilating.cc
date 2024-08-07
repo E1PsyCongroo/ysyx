@@ -1,17 +1,19 @@
 #include <VRVCPU.h>
+#include <VRVCPU___024root.h>
 extern "C" {
 #include <isa.h>
 #include <memory/paddr.h>
 #include <cpu/cpu.h>
+#include "local-include/reg.h"
 }
 
 extern "C"{
 
-static VRVCPU dut;
+static VRVCPU rvcpu;
 // void nvboard_bind_all_pins(TOP_NAME* top);
 
 void sim_end() {
-  set_npc_state(NPC_END, dut.io_pc, 0);
+  set_npc_state(NPC_END, rvcpu.io_pc, 0);
 }
 
 word_t pmem_read(paddr_t raddr) {
@@ -32,15 +34,35 @@ void pmem_write(paddr_t waddr, word_t wdata, char wmask) {
   paddr_write(waddr & ~0x3u, 4, wdata & bit_mask);
 }
 
-// static void single_cycle() {
-//   dut.clock = 0; dut.eval();
-//   dut.clock = 1; dut.eval();
-// }
+void rvcpu_single_cycle(void) {
+  rvcpu.clock = 0; rvcpu.eval();
+  rvcpu.clock = 1; rvcpu.eval();
+}
 
-// static void reset(int n) {
-//   dut.reset = 1;
-//   while (n -- > 0) single_cycle();
-//   dut.reset = 0;
-// }
+void rvcpu_reset(int n) {
+  rvcpu.reset = 1;
+  while (n -- > 0) rvcpu_single_cycle();
+  rvcpu.reset = 0;
+}
+
+void rvcpu_to_cpu(void) {
+  gpr(0) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_0;
+  gpr(1) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_1;
+  gpr(2) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_2;
+  gpr(3) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_3;
+  gpr(4) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_4;
+  gpr(5) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_5;
+  gpr(6) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_6;
+  gpr(7) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_7;
+  gpr(8) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_8;
+  gpr(9) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_9;
+  gpr(10) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_10;
+  gpr(11) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_11;
+  gpr(12) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_12;
+  gpr(13) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_13;
+  gpr(14) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_14;
+  gpr(15) = rvcpu.rootp->RVCPU__DOT__RegFile__DOT__reg_15;
+  cpu.pc = rvcpu.io_pc;
+}
 
 }
