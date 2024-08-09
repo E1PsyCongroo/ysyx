@@ -19,7 +19,7 @@
 
 bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
   bool result = difftest_check_reg("pc", pc, ref_r->pc, cpu.pc);
-  for (int i = 0; i < MUXDEF(CONFIG_RVE, 16, 32) && result; i++) {
+  for (int i = 0; i < RISCV_GPR_NUM && result; i++) {
     result = difftest_check_reg(reg_name(i), pc, ref_r->gpr[i], gpr(i));
   }
   return result;
