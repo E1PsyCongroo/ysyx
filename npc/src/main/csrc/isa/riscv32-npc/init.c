@@ -1,5 +1,6 @@
 #include <isa.h>
 #include <memory/paddr.h>
+#include <memory/vaddr.h>
 #include "local-include/verilating.h"
 // this is not consistent with uint8_t
 // but it is ok since we do not access the array directly
@@ -13,8 +14,6 @@ static const uint32_t img [] = {
 
 static void restart() {
   rvcpu_init();
-  rvcpu_reset(10);
-  rvcpu_to_cpu();
 }
 
 void init_isa() {

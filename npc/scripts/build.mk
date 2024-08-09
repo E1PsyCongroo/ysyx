@@ -11,6 +11,7 @@ PRJ 														:= RVCPU
 WORK_DIR  											:= $(shell pwd)
 BUILD_DIR 											:= $(WORK_DIR)/build
 OBJ_DIR  												:= $(BUILD_DIR)/obj-$(NAME)$(SO)
+VERILATOR_DIR										:= $(OBJ_DIR)/verilator
 SRC_DIR													:= $(WORK_DIR)/src/main
 VSRC_DIR 												:= $(SRC_DIR)/vsrc
 CSRC_DIR 												:= $(SRC_DIR)/csrc
@@ -20,16 +21,17 @@ CHISEL_SRC_DIR									:= $(SRC_DIR)/scala
 
 VERILATOR_ROOT									:= /home/focused_xy/.conda/envs/ysyx/share/verilator
 VERILATOR_INC_PATH 							:= $(VERILATOR_ROOT)/include $(VERILATOR_ROOT)/include/vltstd
-INC_PATH 												:= $(WORK_DIR)/include $(VERILATOR_INC_PATH) $(OBJ_DIR) $(INC_PATH)
+INC_PATH 												:= $(WORK_DIR)/include $(VERILATOR_INC_PATH) $(VERILATOR_DIR) $(INC_PATH)
 BINARY   												:= $(BUILD_DIR)/$(NAME)$(SO)
 
 
-# project source
+# Project sources
 VSRCS 													?= $(shell find $(VSRC_DIR) -type f -name "*.v" -or -name "*.sv")
 CHISELSRCS											?= $(shell find $(CHISEL_SRC_DIR) -type f -name "*.scala" -or -name "*.sc")
+CHISELSRCS											+= $(SRC_DIR)/Elaborate.scala
 RESOURCES												?= $(shell find $(RESOURCES_DIR) -type f -name "*.v" -or -name "*.sv")
 
-# rules for NVBoard
+# Rules for NVBoard
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 # Compilation flags
@@ -51,25 +53,25 @@ VERILATOR_CFLAGS 								?= --MMD --build --cc -O3 --x-assign fast --x-initial f
 .stamp.verilog: $(CHISELSRCS)
 	$(call git_commit, "generate verilog")
 	@echo + VERILOG $(VSRC_DIR)
-	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR)
+	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR) --split-verilog
 	@touch $@
 
-$(OBJ_DIR)/lib$(PRJ).a: .stamp.verilog $(RESOURCES)
+$(VERILATOR_DIR)/lib$(PRJ).%: .stamp.verilog $(RESOURCES)
 	@echo + VERILATOR $(RESOURCES) $(VSRCS)
-	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(VERILATOR_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(PRJ) $(RESOURCES) $(VSRCS) \
-		--lib-create $(PRJ) --Mdir $(OBJ_DIR)
+		--lib-create $(PRJ) --Mdir $(VERILATOR_DIR)
 
 # NVBOARD
-$(BUILD_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
+$(OBJ_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
 	@echo + AUTO-BIND $<
 	@mkdir -p $(dir $@)
 	@python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
-CXXSRC += $(BUILD_DIR)/$(PRJ)_auto_bind.cc
-ARCHIVES += $(OBJ_DIR)/lib$(PRJ).a $(NVBOARD_ARCHIVE)
-OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o) $(CXXSRC:%.cpp=$(OBJ_DIR)/%.o)
+CXXSRC += $(OBJ_DIR)/$(PRJ)_auto_bind.cc
+ARCHIVES += $(VERILATOR_DIR)/lib$(PRJ).so $(NVBOARD_ARCHIVE)
+OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
 
 # Compilation patterns
 $(OBJ_DIR)/%.o: %.c
@@ -84,11 +86,6 @@ $(OBJ_DIR)/%.o: %.cc
 	@$(CXX) $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
 	$(call call_fixdep, $(@:.o=.d), $@)
 
-$(OBJ_DIR)/%.o: %.cpp
-	@echo + CXX $<
-	@mkdir -p $(dir $@)
-	@$(CXX) $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
-	$(call call_fixdep, $(@:.o=.d), $@)
 
 # Depencies
 -include $(OBJS:.o=.d)
@@ -105,7 +102,7 @@ $(BINARY):: $(ARCHIVES) $(OBJS)
 
 verilog: .stamp.verilog
 
-verilator: $(OBJ_DIR)/lib$(PRJ).a
+verilator: $(VERILATOR_DIR)/lib$(PRJ).a
 
 clean:
 	-rm -rf $(BUILD_DIR)
