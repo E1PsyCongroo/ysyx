@@ -53,7 +53,7 @@ VERILATOR_CFLAGS 								?= --MMD --build --cc -O3 --x-assign fast --x-initial f
 .stamp.verilog: $(CHISELSRCS)
 	$(call git_commit, "generate verilog")
 	@echo + VERILOG $(VSRC_DIR)
-	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR)
+	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR) --spilit-verilog
 	@touch $@
 
 $(VERILATOR_DIR)/lib$(PRJ).%: .stamp.verilog $(RESOURCES)

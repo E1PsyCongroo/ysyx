@@ -5,7 +5,7 @@ object Elaborate extends App {
     "disallowLocalVariables",
     "disallowPackedArrays",
     "locationInfoStyle=wrapInAtSquareBracket"
-  ).mkString(","), "--split-verilog")
+  ).mkString(","),)
   circt.stage.ChiselStage.emitSystemVerilogFile(
     new RVCPU.RVCPU(
       xlen       = 32,
