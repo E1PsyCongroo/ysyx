@@ -83,8 +83,8 @@ object ALUControlField extends DecodeField[Instruction, UInt] {
 }
 
 object BrControlField extends DecodeField[Instruction, UInt] {
-  import Instruction.InstricitonMap._
   import BrType._
+  import Instruction.InstricitonMap._
   def name: String = "Branch Control Field"
   def chiselType: UInt = UInt(BrType.getWidth.W)
   override def default: BitPat = BitPat(brNone.litValue.U(width.W))
@@ -92,6 +92,9 @@ object BrControlField extends DecodeField[Instruction, UInt] {
     Instruction.instrTypeMap(op.opcode) match {
       case InstructionType.JType => op.opcode match {
         case JAL.opcode => BitPat(brJ.litValue.U(width.W))
+        case _ => default
+      }
+      case InstructionType.IType => op.opcode match {
         case JALR.opcode => BitPat(brJr.litValue.U(width.W))
         case _ => default
       }
