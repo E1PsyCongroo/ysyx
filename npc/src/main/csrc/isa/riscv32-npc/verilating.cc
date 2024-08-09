@@ -39,13 +39,16 @@ void pmem_write(paddr_t waddr, word_t wdata, char wmask) {
   // 如`wmask = 0x3`代表只写入最低2个字节, 内存中的其它字节保持不变
   // if (!in_pmem(waddr)) return;
   // printf("RVCPU write: " FMT_PADDR "\n", waddr);
-  word_t bit_mask = 0;
+  int len = 0;
   for (uint32_t i = 0; i < sizeof(word_t); i++) {
-      if (wmask & (1 << i)) {
-          bit_mask |= (0xFF << (i * 8));
-      }
+    if (wmask & (1 << i)) {
+      len++;
+    }
+    else {
+      wdata >>= 8;
+    }
   }
-  vaddr_write(waddr & ~0x3u, 4, wdata & bit_mask);
+  vaddr_write(waddr, len, wdata);
 }
 
 static void rvcpu_sync(void) {
