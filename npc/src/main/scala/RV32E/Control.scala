@@ -68,6 +68,11 @@ object ALUControlField extends DecodeField[Instruction, UInt] {
         case SRAI.funct3 => aluSra
         case ORI.funct3 => aluOr
         case ANDI.funct3 => aluAnd
+        case LB.funct3 => aluAdd
+        case LBU.funct3 => aluAdd
+        case LH.funct3 => aluAdd
+        case LHU.funct3 => aluAdd
+        case LW.funct3 => aluAdd
         case _ => dc
       }
       case SType => aluAdd
