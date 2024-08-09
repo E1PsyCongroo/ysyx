@@ -19,6 +19,7 @@
 #define CONFIG_ITRACE 1
 #define CONFIG_DIFFTEST 1
 #define CONFIG_ISA_riscv 1
+#define CONFIG_CC_LTO 1
 #define CONFIG_TRACE_END 10000
 #define CONFIG_MTRACE_COND "true"
 #define CONFIG_MBASE 0x80000000
