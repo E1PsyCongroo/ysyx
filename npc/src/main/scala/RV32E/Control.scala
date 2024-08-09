@@ -202,12 +202,17 @@ object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
 
 object WBSrcControlField extends DecodeField[Instruction, UInt] {
   import WBSrcFrom._
+  import Instruction.InstricitonMap._
   def name: String = "Write Back Control Feild"
   def chiselType: UInt = UInt(WBSrcFrom.getWidth.W)
   override def default: BitPat = BitPat(fromALU.litValue.U(width.W))
   def genTable(op: Instruction): BitPat = {
-    Instruction.instrTypeMap(op.opcode) match {
-      case InstructionType.SType => BitPat(fromMem.litValue.U(width.W))
+    op.opcode match {
+      case LB.opcode => BitPat(fromMem.litValue.U(width.W))
+      case LBU.opcode => BitPat(fromMem.litValue.U(width.W))
+      case LH.opcode => BitPat(fromMem.litValue.U(width.W))
+      case LHU.opcode => BitPat(fromMem.litValue.U(width.W))
+      case LW.opcode => BitPat(fromMem.litValue.U(width.W))
       case _ => default
     }
   }
