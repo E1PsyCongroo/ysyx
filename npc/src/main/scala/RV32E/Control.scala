@@ -63,14 +63,7 @@ object ALUControlField extends DecodeField[Instruction, UInt] {
       }
       case IType => op.opcode match {
         case JALR.opcode => aluAdd
-        case LB.opcode | LH.opcode | LW.opcode | LBU.opcode | LHU.opcode => op.funct3 match {
-          case LB.funct3 => aluAdd
-          case LBU.funct3 => aluAdd
-          case LH.funct3 => aluAdd
-          case LHU.funct3 => aluAdd
-          case LW.funct3 => aluAdd
-          case _ => dc
-        }
+        case LB.opcode | LH.opcode | LW.opcode | LBU.opcode | LHU.opcode => aluAdd
         case ADDI.opcode | SLLI.opcode | SLTI.opcode | SLTIU.opcode |
              XORI.opcode | SRLI.opcode | SRAI.opcode | ORI.opcode |
              ANDI.opcode => op.funct3 match {
@@ -88,7 +81,12 @@ object ALUControlField extends DecodeField[Instruction, UInt] {
         case _ => dc
       }
       case SType => aluAdd
-      case BType => aluSub
+      case BType => op.funct3 match {
+        case BEQ.funct3 | BNE.funct3 => aluSub
+        case BLT.funct3 | BGE.funct3 => aluSlt
+        case BLTU.funct3 | BGEU.funct3 => aluSltu
+        case _ => dc
+      }
       case UType => op.opcode match {
         case LUI.opcode => aluBout
         case AUIPC.opcode => aluAdd
