@@ -52,27 +52,39 @@ object ALUControlField extends DecodeField[Instruction, UInt] {
         case SLT.funct3 => aluSlt
         case SLTU.funct3 => aluSltu
         case XOR.funct3 => aluXor
-        case SRL.funct3 => aluSrl
-        case SRA.funct3 => aluSra
+        case SRL.funct3 | SRA.funct3 => op.funct7 match {
+          case SRL.funct7 => aluSrl
+          case SRA.funct7 => aluSra
+          case _ =>dc
+        }
         case OR.funct3 => aluOr
         case AND.funct3 => aluAnd
         case _ => dc
       }
-      case IType => op.funct3 match {
-        case ADDI.funct3 => aluAdd
-        case SLLI.funct3 => aluSll
-        case SLTI.funct3 => aluSlt
-        case SLTIU.funct3 => aluSltu
-        case XORI.funct3 => aluXor
-        case SRLI.funct3 => aluSrl
-        case SRAI.funct3 => aluSra
-        case ORI.funct3 => aluOr
-        case ANDI.funct3 => aluAnd
-        case LB.funct3 => aluAdd
-        case LBU.funct3 => aluAdd
-        case LH.funct3 => aluAdd
-        case LHU.funct3 => aluAdd
-        case LW.funct3 => aluAdd
+      case IType => op.opcode match {
+        case JALR.opcode => aluAdd
+        case LB.opcode | LH.opcode | LW.opcode | LBU.opcode | LHU.opcode => op.funct3 match {
+          case LB.funct3 => aluAdd
+          case LBU.funct3 => aluAdd
+          case LH.funct3 => aluAdd
+          case LHU.funct3 => aluAdd
+          case LW.funct3 => aluAdd
+          case _ => dc
+        }
+        case ADDI.opcode | SLLI.opcode | SLTI.opcode | SLTIU.opcode |
+             XORI.opcode | SRLI.opcode | SRAI.opcode | ORI.opcode |
+             ANDI.opcode => op.funct3 match {
+          case ADDI.funct3 => aluAdd
+          case SLLI.funct3 => aluSll
+          case SLTI.funct3 => aluSlt
+          case SLTIU.funct3 => aluSltu
+          case XORI.funct3 => aluXor
+          case SRLI.funct3 => aluSrl
+          case SRAI.funct3 => aluSra
+          case ORI.funct3 => aluOr
+          case ANDI.funct3 => aluAnd
+          case _ => dc
+        }
         case _ => dc
       }
       case SType => aluAdd
