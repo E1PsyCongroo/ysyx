@@ -56,11 +56,11 @@ VERILATOR_CFLAGS 								?= --MMD --build --cc -O3 --x-assign fast --x-initial f
 	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR) --split-verilog
 	@touch $@
 
-$(VERILATOR_DIR)/lib$(PRJ).%: .stamp.verilog $(RESOURCES)
-	@echo + VERILATOR $(RESOURCES) $(VSRCS)
+$(VERILATOR_DIR)/lib$(PRJ).%: .stamp.verilog
+	@echo + VERILATOR $(VSRCS)
 	@mkdir -p $(VERILATOR_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
-		--top-module $(PRJ) $(RESOURCES) $(VSRCS) \
+		--top-module $(PRJ) $(VSRCS) \
 		--lib-create $(PRJ) --Mdir $(VERILATOR_DIR)
 
 # NVBOARD
