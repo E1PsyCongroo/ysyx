@@ -107,6 +107,26 @@ object BrControlField extends DecodeField[Instruction, UInt] {
   }
 }
 
+object MemValidControlField extends DecodeField[Instruction, Bool] {
+  import Instruction.InstricitonMap._
+  def name: String = " Mem Valid Control Field"
+  def chiselType: Bool = Bool()
+  override def default: BitPat = BitPat.N(1)
+  def genTable(op: Instruction): BitPat = {
+    op.opcode match {
+      case LB.opcode => BitPat.Y(1)
+      case LBU.opcode => BitPat.Y(1)
+      case LH.opcode => BitPat.Y(1)
+      case LHU.opcode => BitPat.Y(1)
+      case LW.opcode => BitPat.Y(1)
+      case SB.opcode => BitPat.Y(1)
+      case SH.opcode => BitPat.Y(1)
+      case SW.opcode => BitPat.Y(1)
+      case _ => default
+    }
+  }
+}
+
 object MemOpControlField extends DecodeField[Instruction, UInt] {
   import Instruction.InstricitonMap._
   import InstructionType._
@@ -135,7 +155,7 @@ object MemOpControlField extends DecodeField[Instruction, UInt] {
 }
 
 object MemWenControlField extends DecodeField[Instruction, Bool] {
-  def name: String = "MemWen Control Field"
+  def name: String = "Mem Wen Control Field"
   def chiselType: Bool = Bool()
   def genTable(op: Instruction): BitPat = {
     Instruction.instrTypeMap(op.opcode) match {
@@ -205,6 +225,7 @@ object EndControlField extends DecodeField[Instruction, Bool] {
   }
 }
 
+
 class ControlIO extends Bundle {
   val instr = Input(UInt(32.W))
   val immType = Output(UInt(ImmType.getWidth.W))
@@ -214,6 +235,7 @@ class ControlIO extends Bundle {
   val aluCtr = Output(UInt(ALUOp.getWidth.W))
   val brType = Output(UInt(BrType.getWidth.W))
   val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
+  val memValid = Output(Bool())
   val memWe = Output(Bool())
   val memOp = Output(UInt(MemOp.getWidth.W))
   val isEnd = Output(Bool())
@@ -236,6 +258,7 @@ class Control extends Module {
       RegWeControlField,
       ALUControlField,
       BrControlField,
+      MemValidControlField,
       MemOpControlField,
       MemWenControlField,
       ALUASrcControlField,
@@ -252,6 +275,7 @@ class Control extends Module {
   io.aluCtr       := decodeResult(ALUControlField)
   io.brType       := decodeResult(BrControlField)
   io.wbSrc        := decodeResult(WBSrcControlField)
+  io.memValid     := decodeResult(MemValidControlField)
   io.memWe        := decodeResult(MemWenControlField)
   io.memOp        := decodeResult(MemOpControlField)
   io.isEnd        := decodeResult(EndControlField)

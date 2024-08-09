@@ -79,7 +79,7 @@ class RVCPU(
   PCnext              := Mux(reset.asBool, PCReset.U, PCASrc + PCBSrc)
 
   /* Memory */
-  Mem.io.valid        := !reset.asBool
+  Mem.io.valid        := !reset.asBool && Control.io.memValid
   Mem.io.memOp        := Control.io.memOp
   Mem.io.raddr        := ALU.io.aluOut
 
