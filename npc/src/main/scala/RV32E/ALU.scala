@@ -60,7 +60,7 @@ class ALUControl extends Module {
       val isUnsigned = op.aluCtr3
       val isSub = op.bitPat.rawString match {
         case "1000" | "0010" | "1010" => BitPat.Y(1)
-        case _ => dc
+        case _ => BitPat.dontCare(1)
       }
       aluSel ## isArith ## isLeft ## isUnsigned ## isSub
     }
