@@ -53,7 +53,7 @@ void rvcpu_init(void){
   rvcpu->clock = 0;
 
   /* binding cpu with rvcpu */
-  cpu.pc = &rvcpu->io_pc;
+  cpu.pc = &rvcpu->rootp->RVCPU__DOT__PC;
   cpu.gpr[0] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_0;
   cpu.gpr[1] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_1;
   cpu.gpr[2] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_2;
