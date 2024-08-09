@@ -17,7 +17,7 @@ static VerilatedVcdC* tfp = nullptr;
 // void nvboard_bind_all_pins(TOP_NAME* top);
 
 void sim_end() {
-  set_npc_state(NPC_END, rvcpu->io_pc, 0);
+  set_npc_state(NPC_END, *(cpu.pc), 0);
 }
 
 word_t pmem_read(paddr_t raddr) {
