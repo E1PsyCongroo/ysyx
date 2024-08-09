@@ -88,8 +88,7 @@ void rvcpu_single_cycle(void) {
   printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->io_inst);
   contextp->timeInc(1); tfp->dump(contextp->time());
   /* time down */
-  rvcpu->clock = 0;
-  rvcpu->eval();
+  rvcpu->clock = 0; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
 }
 
