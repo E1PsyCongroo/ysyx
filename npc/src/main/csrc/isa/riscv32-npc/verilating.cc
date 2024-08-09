@@ -23,7 +23,7 @@ void sim_end() {
 word_t pmem_read(paddr_t raddr) {
   // 总是读取地址为`raddr & ~0x3u`的4字节返回
   if (!in_pmem(raddr)) return 0;
-  printf("RVCPU read: " FMT_PADDR "\n", raddr);
+  // printf("RVCPU read: " FMT_PADDR "\n", raddr);
   return vaddr_read(raddr & ~0x3u, 4);
 }
 
@@ -32,7 +32,7 @@ void pmem_write(paddr_t waddr, word_t wdata, char wmask) {
   // `wmask`中每比特表示`wdata`中1个字节的掩码,
   // 如`wmask = 0x3`代表只写入最低2个字节, 内存中的其它字节保持不变
   if (!in_pmem(waddr)) return;
-  printf("RVCPU write: " FMT_PADDR "\n", waddr);
+  // printf("RVCPU write: " FMT_PADDR "\n", waddr);
   word_t bit_mask = 0;
   for (uint32_t i = 0; i < sizeof(word_t); i++) {
       if (wmask & (1 << i)) {
@@ -81,11 +81,11 @@ void rvcpu_exit(void){
 
 void rvcpu_single_cycle(void) {
   /* time up */
-  printf("pc: " FMT_WORD ", npc: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->rootp->RVCPU__DOT___PCnext_T);
+  // printf("pc: " FMT_WORD ", npc: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->rootp->RVCPU__DOT___PCnext_T);
   uint32_t pc = rvcpu->io_pc;
   rvcpu->clock = 1; rvcpu->eval();
   rvcpu->io_inst = vaddr_ifetch(pc, 4);
-  printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->io_inst);
+  // printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->io_inst);
   contextp->timeInc(1); tfp->dump(contextp->time());
   /* time down */
   rvcpu->clock = 0; rvcpu->eval();
