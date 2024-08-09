@@ -52,7 +52,8 @@ VERILATOR_CFLAGS 								?= --MMD --build --cc -O3 --x-assign fast --x-initial f
 # Verilating
 .stamp.verilog: $(CHISELSRCS)
 	$(call git_commit, "generate verilog")
-	@echo + VERILOG $(VSRC_DIR)
+	@echo + VERILOG $^
+	@mkdir -p $(VSRC_DIR)
 	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR) --split-verilog
 	@touch $@
 
