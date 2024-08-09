@@ -99,6 +99,7 @@ void rvcpu_single_cycle(void) {
   rvcpu->clock = 1; rvcpu->eval();
   rvcpu->io_inst = vaddr_ifetch(pc, 4); rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
+  rvcpu_sync();
   // printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->io_inst);
   /* time down */
   rvcpu->clock = 0; rvcpu->eval();
