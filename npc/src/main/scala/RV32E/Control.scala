@@ -204,6 +204,7 @@ object ALUASrcControlField extends DecodeField[Instruction, UInt] {
 
 object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
   import InstructionType._
+  import Instruction.InstricitonMap._
   import ALUBSrcFrom._
   def name: String = "ALU Bsrc Control Field"
   def chiselType: UInt = UInt(ALUBSrcFrom.getWidth.W)
@@ -211,7 +212,7 @@ object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
     Instruction.instrTypeMap(op.opcode) match {
       case RType | BType => BitPat(fromRs2.litValue.U(width.W))
       case IType => op.opcode match {
-        case Instruction.InstricitonMap.JALR => BitPat(from4.litValue.U(width.W))
+        case JALR.opcode => BitPat(from4.litValue.U(width.W))
         case _ => BitPat(fromImm.litValue.U(width.W))
       }
       case SType | UType => BitPat(fromImm.litValue.U(width.W))
