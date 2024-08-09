@@ -3,8 +3,6 @@ package RVCPU
 import circt.stage.ChiselStage
 import chisel3._
 import chisel3.util._
-import org.apache.commons.compress.harmony.unpack200.bytecode.forms.ReferenceForm
-import coursier.core.shaded.geny.Generator.End
 
 class EndControlIO extends Bundle {
   val clock = Input(Clock())
@@ -13,6 +11,14 @@ class EndControlIO extends Bundle {
 }
 class EndControl extends BlackBox {
   val io = IO(new EndControlIO)
+}
+
+class IfetchIO(extentionC: Boolean = false) extends Bundle {
+  val inst = Input(UInt(if (extentionC) 16.W else 32.W))
+}
+
+class Ifetch(extentionC: Boolean = false) extends BlackBox {
+  val io = IO(new IfetchIO(extentionC))
 }
 
 class RVCPU(
@@ -34,12 +40,15 @@ class RVCPU(
   val ALU         = Module(new ALU(xlen))
   val BrCond      = Module(new BrCond)
   val EndControl  = Module(new EndControl)
+  val Ifetch      = Module(new Ifetch(extentionC))
 
   /* Instruction Fetch */
-  io.pc       := PCnext
+  io.pc           := PCnext
+
+  val inst        = io.inst
+  Ifetch.io.inst  := inst
 
   /* Instruction Decode */
-  val inst    = io.inst
   val rs1     = inst(19, 15)
   val rs2     = inst(24, 20)
   val rd      = inst(11, 7)

@@ -1,5 +1,6 @@
 #include <VRVCPU.h>
 #include <VRVCPU___024root.h>
+#include <VRVCPU__Dpi.h>
 #include <verilated_vcd_c.h>
 
 extern "C" {
@@ -14,10 +15,15 @@ extern "C"{
 static VRVCPU* rvcpu = nullptr;
 static VerilatedContext* contextp = nullptr;
 static VerilatedVcdC* tfp = nullptr;
+static uint32_t cur_inst;
 // void nvboard_bind_all_pins(TOP_NAME* top);
 
 void sim_end() {
   set_npc_state(NPC_END, *(cpu.pc), 0);
+}
+
+void ifetch(uint32_t inst) {
+  cur_inst = inst;
 }
 
 word_t pmem_read(paddr_t raddr) {
@@ -96,6 +102,11 @@ void rvcpu_reset(int n) {
   rvcpu->reset = 1; rvcpu->eval();
   while (n -- > 0) rvcpu_single_cycle();
   rvcpu->reset = 0; rvcpu->eval();
+}
+
+uint32_t rvcpu_ifetch(vaddr_t *pc, int len) {
+  (*pc) += len;
+  return cur_inst;
 }
 
 }
