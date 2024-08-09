@@ -7,6 +7,7 @@
 
 int isa_exec_once(Decode *s) {
   s->isa.inst.val = vaddr_ifetch(*(cpu.pc), 4);
+  s->snpc = *(cpu.pc) + 4;
   rvcpu_single_cycle();
   s->dnpc = *(cpu.pc);
   return 0;
