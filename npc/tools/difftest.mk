@@ -14,7 +14,7 @@
 #**************************************************************************************/
 
 ifdef CONFIG_DIFFTEST
-ifdef DIFFTEST_REF_NEMU
+ifdef CONFIG_DIFFTEST_REF_NEMU
 DIFF_REF_PATH = $(call remove_quote,$(CONFIG_DIFFTEST_REF_PATH))
 else
 DIFF_REF_PATH = $(NPC_HOME)/$(call remove_quote,$(CONFIG_DIFFTEST_REF_PATH))
