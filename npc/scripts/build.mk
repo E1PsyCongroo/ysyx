@@ -28,6 +28,7 @@ BINARY   												:= $(BUILD_DIR)/$(NAME)$(SO)
 # Project sources
 VSRCS 													?= $(shell find $(VSRC_DIR) -type f -name "*.v" -or -name "*.sv")
 CHISELSRCS											?= $(shell find $(CHISEL_SRC_DIR) -type f -name "*.scala" -or -name "*.sc")
+CHISELSRCS											+= $(SRC_DIR)/Elaborate.scala
 RESOURCES												?= $(shell find $(RESOURCES_DIR) -type f -name "*.v" -or -name "*.sv")
 
 # Rules for NVBoard
