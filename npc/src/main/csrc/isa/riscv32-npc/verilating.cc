@@ -19,7 +19,7 @@ static uint32_t cur_inst;
 // void nvboard_bind_all_pins(TOP_NAME* top);
 
 void sim_end() {
-  set_npc_state(NPC_END, *(cpu.pc), 0);
+  set_npc_state(NPC_END, cpu.pc, 0);
 }
 
 void ifetch(uint32_t inst) {
@@ -48,6 +48,27 @@ void pmem_write(paddr_t waddr, word_t wdata, char wmask) {
   vaddr_write(waddr & ~0x3u, 4, wdata & bit_mask);
 }
 
+static void rvcpu_sync(void) {
+  /* synchronizing cpu with rvcpu */
+  cpu.pc = rvcpu->rootp->RVCPU__DOT__PC;
+  cpu.gpr[0] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_0;
+  cpu.gpr[1] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_1;
+  cpu.gpr[2] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_2;
+  cpu.gpr[3] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_3;
+  cpu.gpr[4] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_4;
+  cpu.gpr[5] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_5;
+  cpu.gpr[6] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_6;
+  cpu.gpr[7] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_7;
+  cpu.gpr[8] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_8;
+  cpu.gpr[9] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_9;
+  cpu.gpr[10] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_10;
+  cpu.gpr[11] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_11;
+  cpu.gpr[12] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_12;
+  cpu.gpr[13] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_13;
+  cpu.gpr[14] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_14;
+  cpu.gpr[15] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_15;
+}
+
 void rvcpu_init(void){
   Verilated::traceEverOn(true);
   contextp = new VerilatedContext;
@@ -57,26 +78,9 @@ void rvcpu_init(void){
   rvcpu->trace(tfp, 5);
   tfp->open("./wave/rvcpu.vcd");
   rvcpu->clock = 0;
-
-  /* binding cpu with rvcpu */
-  cpu.pc = &rvcpu->rootp->RVCPU__DOT__PC;
-  cpu.gpr[0] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_0;
-  cpu.gpr[1] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_1;
-  cpu.gpr[2] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_2;
-  cpu.gpr[3] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_3;
-  cpu.gpr[4] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_4;
-  cpu.gpr[5] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_5;
-  cpu.gpr[6] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_6;
-  cpu.gpr[7] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_7;
-  cpu.gpr[8] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_8;
-  cpu.gpr[9] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_9;
-  cpu.gpr[10] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_10;
-  cpu.gpr[11] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_11;
-  cpu.gpr[12] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_12;
-  cpu.gpr[13] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_13;
-  cpu.gpr[14] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_14;
-  cpu.gpr[15] = &rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_15;
+  rvcpu_sync();
 }
+
 
 void rvcpu_exit(void){
   tfp->close();
@@ -96,6 +100,7 @@ void rvcpu_single_cycle(void) {
   /* time down */
   rvcpu->clock = 0; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
+  rvcpu_sync();
 }
 
 void rvcpu_reset(int n) {
