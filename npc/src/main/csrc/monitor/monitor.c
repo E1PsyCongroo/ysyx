@@ -9,6 +9,7 @@ void init_device();
 void init_sdb();
 void init_disasm();
 void init_ftrace(const char* elf_file);
+void rvcpu_reset(int n);
 
 static void welcome() {
   Log("Trace: %s", MUXDEF(CONFIG_TRACE, ANSI_FMT("ON", ANSI_FG_GREEN), ANSI_FMT("OFF", ANSI_FG_RED)));
@@ -109,6 +110,9 @@ void init_monitor(int argc, char *argv[]) {
 
   /* Load the image to memory. This will overwrite the built-in image. */
   long img_size = load_img();
+
+  /* Initial rvcpu. */
+  rvcpu_reset(1);
 
   /* Initialize differential testing. */
   init_difftest(diff_so_file, img_size, difftest_port);

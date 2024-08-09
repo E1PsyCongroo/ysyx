@@ -4,6 +4,7 @@ void init_monitor(int, char *[]);
 void am_init_monitor();
 void engine_start();
 int is_exit_status_bad();
+void rvcpu_exit(void);
 
 int main(int argc, char *argv[]) {
   /* Initialize the monitor. */
@@ -16,5 +17,7 @@ int main(int argc, char *argv[]) {
   /* Start engine. */
   engine_start();
 
+  /* Exit program */
+  rvcpu_exit();
   return is_exit_status_bad();
 }

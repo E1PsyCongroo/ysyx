@@ -23,6 +23,7 @@ class BrCond extends Module {
 
   io.PCASrc := MuxLookup(io.brType, false.B)(Seq(
     brJ.asUInt -> true.B,
+    brJr.asUInt -> true.B,
     brEq.asUInt -> isEq,
     brNe.asUInt -> isNe,
     brLt.asUInt -> isLt,

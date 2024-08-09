@@ -52,26 +52,44 @@ object ALUControlField extends DecodeField[Instruction, UInt] {
         case SLT.funct3 => aluSlt
         case SLTU.funct3 => aluSltu
         case XOR.funct3 => aluXor
-        case SRL.funct3 => aluSrl
-        case SRA.funct3 => aluSra
+        case SRL.funct3 | SRA.funct3 => op.funct7 match {
+          case SRL.funct7 => aluSrl
+          case SRA.funct7 => aluSra
+          case _ =>dc
+        }
         case OR.funct3 => aluOr
         case AND.funct3 => aluAnd
         case _ => dc
       }
-      case IType => op.funct3 match {
-        case ADDI.funct3 => aluAdd
-        case SLLI.funct3 => aluSll
-        case SLTI.funct3 => aluSlt
-        case SLTIU.funct3 => aluSltu
-        case XORI.funct3 => aluXor
-        case SRLI.funct3 => aluSrl
-        case SRAI.funct3 => aluSra
-        case ORI.funct3 => aluOr
-        case ANDI.funct3 => aluAnd
+      case IType => op.opcode match {
+        case JALR.opcode => aluAdd
+        case LB.opcode | LH.opcode | LW.opcode | LBU.opcode | LHU.opcode => aluAdd
+        case ADDI.opcode | SLLI.opcode | SLTI.opcode | SLTIU.opcode |
+             XORI.opcode | SRLI.opcode | SRAI.opcode | ORI.opcode |
+             ANDI.opcode => op.funct3 match {
+          case ADDI.funct3 => aluAdd
+          case SLLI.funct3 => aluSll
+          case SLTI.funct3 => aluSlt
+          case SLTIU.funct3 => aluSltu
+          case XORI.funct3 => aluXor
+          case SRLI.funct3 | SRAI.funct3 => op.funct7 match {
+            case SRLI.funct7 => aluSrl
+            case SRAI.funct7 => aluSra
+            case _ => dc
+          }
+          case ORI.funct3 => aluOr
+          case ANDI.funct3 => aluAnd
+          case _ => dc
+        }
         case _ => dc
       }
       case SType => aluAdd
-      case BType => aluSub
+      case BType => op.funct3 match {
+        case BEQ.funct3 | BNE.funct3 => aluSub
+        case BLT.funct3 | BGE.funct3 => aluSlt
+        case BLTU.funct3 | BGEU.funct3 => aluSltu
+        case _ => dc
+      }
       case UType => op.opcode match {
         case LUI.opcode => aluBout
         case AUIPC.opcode => aluAdd
@@ -83,8 +101,8 @@ object ALUControlField extends DecodeField[Instruction, UInt] {
 }
 
 object BrControlField extends DecodeField[Instruction, UInt] {
-  import Instruction.InstricitonMap._
   import BrType._
+  import Instruction.InstricitonMap._
   def name: String = "Branch Control Field"
   def chiselType: UInt = UInt(BrType.getWidth.W)
   override def default: BitPat = BitPat(brNone.litValue.U(width.W))
@@ -92,6 +110,9 @@ object BrControlField extends DecodeField[Instruction, UInt] {
     Instruction.instrTypeMap(op.opcode) match {
       case InstructionType.JType => op.opcode match {
         case JAL.opcode => BitPat(brJ.litValue.U(width.W))
+        case _ => default
+      }
+      case InstructionType.IType => op.opcode match {
         case JALR.opcode => BitPat(brJr.litValue.U(width.W))
         case _ => default
       }
@@ -102,6 +123,26 @@ object BrControlField extends DecodeField[Instruction, UInt] {
         case BGE.funct3 | BGEU.funct3 => BitPat(brGe.litValue.U(width.W))
         case _ => default
       }
+      case _ => default
+    }
+  }
+}
+
+object MemValidControlField extends DecodeField[Instruction, Bool] {
+  import Instruction.InstricitonMap._
+  def name: String = " Mem Valid Control Field"
+  def chiselType: Bool = Bool()
+  override def default: BitPat = BitPat.N(1)
+  def genTable(op: Instruction): BitPat = {
+    op.opcode match {
+      case LB.opcode => BitPat.Y(1)
+      case LBU.opcode => BitPat.Y(1)
+      case LH.opcode => BitPat.Y(1)
+      case LHU.opcode => BitPat.Y(1)
+      case LW.opcode => BitPat.Y(1)
+      case SB.opcode => BitPat.Y(1)
+      case SH.opcode => BitPat.Y(1)
+      case SW.opcode => BitPat.Y(1)
       case _ => default
     }
   }
@@ -135,7 +176,7 @@ object MemOpControlField extends DecodeField[Instruction, UInt] {
 }
 
 object MemWenControlField extends DecodeField[Instruction, Bool] {
-  def name: String = "MemWen Control Field"
+  def name: String = "Mem Wen Control Field"
   def chiselType: Bool = Bool()
   def genTable(op: Instruction): BitPat = {
     Instruction.instrTypeMap(op.opcode) match {
@@ -163,6 +204,7 @@ object ALUASrcControlField extends DecodeField[Instruction, UInt] {
 
 object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
   import InstructionType._
+  import Instruction.InstricitonMap._
   import ALUBSrcFrom._
   def name: String = "ALU Bsrc Control Field"
   def chiselType: UInt = UInt(ALUBSrcFrom.getWidth.W)
@@ -170,7 +212,7 @@ object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
     Instruction.instrTypeMap(op.opcode) match {
       case RType | BType => BitPat(fromRs2.litValue.U(width.W))
       case IType => op.opcode match {
-        case Instruction.InstricitonMap.JALR => BitPat(from4.litValue.U(width.W))
+        case JALR.opcode => BitPat(from4.litValue.U(width.W))
         case _ => BitPat(fromImm.litValue.U(width.W))
       }
       case SType | UType => BitPat(fromImm.litValue.U(width.W))
@@ -182,12 +224,17 @@ object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
 
 object WBSrcControlField extends DecodeField[Instruction, UInt] {
   import WBSrcFrom._
+  import Instruction.InstricitonMap._
   def name: String = "Write Back Control Feild"
   def chiselType: UInt = UInt(WBSrcFrom.getWidth.W)
   override def default: BitPat = BitPat(fromALU.litValue.U(width.W))
   def genTable(op: Instruction): BitPat = {
-    Instruction.instrTypeMap(op.opcode) match {
-      case InstructionType.SType => BitPat(fromMem.litValue.U(width.W))
+    op.opcode match {
+      case LB.opcode => BitPat(fromMem.litValue.U(width.W))
+      case LBU.opcode => BitPat(fromMem.litValue.U(width.W))
+      case LH.opcode => BitPat(fromMem.litValue.U(width.W))
+      case LHU.opcode => BitPat(fromMem.litValue.U(width.W))
+      case LW.opcode => BitPat(fromMem.litValue.U(width.W))
       case _ => default
     }
   }
@@ -205,6 +252,7 @@ object EndControlField extends DecodeField[Instruction, Bool] {
   }
 }
 
+
 class ControlIO extends Bundle {
   val instr = Input(UInt(32.W))
   val immType = Output(UInt(ImmType.getWidth.W))
@@ -214,6 +262,7 @@ class ControlIO extends Bundle {
   val aluCtr = Output(UInt(ALUOp.getWidth.W))
   val brType = Output(UInt(BrType.getWidth.W))
   val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
+  val memValid = Output(Bool())
   val memWe = Output(Bool())
   val memOp = Output(UInt(MemOp.getWidth.W))
   val isEnd = Output(Bool())
@@ -236,6 +285,7 @@ class Control extends Module {
       RegWeControlField,
       ALUControlField,
       BrControlField,
+      MemValidControlField,
       MemOpControlField,
       MemWenControlField,
       ALUASrcControlField,
@@ -252,6 +302,7 @@ class Control extends Module {
   io.aluCtr       := decodeResult(ALUControlField)
   io.brType       := decodeResult(BrControlField)
   io.wbSrc        := decodeResult(WBSrcControlField)
+  io.memValid     := decodeResult(MemValidControlField)
   io.memWe        := decodeResult(MemWenControlField)
   io.memOp        := decodeResult(MemOpControlField)
   io.isEnd        := decodeResult(EndControlField)
