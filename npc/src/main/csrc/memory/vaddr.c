@@ -12,7 +12,7 @@ word_t vaddr_ifetch(vaddr_t addr, int len) {
 word_t vaddr_read(vaddr_t addr, int len) {
   word_t data = paddr_read(addr, len);
 #ifdef CONFIG_MTRACE
-  if (MTRACE_COND) { log_write(ANSI_FMT("Read instruction:\t@" FMT_PADDR ", len = %2d, data = " FMT_WORD "\n", ANSI_FG_CYAN), addr, len, data); }
+  if (MTRACE_COND) { log_write(ANSI_FMT("Read memory:\t@" FMT_PADDR ", len = %2d, data = " FMT_WORD "\n", ANSI_FG_CYAN), addr, len, data); }
 #endif
   return data;
 }
