@@ -43,11 +43,11 @@ void pmem_write(paddr_t waddr, word_t wdata, char wmask) {
   int len = 0;
   for (uint32_t i = 0; i < sizeof(word_t); i++) {
     if (wmask & (1 << i)) {
+      bit_mask |= (0xFF << (len * 8));
       len++;
-      bit_mask |= (0xFF << (i * 8));
     }
   }
-  vaddr_write(waddr, len, (wdata & bit_mask) >> ((waddr & 0x3) << 3));
+  vaddr_write(waddr, len, wdata & bit_mask);
 }
 
 static void rvcpu_sync(void) {
