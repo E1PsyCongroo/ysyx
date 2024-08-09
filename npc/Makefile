@@ -30,8 +30,7 @@ CXXSRC              = $(filter-out $(CXXSRC-BLACKLIST-y), $(CXXSRC-y))
 
 # Extract compiler and options from menuconfig
 ifneq ($(CONFIG_CC),)
-# CC = $(call remove_quote,$(CONFIG_CC))
-CC = "ccache gcc"
+CC = $(call remove_quote,$(CONFIG_CC))
 endif
 CFLAGS_BUILD      += $(call remove_quote,$(CONFIG_CC_OPT))
 CFLAGS_BUILD      += $(if $(CONFIG_CC_LTO),-flto,)
