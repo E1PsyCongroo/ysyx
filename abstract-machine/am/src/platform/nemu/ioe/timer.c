@@ -4,13 +4,13 @@
 static uint64_t setup_time;
 
 void __am_timer_init() {
-  setup_time = (uint64_t)inw(RTC_ADDR + 4) << 32;
-  setup_time = setup_time + inw(RTC_ADDR);
+  setup_time = (uint64_t)inl(RTC_ADDR + 4) << 32;
+  setup_time = setup_time + inl(RTC_ADDR);
 }
 
 void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
-  uptime->us = (uint64_t)inw(RTC_ADDR + 4) << 32;
-  uptime->us = uptime->us + inw(RTC_ADDR);
+  uptime->us = (uint64_t)inl(RTC_ADDR + 4) << 32;
+  uptime->us = uptime->us + inl(RTC_ADDR);
   uptime->us -= setup_time;
 }
 
