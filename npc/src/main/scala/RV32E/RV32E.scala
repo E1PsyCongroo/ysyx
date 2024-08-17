@@ -9,16 +9,18 @@ class EndControlIO extends Bundle {
   val reset = Input(Reset())
   val isEnd = Input(Bool())
 }
-class EndControl extends BlackBox {
+class EndControl extends BlackBox with HasBlackBoxResource{
   val io = IO(new EndControlIO)
+  addResource("/EndControl.sv")
 }
 
 class IfetchIO(extentionC: Boolean = false) extends Bundle {
   val inst = Input(UInt(if (extentionC) 16.W else 32.W))
 }
 
-class Ifetch(extentionC: Boolean = false) extends BlackBox {
+class Ifetch(extentionC: Boolean = false) extends BlackBox with HasBlackBoxResource {
   val io = IO(new IfetchIO(extentionC))
+  addResource("/Ifetch.sv")
 }
 
 class RVCPU(

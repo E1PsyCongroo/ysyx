@@ -106,7 +106,6 @@ void assert_fail_msg() {
   isa_reg_display();
   statistic();
   IFDEF(CONFIG_IRINGBUF, print_i_ring_buf());
-  rvcpu_exit();
 }
 
 /* Simulate how the CPU works. */
