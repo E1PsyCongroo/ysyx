@@ -33,13 +33,12 @@ static uint32_t *audio_base = NULL;
 static void SDL_audio_callback(void* userdata, uint8_t* stream, int len) {
   static uint32_t position = 0;
   uint32_t size = len < (audio_base[reg_count] - position) ? len : (audio_base[reg_count] - position);
-  SDL_memcpy(userdata + position, stream, size);
+  SDL_memcpy(stream, userdata + position, size);
   position += size;
   if (audio_base[reg_count] == position) {
     audio_base[reg_count] = 0;
     position = 0;
   }
-  printf("%u %u\n", position, audio_base[reg_count]);
 }
 
 static void audio_io_handler(uint32_t offset, int len, bool is_write) {
