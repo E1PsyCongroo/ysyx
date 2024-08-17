@@ -32,15 +32,15 @@ static uint32_t *audio_base = NULL;
 
 static void SDL_audio_callback(void* userdata, uint8_t* stream, int len) {
   static uint32_t position = 0;
+  SDL_LockAudio();
   uint32_t size = len < (audio_base[reg_count] - position) ? len : (audio_base[reg_count] - position);
   SDL_memcpy(stream, userdata + position, size);
   position += size;
   if (audio_base[reg_count] == position) {
-    SDL_LockAudio();
     audio_base[reg_count] = 0;
-    SDL_UnlockAudio();
     position = 0;
   }
+  SDL_UnlockAudio();
 }
 
 static void audio_io_handler(uint32_t offset, int len, bool is_write) {

@@ -58,7 +58,9 @@ word_t map_read(paddr_t addr, int len, IOMap *map) {
   check_bound(map, addr);
   paddr_t offset = addr - map->low;
   invoke_callback(map->callback, offset, len, false); // prepare data to read
+  SDL_LockAudio();
   word_t ret = host_read(map->space + offset, len);
+  SDL_UnlockAudio();
 #ifdef CONFIG_DTRACE
   if (DTRACE_COND) { log_write(ANSI_FMT("%-16.16s[%s]: @" FMT_PADDR ", len = %2d, data = " FMT_WORD "\n", ANSI_FG_MAGENTA), "Read device", map->name, addr, len, ret); }
 #endif
