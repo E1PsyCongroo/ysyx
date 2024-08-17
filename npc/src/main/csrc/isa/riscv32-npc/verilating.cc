@@ -94,15 +94,14 @@ void rvcpu_exit(void){
 }
 
 void rvcpu_single_cycle(void) {
-  printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->io_inst);
   /* time down */
   rvcpu->clock = 0; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
   rvcpu_sync();
+  printf("pc: " FMT_WORD ", inst: " FMT_WORD ", npc: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->io_inst, rvcpu->rootp->RVCPU__DOT___PCnext_T);
   /* time up */
-  printf("pc: " FMT_WORD ", npc: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->rootp->RVCPU__DOT___PCnext_T);
   uint32_t pc = rvcpu->io_pc;
-  rvcpu->clock = 1;// rvcpu->eval();
+  rvcpu->clock = 1; rvcpu->eval();
   rvcpu->io_inst = vaddr_ifetch(pc, 4); rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
   rvcpu_sync();
