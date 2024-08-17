@@ -104,7 +104,7 @@ void rvcpu_single_cycle(void) {
   uint32_t pc = rvcpu->io_pc;
   rvcpu->clock = 1; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
-  rvcpu->io_inst = vaddr_ifetch(pc, 4);// rvcpu->eval();
+  rvcpu->io_inst = vaddr_ifetch(pc, 4); rvcpu->eval();
   rvcpu_sync();
 }
 
