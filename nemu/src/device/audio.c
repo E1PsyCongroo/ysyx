@@ -33,11 +33,10 @@ static SDL_AudioSpec desired;
 
 static void SDL_audio_callback(void* userdata, uint8_t* stream, int len) {
   static uint32_t position = 0;
-  uint32_t size = len < audio_base[reg_count] ? len : audio_base[reg_count];
+  uint32_t size = len < (audio_base[reg_count] - position) ? len : (audio_base[reg_count] - position);
   SDL_memcpy(userdata + position, stream, size);
   position += size;
-  audio_base[reg_count] -= size;
-  if (audio_base[reg_count] == 0) {
+  if (audio_base[reg_count] == position) {
     position = 0;
   }
 }
