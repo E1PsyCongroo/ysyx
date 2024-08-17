@@ -1,22 +1,8 @@
-/***************************************************************************************
-* Copyright (c) 2014-2022 Zihao Yu, Nanjing University
-*
-* NEMU is licensed under Mulan PSL v2.
-* You can use this software according to the terms and conditions of the Mulan PSL v2.
-* You may obtain a copy of Mulan PSL v2 at:
-*          http://license.coscl.org.cn/MulanPSL2
-*
-* THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
-* EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
-* MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-*
-* See the Mulan PSL v2 for more details.
-***************************************************************************************/
-
 #include <isa.h>
 #include <memory/host.h>
 #include <memory/vaddr.h>
 #include <device/map.h>
+#include <SDL2/SDL.h>
 
 #define IO_SPACE_MAX (2 * 1024 * 1024)
 
@@ -57,14 +43,24 @@ word_t map_read(paddr_t addr, int len, IOMap *map) {
   check_bound(map, addr);
   paddr_t offset = addr - map->low;
   invoke_callback(map->callback, offset, len, false); // prepare data to read
+  SDL_LockAudio();
   word_t ret = host_read(map->space + offset, len);
+  SDL_UnlockAudio();
+#ifdef CONFIG_DTRACE
+  if (DTRACE_COND) { log_write(ANSI_FMT("%-16.16s[%s]: @" FMT_PADDR ", len = %2d, data = " FMT_WORD "\n", ANSI_FG_MAGENTA), "Read device", map->name, addr, len, ret); }
+#endif
   return ret;
 }
 
 void map_write(paddr_t addr, int len, word_t data, IOMap *map) {
+#ifdef CONFIG_DTRACE
+  if (DTRACE_COND) { log_write(ANSI_FMT("%-16.16s[%s]: @" FMT_PADDR ", len = %2d, data = " FMT_WORD "\n", ANSI_FG_MAGENTA), "Write device", map->name, addr, len, data); }
+#endif
   assert(len >= 1 && len <= 8);
   check_bound(map, addr);
   paddr_t offset = addr - map->low;
+  SDL_LockAudio();
   host_write(map->space + offset, len, data);
+  SDL_UnlockAudio();
   invoke_callback(map->callback, offset, len, true);
 }
