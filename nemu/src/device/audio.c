@@ -58,6 +58,7 @@ static void audio_io_handler(uint32_t offset, int len, bool is_write) {
       desired.userdata = sbuf;
       SDL_OpenAudio(&desired, NULL);
       SDL_PauseAudio(0);
+      printf("here\n");
     }
   }
   else {
