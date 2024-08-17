@@ -1,5 +1,6 @@
 #include <am.h>
 #include <nemu.h>
+#include <string.h>
 
 #define SYNC_ADDR (VGACTL_ADDR + 4)
 
@@ -27,9 +28,7 @@ void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *ctl) {
   int base_fb = ctl->y * width + ctl->x;
   int base_pixels = 0;
   for (int y = 0; y < ctl->h; y++) {
-    for (int x = 0; x < ctl->w; x++) {
-      fb[base_fb + x] = pixels[base_pixels + x];
-    }
+    memcpy(fb + base_fb, pixels + base_pixels, ctl->w);
     base_fb += width;
     base_pixels += ctl->w;
   }
