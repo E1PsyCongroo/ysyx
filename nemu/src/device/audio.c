@@ -33,7 +33,8 @@ static uint32_t *audio_base = NULL;
 static void SDL_audio_callback(void* userdata, uint8_t* stream, int len) {
   static uint32_t read_position = 0;
   SDL_LockAudio();
-  uint32_t size = len < (audio_base[reg_count] - read_position) ? len : (audio_base[reg_count] - read_position);
+  uint32_t available_size = audio_base[reg_count] - read_position;
+  uint32_t size = len < available_size ? len : available_size;
   SDL_memcpy(stream, userdata + read_position, size);
   read_position += size;
   if (read_position > CONFIG_SB_SIZE / 2) {
@@ -42,12 +43,6 @@ static void SDL_audio_callback(void* userdata, uint8_t* stream, int len) {
     read_position = 0;
   }
   SDL_UnlockAudio();
-  // SDL_LockAudio();
-  // uint32_t size = len < audio_base[reg_count] ? len : audio_base[reg_count];
-  // SDL_memcpy(stream, userdata, size);
-  // SDL_memmove(userdata, userdata+size, audio_base[reg_count] - size);
-  // audio_base[reg_count] -= size;
-  // SDL_UnlockAudio();
 }
 
 static void audio_io_handler(uint32_t offset, int len, bool is_write) {
