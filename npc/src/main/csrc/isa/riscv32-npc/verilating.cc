@@ -103,8 +103,8 @@ void rvcpu_single_cycle(void) {
   printf("pc: " FMT_WORD ", npc: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->rootp->RVCPU__DOT___PCnext_T);
   uint32_t pc = rvcpu->io_pc;
   rvcpu->clock = 1; rvcpu->eval();
-  rvcpu->io_inst = vaddr_ifetch(pc, 4); rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
+  rvcpu->io_inst = vaddr_ifetch(pc, 4);// rvcpu->eval();
   rvcpu_sync();
 }
 
