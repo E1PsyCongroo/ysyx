@@ -24,11 +24,11 @@ $(BINARY):: compile_git
 
 # Some convenient rules
 
-ARGS += --log=$(BUILD_DIR)/nemu-log.txt
+override ARGS += --log=$(BUILD_DIR)/nemu-log.txt
 ifdef ELF
-ARGS += --elf=$(ELF)
+override ARGS += --elf=$(ELF)
 endif
-ARGS += $(ARGS_DIFF)
+override ARGS += $(ARGS_DIFF)
 
 # Command to execute NEMU
 IMG ?=
