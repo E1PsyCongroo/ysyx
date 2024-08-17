@@ -42,7 +42,7 @@ static void SDL_audio_callback(void* userdata, uint8_t* stream, int len) {
   // }
   // SDL_UnlockAudio();
   uint32_t size = len < audio_base[reg_count] ? len : audio_base[reg_count];
-  SDL_memcmp(stream, userdata, size);
+  SDL_memcpy(stream, userdata, size);
   SDL_LockAudio();
   SDL_memmove(userdata, userdata+size, audio_base[reg_count] - size);
   audio_base[reg_count] -= size;
