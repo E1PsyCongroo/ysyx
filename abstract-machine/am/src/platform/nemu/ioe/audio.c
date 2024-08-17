@@ -1,5 +1,6 @@
 #include <am.h>
 #include <nemu.h>
+#include <string.h>
 
 #define AUDIO_FREQ_ADDR      (AUDIO_ADDR + 0x00)
 #define AUDIO_CHANNELS_ADDR  (AUDIO_ADDR + 0x04)
@@ -12,15 +13,30 @@ void __am_audio_init() {
 }
 
 void __am_audio_config(AM_AUDIO_CONFIG_T *cfg) {
-  cfg->present = false;
+  cfg->present = true;
+  cfg->bufsize = inl(AUDIO_SBUF_SIZE_ADDR);
 }
 
 void __am_audio_ctrl(AM_AUDIO_CTRL_T *ctrl) {
+  outl(AUDIO_FREQ_ADDR, ctrl->freq);
+  outl(AUDIO_CHANNELS_ADDR, ctrl->channels);
+  outl(AUDIO_SAMPLES_ADDR, ctrl->samples);
+  outl(AUDIO_INIT_ADDR, 1);
 }
 
 void __am_audio_status(AM_AUDIO_STATUS_T *stat) {
-  stat->count = 0;
+  stat->count = inl(AUDIO_COUNT_ADDR);
 }
 
 void __am_audio_play(AM_AUDIO_PLAY_T *ctl) {
+  uint32_t bufsize = inl(AUDIO_SBUF_SIZE_ADDR);
+  uint32_t write_size = (uint8_t*)ctl->buf.end - (uint8_t*)ctl->buf.start;
+  uint32_t count;
+  do {
+    count = inl(AUDIO_COUNT_ADDR);
+  } while (write_size > (bufsize - count));
+  uint8_t *sbuf = (uint8_t*)(uintptr_t)AUDIO_SBUF_ADDR;
+  memcpy(sbuf + count, ctl->buf.start, write_size);
+  count += write_size;
+  outl(AUDIO_COUNT_ADDR, count);
 }
