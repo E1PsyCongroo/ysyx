@@ -47,7 +47,7 @@ static void audio_io_handler(uint32_t offset, int len, bool is_write) {
            offset == reg_samples * sizeof(uint32_t) || offset == reg_init * sizeof(uint32_t) ||
            offset == reg_count * sizeof(uint32_t));
     if (offset == reg_init * sizeof(uint32_t)) {
-      SDL_Init(SDL_INIT_AUDIO);
+      SDL_InitSubSystem(SDL_INIT_AUDIO);
       SDL_AudioSpec desired;
       SDL_memset(&desired, 0, sizeof(desired));
       desired.freq = audio_base[reg_freq];
