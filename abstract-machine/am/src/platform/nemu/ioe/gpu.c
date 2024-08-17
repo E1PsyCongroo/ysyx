@@ -28,7 +28,7 @@ void __am_gpu_fbdraw(AM_GPU_FBDRAW_T *ctl) {
   int base_fb = ctl->y * width + ctl->x;
   int base_pixels = 0;
   for (int y = 0; y < ctl->h; y++) {
-    memcpy(fb + base_fb, pixels + base_pixels, ctl->w);
+    memcpy(fb + base_fb, pixels + base_pixels, ctl->w * sizeof(uint32_t));
     base_fb += width;
     base_pixels += ctl->w;
   }
