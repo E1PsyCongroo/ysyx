@@ -8,6 +8,7 @@ extern "C" {
 #include <memory/vaddr.h>
 #include <memory/paddr.h>
 #include <cpu/cpu.h>
+#include "local-include/verilating.h"
 }
 
 extern "C"{
@@ -81,8 +82,9 @@ void rvcpu_init(void){
   tfp->open("./wave/rvcpu.vcd");
   rvcpu->clock = 0;
   rvcpu_sync();
+  /* Exit */
+  atexit(rvcpu_exit);
 }
-
 
 void rvcpu_exit(void){
   tfp->close();
