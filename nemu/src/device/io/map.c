@@ -17,6 +17,7 @@
 #include <memory/host.h>
 #include <memory/vaddr.h>
 #include <device/map.h>
+#include <SDL2/SDL.h>
 
 #define IO_SPACE_MAX (2 * 1024 * 1024)
 
@@ -71,6 +72,8 @@ void map_write(paddr_t addr, int len, word_t data, IOMap *map) {
   assert(len >= 1 && len <= 8);
   check_bound(map, addr);
   paddr_t offset = addr - map->low;
+  SDL_LockAudio();
   host_write(map->space + offset, len, data);
+  SDL_UnlockAudio();
   invoke_callback(map->callback, offset, len, true);
 }
