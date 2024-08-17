@@ -31,15 +31,21 @@ static uint8_t *sbuf = NULL;
 static uint32_t *audio_base = NULL;
 
 static void SDL_audio_callback(void* userdata, uint8_t* stream, int len) {
-  static uint32_t position = 0;
+  // static uint32_t position = 0;
+  // SDL_LockAudio();
+  // uint32_t size = len < (audio_base[reg_count] - position) ? len : (audio_base[reg_count] - position);
+  // SDL_memcpy(stream, userdata + position, size);
+  // position += size;
+  // if (audio_base[reg_count] == position) {
+  //   audio_base[reg_count] = 0;
+  //   position = 0;
+  // }
+  // SDL_UnlockAudio();
+  uint32_t size = len < audio_base[reg_count] ? len : audio_base[reg_count];
+  SDL_memcmp(stream, userdata, size);
   SDL_LockAudio();
-  uint32_t size = len < (audio_base[reg_count] - position) ? len : (audio_base[reg_count] - position);
-  SDL_memcpy(stream, userdata + position, size);
-  position += size;
-  if (audio_base[reg_count] == position) {
-    audio_base[reg_count] = 0;
-    position = 0;
-  }
+  SDL_memmove(userdata, userdata+size, audio_base[reg_count] - size);
+  audio_base[reg_count] -= size;
   SDL_UnlockAudio();
 }
 
