@@ -37,6 +37,7 @@ static void SDL_audio_callback(void* userdata, uint8_t* stream, int len) {
   SDL_memcpy(userdata + position, stream, size);
   position += size;
   if (audio_base[reg_count] == position) {
+    audio_base[reg_count] = 0;
     position = 0;
   }
 }
