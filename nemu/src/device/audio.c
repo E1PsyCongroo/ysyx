@@ -39,6 +39,7 @@ static void SDL_audio_callback(void* userdata, uint8_t* stream, int len) {
     audio_base[reg_count] = 0;
     position = 0;
   }
+  printf("%u %u\n", position, audio_base[reg_count]);
 }
 
 static void audio_io_handler(uint32_t offset, int len, bool is_write) {
@@ -58,7 +59,6 @@ static void audio_io_handler(uint32_t offset, int len, bool is_write) {
       desired.userdata = sbuf;
       SDL_OpenAudio(&desired, NULL);
       SDL_PauseAudio(0);
-      printf("here\n");
     }
   }
   else {
