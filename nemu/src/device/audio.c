@@ -31,15 +31,15 @@ static uint8_t *sbuf = NULL;
 static uint32_t *audio_base = NULL;
 
 static void SDL_audio_callback(void* userdata, uint8_t* stream, int len) {
-  static uint32_t position = 0;
+  static uint32_t read_position = 0;
   SDL_LockAudio();
-  uint32_t size = len < (audio_base[reg_count] - position) ? len : (audio_base[reg_count] - position);
-  SDL_memcpy(stream, userdata + position, size);
-  position += size;
-  if (position > CONFIG_SB_SIZE / 2) {
-    audio_base[reg_count] -= position;
-    SDL_memmove(userdata, userdata+position, audio_base[reg_count] - position);
-    position = 0;
+  uint32_t size = len < (audio_base[reg_count] - read_position) ? len : (audio_base[reg_count] - read_position);
+  SDL_memcpy(stream, userdata + read_position, size);
+  read_position += size;
+  if (read_position > CONFIG_SB_SIZE / 2) {
+    SDL_memmove(userdata, userdata + read_position, audio_base[reg_count] - read_position);
+    audio_base[reg_count] -= read_position;
+    read_position = 0;
   }
   SDL_UnlockAudio();
   // SDL_LockAudio();
