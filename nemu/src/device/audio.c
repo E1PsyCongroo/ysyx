@@ -37,7 +37,7 @@ static void SDL_audio_callback(void* userdata, uint8_t* stream, int len) {
   uint32_t size = len < available_size ? len : available_size;
   SDL_memcpy(stream, userdata + read_position, size);
   read_position += size;
-  if (read_position > CONFIG_SB_SIZE / 2) {
+  if (read_position > CONFIG_SB_SIZE / 2 || read_position == audio_base[reg_count]) {
     SDL_memmove(userdata, userdata + read_position, audio_base[reg_count] - read_position);
     audio_base[reg_count] -= read_position;
     read_position = 0;
