@@ -19,7 +19,7 @@
 #include <cpu/decode.h>
 
 #define R(i) gpr(i)
-#define CSR(csr) (cpu. ## csr)
+#define CSR(csr_num) csr(csr_num)
 #define Mr vaddr_read
 #define Mw vaddr_write
 #define DIV(src1, src2) ( \
@@ -37,8 +37,8 @@
 #define ECALL isa_raise_intr
 
 enum {
-  TYPE_R, TYPE_I, TYPE_S, TYPE_B, TYPE_U,
-  TYPE_J, TYPE_N, // none
+  TYPE_R, TYPE_I, TYPE_IC, TYPE_S,
+  TYPE_B, TYPE_U, TYPE_J, TYPE_N, // none
 };
 
 #define src1R() do { *src1 = R(rs1); } while (0)
@@ -54,6 +54,7 @@ enum {
   *imm = (SEXT(BITS(i, 31, 31), 1) << 20) | (BITS(i, 19, 12) << 12) | \
          (BITS(i, 20, 20) << 11) | (BITS(i, 30, 21) << 1); \
 } while(0)
+#define srcUI() do { *src1 = rs1; } while (0)
 
 static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_t *imm, int type) {
   uint32_t i = s->isa.inst.val;
@@ -63,6 +64,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
   switch (type) {
     case TYPE_R: src1R(); src2R();         break;
     case TYPE_I: src1R();          immI(); break;
+    case TYPE_IC:srcUI();          immI(); break;
     case TYPE_S: src1R(); src2R(); immS(); break;
     case TYPE_B: src1R(); src2R(); immB(); break;
     case TYPE_U:                   immU(); break;
@@ -134,15 +136,15 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, R(rd) = REM((sword_t)src1, (sword_t)src2));
   INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, R(rd) = REMU(src1, src2));
 
-  // /* Zicsr */
-  // INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I, if (rd != 0) { R(rd) = *Csr(imm); }; *Csr(imm) = src1);
-  // INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I, IFDEF(CONFIG_DIFFTEST, difftest_skip_ref()); R(rd) = *Csr(imm); *Csr(imm) |= src1);
-  // INSTPAT("??????? ????? ????? 011 ????? 11100 11", csrrc  , I, R(rd) = *Csr(imm); *Csr(imm) &= ~src1);
-  // INSTPAT("??????? ????? ????? 101 ????? 11100 11", csrrwi , C, if (rd != 0) { R(rd) = *Csr(imm); }; *Csr(imm) = src1);
-  // INSTPAT("??????? ????? ????? 110 ????? 11100 11", csrrsi , C, IFDEF(CONFIG_DIFFTEST, difftest_skip_ref()); R(rd) = *Csr(imm); *Csr(imm) |= src1);
-  // INSTPAT("??????? ????? ????? 111 ????? 11100 11", csrrci , C, R(rd) = *Csr(imm); *Csr(imm) &= ~src1);
-  // /* Machine-Mode Privileged Instructions */
-  // INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , R, IFDEF(CONFIG_DIFFTEST, difftest_skip_ref()); MRET; IFDEF(CONFIG_ETRACE, etrace(s->isa.inst.val, s->pc, s->dnpc)));
+  /* Zicsr */
+  INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I, if (rd != 0) { R(rd) = CSR(imm); }; CSR(imm) = src1);
+  INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I, R(rd) = CSR(imm); CSR(imm) |= src1);
+  INSTPAT("??????? ????? ????? 011 ????? 11100 11", csrrc  , I, R(rd) = CSR(imm); CSR(imm) &= ~src1);
+  INSTPAT("??????? ????? ????? 101 ????? 11100 11", csrrwi , IC, if (rd != 0) { R(rd) = CSR(imm); }; CSR(imm) = src1);
+  INSTPAT("??????? ????? ????? 110 ????? 11100 11", csrrsi , IC, R(rd) = CSR(imm); CSR(imm) |= src1);
+  INSTPAT("??????? ????? ????? 111 ????? 11100 11", csrrci , IC, R(rd) = CSR(imm); CSR(imm) &= ~src1);
+  /* Machine-Mode Privileged Instructions */
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , R, s->dnpc = cpu.mepc; IFDEF(CONFIG_ETRACE, etrace(s->isa.inst.val, s->pc, s->dnpc)));
 
 
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));

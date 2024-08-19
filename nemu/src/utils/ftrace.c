@@ -95,11 +95,7 @@ void ftrace(uint32_t instruction, word_t pc, word_t dnpc) {
   __VA_ARGS__ ; \
 }
   INSTPAT_START();
-  // uint32_t opcode = BITS(instruction, 6, 0);
-  // uint32_t rs1 = BITS(instruction, 19, 15);
-  // uint32_t rd = BITS(instruction, 11, 7);
-  // const uint32_t jal_opcode = 0b1101111;
-  // const uint32_t jalr_opcode = 0b1100111;
+  /* function call (jal ra, func | jalr ra, offset(rs1)) */
   INSTPAT("??????? ????? ????? ??? 00001 110?1 11",
     log_write(
       ANSI_FMT(FMT_WORD ": %*scall[%s->%s@" FMT_WORD "]\n", ANSI_FG_YELLOW),
@@ -107,6 +103,7 @@ void ftrace(uint32_t instruction, word_t pc, word_t dnpc) {
     );
     num_space += 1;
   );
+  /* function ret (jalr x0, 0(ra)) */
   INSTPAT("??????? ????? 00001 ??? 00000 11001 11",
     num_space = num_space == 0 ? 0 : num_space - 1;
     log_write(
@@ -114,22 +111,6 @@ void ftrace(uint32_t instruction, word_t pc, word_t dnpc) {
       pc, num_space, "", current_func, trace_name, dnpc
     );
   );
-  // if (((opcode == jal_opcode) | (opcode == jalr_opcode)) && rd == 1) {
-  //   /* function call (jal ra, func | jalr ra, offset(rs1)) */
-  //   log_write(
-  //     ANSI_FMT(FMT_WORD ": %*scall[%s->%s@" FMT_WORD "]\n", ANSI_FG_YELLOW),
-  //     pc, num_space, "", current_func, trace_name, dnpc
-  //   );
-  //   num_space += 1;
-  // }
-  // else if ((opcode == jalr_opcode) && (rs1 == 1) && (rd == 0)) {
-  //   /* function ret (jalr x0, 0(ra)) */
-  //   num_space = num_space == 0 ? 0 : num_space - 1;
-  //   log_write(
-  //     ANSI_FMT(FMT_WORD ": %*sret[%s->%s@" FMT_WORD "]\n", ANSI_FG_YELLOW),
-  //     pc, num_space, "", current_func, trace_name, dnpc
-  //   );
-  // }
   INSTPAT_END();
   current_func = trace_name;
 }
