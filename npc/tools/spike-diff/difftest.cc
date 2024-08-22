@@ -130,7 +130,7 @@ __EXPORT void difftest_init(int port) {
       NULL,
       true);
   s->diff_init(port);
-  std::cout << "init spike\n";
+  puts("init spike");
 }
 
 __EXPORT void difftest_raise_intr(uint64_t NO) {
