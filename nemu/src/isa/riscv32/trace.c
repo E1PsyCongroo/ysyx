@@ -134,7 +134,7 @@ void etrace(uint32_t instruction, word_t pc) {
   INSTPAT("0011000 00010 00000 000 00000 11100 11",
     num_space = num_space == 0 ? 0 : num_space - 1;
     log_write(
-      ANSI_FMT(FMT_WORD ": %*sException return: %s@" FMT_WORD "\n", ANSI_FG_WHITE),
+      ANSI_FMT(FMT_WORD ": %*sException return: [%s@" FMT_WORD "]\n", ANSI_FG_WHITE),
       pc, num_space, "", current_func, cpu.mepc
     );
 
