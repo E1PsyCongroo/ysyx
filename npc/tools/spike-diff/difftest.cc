@@ -61,7 +61,6 @@ void sim_t::diff_get_regs(void* diff_context) {
     ctx->gpr[i] = state->XPR[i];
   }
   ctx->pc = state->pc;
-  printf("here\n");
   ctx->mepc = state->mepc->read();
   ctx->mstatus = state->mstatus->read();
   ctx->mcause = state->mcause->read();
@@ -98,6 +97,7 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
 }
 
 __EXPORT void difftest_regcpy(void* dut, bool direction) {
+  printf("here\n");
   if (direction == DIFFTEST_TO_REF) {
     s->diff_set_regs(dut);
   } else {
