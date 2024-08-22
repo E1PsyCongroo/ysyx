@@ -5,27 +5,28 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
 
-import Instruction.InstructionType
+import Instruction._
 
 object ImmControlField extends DecodeField[Instruction, UInt] {
   def name = "Imm Control Field"
   def chiselType: UInt = UInt(ImmType.getWidth.W)
   def genTable(op: Instruction): BitPat = {
-    Instruction.immTypeMap.getOrElse(Instruction.instrTypeMap(op.opcode), dc)
+    immTypeMap.getOrElse(instrTypeMap(op.opcode), dc)
   }
 }
 
 object RegWeControlField extends DecodeField[Instruction, Bool] {
+  import InstructionType._
   def name = "Reg We Control Field"
   def chiselType: Bool = Bool()
   def genTable(op: Instruction): BitPat = {
-    Instruction.instrTypeMap(op.opcode) match {
-      case InstructionType.RType => BitPat.Y(1)
-      case InstructionType.IType => BitPat.Y(1)
-      case InstructionType.SType => BitPat.N(1)
-      case InstructionType.BType => BitPat.N(1)
-      case InstructionType.UType => BitPat.Y(1)
-      case InstructionType.JType => BitPat.Y(1)
+    instrTypeMap(op.opcode) match {
+      case RType => BitPat.Y(1)
+      case IType => BitPat.Y(1)
+      case SType => BitPat.N(1)
+      case BType => BitPat.N(1)
+      case UType => BitPat.Y(1)
+      case JType => BitPat.Y(1)
       case _ => dc
     }
   }
@@ -35,10 +36,10 @@ object ALUControlField extends DecodeField[Instruction, UInt] {
   def name = "ALU Control Field"
   def chiselType: UInt = UInt(ALUOp.getWidth.W)
   def genTable(op: Instruction): BitPat = {
-    import Instruction.InstricitonMap._
+    import InstricitonMap._
     import InstructionType._
     import ALUOp._
-    Instruction.instrTypeMap(op.opcode) match {
+    instrTypeMap(op.opcode) match {
       case RType => op.funct3 match {
         case ADD.funct3 => op.funct7 match {
           case ADD.funct7 => aluAdd
@@ -99,21 +100,22 @@ object ALUControlField extends DecodeField[Instruction, UInt] {
 
 object BrControlField extends DecodeField[Instruction, UInt] {
   import BrType._
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
+  import InstructionType._
   def name: String = "Branch Control Field"
   def chiselType: UInt = UInt(BrType.getWidth.W)
   override def default: BitPat = brNone
   def genTable(op: Instruction): BitPat = {
-    Instruction.instrTypeMap(op.opcode) match {
-      case InstructionType.JType => op.opcode match {
+    instrTypeMap(op.opcode) match {
+      case JType => op.opcode match {
         case JAL.opcode => brJ
         case _ => default
       }
-      case InstructionType.IType => op.opcode match {
+      case IType => op.opcode match {
         case JALR.opcode => brJr
         case _ => default
       }
-      case InstructionType.BType => op.funct3 match {
+      case BType => op.funct3 match {
         case BEQ.funct3 => brEq
         case BNE.funct3 => brNe
         case BLT.funct3 | BLTU.funct3 => brLt
@@ -126,7 +128,7 @@ object BrControlField extends DecodeField[Instruction, UInt] {
 }
 
 object MemValidControlField extends DecodeField[Instruction, Bool] {
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
   def name: String = " Mem Valid Control Field"
   def chiselType: Bool = Bool()
   override def default: BitPat = BitPat.N(1)
@@ -146,13 +148,13 @@ object MemValidControlField extends DecodeField[Instruction, Bool] {
 }
 
 object MemOpControlField extends DecodeField[Instruction, UInt] {
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
   import InstructionType._
   import MemOp._
   def name: String = "MemOp Control Field"
   def chiselType: UInt = UInt(MemOp.getWidth.W)
   def genTable(op: Instruction): BitPat = {
-    Instruction.instrTypeMap(op.opcode) match {
+    instrTypeMap(op.opcode) match {
       case IType => op.funct3 match {
         case LB.funct3 => memB
         case LH.funct3 => memH
@@ -176,7 +178,7 @@ object MemWenControlField extends DecodeField[Instruction, Bool] {
   def name: String = "Mem Wen Control Field"
   def chiselType: Bool = Bool()
   def genTable(op: Instruction): BitPat = {
-    Instruction.instrTypeMap(op.opcode) match {
+    instrTypeMap(op.opcode) match {
       case InstructionType.SType => BitPat.Y(1)
       case _ => BitPat.N(1)
     }
@@ -184,7 +186,7 @@ object MemWenControlField extends DecodeField[Instruction, Bool] {
 }
 
 object ALUASrcControlField extends DecodeField[Instruction, UInt] {
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
   import ALUASrcFrom._
   def name: String = "ALU Asrc Control Field"
   def chiselType: UInt = UInt(ALUASrcFrom.getWidth.W)
@@ -199,12 +201,12 @@ object ALUASrcControlField extends DecodeField[Instruction, UInt] {
 
 object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
   import InstructionType._
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
   import ALUBSrcFrom._
   def name: String = "ALU Bsrc Control Field"
   def chiselType: UInt = UInt(ALUBSrcFrom.getWidth.W)
   def genTable(op: Instruction): BitPat = {
-    Instruction.instrTypeMap(op.opcode) match {
+    instrTypeMap(op.opcode) match {
       case RType | BType => fromRs2
       case IType => op.opcode match {
         case JALR.opcode => from4
@@ -219,7 +221,7 @@ object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
 
 object WBSrcControlField extends DecodeField[Instruction, UInt] {
   import WBSrcFrom._
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
   def name: String = "Write Back Control Feild"
   def chiselType: UInt = UInt(WBSrcFrom.getWidth.W)
   override def default: BitPat = fromALU
@@ -233,7 +235,7 @@ object WBSrcControlField extends DecodeField[Instruction, UInt] {
 }
 
 object EndControlField extends DecodeField[Instruction, Bool] {
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
   def name: String = "End Control Feild"
   def chiselType: Bool = Bool()
   def genTable(op: Instruction): BitPat = {
@@ -262,7 +264,7 @@ class ControlIO extends Bundle {
 
 class Control extends Module {
   val io = IO(new ControlIO)
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
 
   val possiblePatterns = Seq(
     LUI, AUIPC, JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU,
