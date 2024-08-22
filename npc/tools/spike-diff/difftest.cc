@@ -72,7 +72,7 @@ void sim_t::diff_set_regs(void* diff_context) {
   for (int i = 0; i < NR_GPR; i++) {
     state->XPR.write(i, (sword_t)ctx->gpr[i]);
   }
-  state->pc = ctx->pc;
+  state->pc = ctx->pc + 1;
   state->mepc->write(ctx->mepc);
   state->mstatus->write(ctx->mstatus);
   state->mcause->write(ctx->mcause);
@@ -130,7 +130,6 @@ __EXPORT void difftest_init(int port) {
       NULL,
       true);
   s->diff_init(port);
-  assert(0);
 }
 
 __EXPORT void difftest_raise_intr(uint64_t NO) {
