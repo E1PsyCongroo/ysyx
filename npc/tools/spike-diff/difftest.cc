@@ -97,7 +97,6 @@ __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction)
 }
 
 __EXPORT void difftest_regcpy(void* dut, bool direction) {
-  printf("here\n");
   if (direction == DIFFTEST_TO_REF) {
     s->diff_set_regs(dut);
   } else {
@@ -131,6 +130,7 @@ __EXPORT void difftest_init(int port) {
       NULL,
       true);
   s->diff_init(port);
+  std::cout << "init spike\n";
 }
 
 __EXPORT void difftest_raise_intr(uint64_t NO) {
