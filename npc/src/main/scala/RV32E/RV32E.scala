@@ -69,15 +69,15 @@ class RVCPU(
   EndControl.io.isEnd := Control.io.isEnd
 
   /* Instruction Execution */
-  val aluASrc = MuxLookup(Control.io.aluASrc, PC)(Seq(
-    ALUASrcFrom.fromPc.asUInt   -> PC,
-    ALUASrcFrom.fromRs1.asUInt  -> RegFile.io.rd1,
-  ))
-  val aluBSrc = MuxLookup(Control.io.aluBSrc, 4.U)(Seq(
-    ALUBSrcFrom.from4.asUInt    -> 4.U,
-    ALUBSrcFrom.fromRs2.asUInt  -> RegFile.io.rd2,
-    ALUBSrcFrom.fromImm.asUInt  -> ImmGen.io.imm,
-  ))
+  val aluASrc = MuxCase(PC, Seq(
+    ALUASrcFrom.fromPc   -> PC,
+    ALUASrcFrom.fromRs1  -> RegFile.io.rd1,
+  ).map{ case(key, data) => (Control.io.aluASrc === key, data) })
+  val aluBSrc = MuxCase(4.U, Seq(
+    ALUBSrcFrom.from4   -> 4.U,
+    ALUBSrcFrom.fromRs2 -> RegFile.io.rd2,
+    ALUBSrcFrom.fromImm -> ImmGen.io.imm,
+  ).map { case(key, data) => (Control.io.aluBSrc === key, data) })
   ALU.io.inA          := aluASrc
   ALU.io.inB          := aluBSrc
   ALU.io.aluCtr       := Control.io.aluCtr
@@ -99,10 +99,10 @@ class RVCPU(
   Mem.io.wdata        := RegFile.io.rd2
 
   /* Write Back */
-  val writeToReg = MuxLookup(Control.io.wbSrc, ALU.io.aluOut)(Seq(
-    WBSrcFrom.fromALU.asUInt -> ALU.io.aluOut,
-    WBSrcFrom.fromMem.asUInt -> Mem.io.rdata,
-  ))
+  val writeToReg = MuxCase(ALU.io.aluOut, Seq(
+    WBSrcFrom.fromALU -> ALU.io.aluOut,
+    WBSrcFrom.fromMem -> Mem.io.rdata,
+  ).map{ case(key, data) => (Control.io.wbSrc === key, data) })
   RegFile.io.we       := Control.io.regWe
   RegFile.io.wd       := writeToReg
 }

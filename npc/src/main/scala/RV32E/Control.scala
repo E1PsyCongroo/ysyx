@@ -11,10 +11,7 @@ object ImmControlField extends DecodeField[Instruction, UInt] {
   def name = "Imm Control Field"
   def chiselType: UInt = UInt(ImmType.getWidth.W)
   def genTable(op: Instruction): BitPat = {
-    Instruction.immTypeMap.get(Instruction.instrTypeMap(op.opcode)) match {
-      case Some(immType) => BitPat(immType.litValue.U(width.W))
-      case None => dc
-    }
+    Instruction.immTypeMap.getOrElse(Instruction.instrTypeMap(op.opcode), dc)
   }
 }
 
@@ -105,22 +102,22 @@ object BrControlField extends DecodeField[Instruction, UInt] {
   import Instruction.InstricitonMap._
   def name: String = "Branch Control Field"
   def chiselType: UInt = UInt(BrType.getWidth.W)
-  override def default: BitPat = BitPat(brNone.litValue.U(width.W))
+  override def default: BitPat = brNone
   def genTable(op: Instruction): BitPat = {
     Instruction.instrTypeMap(op.opcode) match {
       case InstructionType.JType => op.opcode match {
-        case JAL.opcode => BitPat(brJ.litValue.U(width.W))
+        case JAL.opcode => brJ
         case _ => default
       }
       case InstructionType.IType => op.opcode match {
-        case JALR.opcode => BitPat(brJr.litValue.U(width.W))
+        case JALR.opcode => brJr
         case _ => default
       }
       case InstructionType.BType => op.funct3 match {
-        case BEQ.funct3 => BitPat(brEq.litValue.U(width.W))
-        case BNE.funct3 => BitPat(brNe.litValue.U(width.W))
-        case BLT.funct3 | BLTU.funct3 => BitPat(brLt.litValue.U(width.W))
-        case BGE.funct3 | BGEU.funct3 => BitPat(brGe.litValue.U(width.W))
+        case BEQ.funct3 => brEq
+        case BNE.funct3 => brNe
+        case BLT.funct3 | BLTU.funct3 => brLt
+        case BGE.funct3 | BGEU.funct3 => brGe
         case _ => default
       }
       case _ => default
@@ -191,12 +188,10 @@ object ALUASrcControlField extends DecodeField[Instruction, UInt] {
   import ALUASrcFrom._
   def name: String = "ALU Asrc Control Field"
   def chiselType: UInt = UInt(ALUASrcFrom.getWidth.W)
-  override def default: BitPat = BitPat(fromRs1.litValue.U(width.W))
+  override def default: BitPat = fromRs1
   def genTable(op: Instruction): BitPat = {
     op.opcode match {
-      case AUIPC.opcode => BitPat(fromPc.litValue.U(width.W))
-      case JAL.opcode => BitPat(fromPc.litValue.U(width.W))
-      case JALR.opcode => BitPat(fromPc.litValue.U(width.W))
+      case AUIPC.opcode | JAL.opcode | JALR.opcode=> fromPc
       case _ => default
     }
   }
@@ -210,13 +205,13 @@ object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
   def chiselType: UInt = UInt(ALUBSrcFrom.getWidth.W)
   def genTable(op: Instruction): BitPat = {
     Instruction.instrTypeMap(op.opcode) match {
-      case RType | BType => BitPat(fromRs2.litValue.U(width.W))
+      case RType | BType => fromRs2
       case IType => op.opcode match {
-        case JALR.opcode => BitPat(from4.litValue.U(width.W))
-        case _ => BitPat(fromImm.litValue.U(width.W))
+        case JALR.opcode => from4
+        case _ => fromImm
       }
-      case SType | UType => BitPat(fromImm.litValue.U(width.W))
-      case JType => BitPat(from4.litValue.U(width.W))
+      case SType | UType => fromImm
+      case JType => from4
       case _ => dc
     }
   }
@@ -227,14 +222,11 @@ object WBSrcControlField extends DecodeField[Instruction, UInt] {
   import Instruction.InstricitonMap._
   def name: String = "Write Back Control Feild"
   def chiselType: UInt = UInt(WBSrcFrom.getWidth.W)
-  override def default: BitPat = BitPat(fromALU.litValue.U(width.W))
+  override def default: BitPat = fromALU
   def genTable(op: Instruction): BitPat = {
     op.opcode match {
-      case LB.opcode => BitPat(fromMem.litValue.U(width.W))
-      case LBU.opcode => BitPat(fromMem.litValue.U(width.W))
-      case LH.opcode => BitPat(fromMem.litValue.U(width.W))
-      case LHU.opcode => BitPat(fromMem.litValue.U(width.W))
-      case LW.opcode => BitPat(fromMem.litValue.U(width.W))
+      case LB.opcode | LBU.opcode | LH.opcode |
+           LHU.opcode | LW.opcode => fromMem
       case _ => default
     }
   }

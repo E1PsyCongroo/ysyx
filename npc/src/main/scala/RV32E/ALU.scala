@@ -19,14 +19,15 @@ class ALUControlIO extends ALUControlOutput {
 }
 
 object ALUOutSel {
-  val selectAdder = "b000".U(3.W)
-  val selectShift1 = "b001".U(3.W)
-  val selectSlt = "b010".U(3.W)
-  val selectB = "b011".U(3.W)
-  val selectXor = "b100".U(3.W)
-  val selectShift2 = "b101".U(3.W)
-  val selectOr = "b110".U(3.W)
-  val selectAnd = "b111".U(3.W)
+  def getWidth = 3
+  val selectAdder   = BitPat("b000")
+  val selectShift1  = BitPat("b001")
+  val selectSlt     = BitPat("b010")
+  val selectB       = BitPat("b011")
+  val selectXor     = BitPat("b100")
+  val selectShift2  = BitPat("b101")
+  val selectOr      = BitPat("b110")
+  val selectAnd     = BitPat("b111")
 }
 import ALUOutSel._
 
@@ -132,7 +133,7 @@ class ALU(xlen: Int = 32) extends Module {
   val xorOut = io.inA ^ io.inB
   val orOut = io.inA | io.inB
   val andOut = io.inA & io.inB
-  val aluOut = MuxLookup(aluControl.io.aluSel, adderOut)(Seq(
+  val aluOut = MuxCase(adderOut, Seq(
     selectAdder -> adderOut,
     selectShift1 -> shiftOut,
     selectSlt -> sltOut,
@@ -141,7 +142,7 @@ class ALU(xlen: Int = 32) extends Module {
     selectShift2 -> shiftOut,
     selectOr -> orOut,
     selectAnd -> andOut
-  ))
+  ).map { case(key, data) => (aluControl.io.aluSel === key, data) })
 
   io.aluOut := aluOut
   io.less := less

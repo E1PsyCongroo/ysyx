@@ -21,13 +21,13 @@ class BrCond extends Module {
   val isLt = io.less
   val isGe = !io.less
 
-  io.PCASrc := MuxLookup(io.brType, false.B)(Seq(
-    brJ.asUInt -> true.B,
-    brJr.asUInt -> true.B,
-    brEq.asUInt -> isEq,
-    brNe.asUInt -> isNe,
-    brLt.asUInt -> isLt,
-    brGe.asUInt -> isGe,
-  ))
-  io.PCBSrc := Mux(io.brType === brJr.asUInt, false.B, true.B)
+  io.PCASrc := MuxCase(false.B, Seq(
+    brJ   -> true.B,
+    brJr  -> true.B,
+    brEq  -> isEq,
+    brNe  -> isNe,
+    brLt-> isLt,
+    brGe  -> isGe,
+  ).map{ case (key, data) => (io.brType === key, data) })
+  io.PCBSrc := Mux(io.brType === brJr, false.B, true.B)
 }
