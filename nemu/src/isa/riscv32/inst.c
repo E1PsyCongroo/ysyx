@@ -40,6 +40,7 @@
   mstatus_t* mstatus = (mstatus_t*)&cpu.mstatus; \
   mstatus->mie = mstatus->mpie; \
   mstatus->mpie = 1; \
+  mstatus->mpp = UMODE; \
 } while(0)
 
 enum {
