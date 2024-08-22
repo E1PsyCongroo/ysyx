@@ -26,7 +26,7 @@ static inline int check_reg_idx(int idx) {
 
 #define gpr(idx) (cpu.gpr[check_reg_idx(idx)])
 
-typedef union
+typedef struct
 {
   word_t      : 1, sie  : 1,      : 1, mie  : 1,      : 1,
          spie : 1, ube  : 1, mpie : 1, spp  : 1, vs   : 2,
