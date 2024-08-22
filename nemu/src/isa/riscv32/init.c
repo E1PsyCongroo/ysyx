@@ -36,6 +36,7 @@ static void restart() {
 
   /* Make difftest pass */
   mstatus_t* mstatus = (mstatus_t*)&cpu.mstatus;
+  mstatus->sd = 1;
   mstatus->mpp = MMODE;
 }
 
