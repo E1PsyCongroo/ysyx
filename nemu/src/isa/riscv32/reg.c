@@ -28,6 +28,10 @@ void isa_reg_display() {
   for (int i = 0; i < MUXDEF(CONFIG_RVE, 16, 32); i++) {
     printf("%-8s  0x%-16x  %d\n", reg_name(i), gpr(i), gpr(i));
   }
+  printf("%-8s  0x%-16x  %d\n", "mtvec", cpu.mtvec, cpu.mtvec);
+  printf("%-8s  0x%-16x  %d\n", "mstatus", cpu.mstatus, cpu.mstatus);
+  printf("%-8s  0x%-16x  %d\n", "mcause", cpu.mcause, cpu.mcause);
+  printf("%-8s  0x%-16x  %d\n", "mepc", cpu.mepc, cpu.mepc);
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
