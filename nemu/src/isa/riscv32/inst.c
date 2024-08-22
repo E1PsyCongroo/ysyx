@@ -34,7 +34,7 @@
 #define REMU(src1, src2) ( \
   ((src2) != 0) ? ((src1) % (src2)) : (src1) \
 )
-#define ECALL isa_raise_intr
+#define ECALL(epc) isa_raise_intr(11, epc)
 
 enum {
   TYPE_R, TYPE_I, TYPE_IC, TYPE_S,
@@ -54,7 +54,7 @@ enum {
   *imm = (SEXT(BITS(i, 31, 31), 1) << 20) | (BITS(i, 19, 12) << 12) | \
          (BITS(i, 20, 20) << 11) | (BITS(i, 30, 21) << 1); \
 } while(0)
-#define srcUI() do { *src1 = rs1; } while (0)
+#define src1I() do { *src1 = rs1; } while (0)
 
 static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_t *imm, int type) {
   uint32_t i = s->isa.inst.val;
@@ -64,7 +64,7 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
   switch (type) {
     case TYPE_R: src1R(); src2R();         break;
     case TYPE_I: src1R();          immI(); break;
-    case TYPE_IC:srcUI();          immI(); break;
+    case TYPE_IC:src1I();          immI(); break;
     case TYPE_S: src1R(); src2R(); immS(); break;
     case TYPE_B: src1R(); src2R(); immB(); break;
     case TYPE_U:                   immU(); break;
@@ -123,7 +123,7 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000000 ????? ????? 110 ????? 01100 11", or     , R, R(rd) = src1 | src2);
   INSTPAT("0000000 ????? ????? 111 ????? 01100 11", and    , R, R(rd) = src1 & src2);
   INSTPAT("??????? ????? ????? 000 ????? 00011 11", fence  , I, );
-  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , I, s->dnpc = ECALL(MUXDEF(CONFIG_RVE, R(15), R(17)), s->pc); IFDEF(CONFIG_ETRACE, etrace(s->isa.inst.val, s->pc, MUXDEF(CONFIG_RVE, R(15), R(17)))));
+  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , I, s->dnpc = ECALL(s->pc); IFDEF(CONFIG_ETRACE, etrace(s->isa.inst.val, s->pc, MUXDEF(CONFIG_RVE, R(15), R(17)))));
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
 
   /* RV32M Standard Extension */
@@ -136,15 +136,15 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, R(rd) = REM((sword_t)src1, (sword_t)src2));
   INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, R(rd) = REMU(src1, src2));
 
-  // /* Zicsr */
-  // INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I, if (rd != 0) { R(rd) = CSR(imm); }; CSR(imm) = src1);
-  // INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I, R(rd) = CSR(imm); CSR(imm) |= src1);
-  // INSTPAT("??????? ????? ????? 011 ????? 11100 11", csrrc  , I, R(rd) = CSR(imm); CSR(imm) &= ~src1);
-  // INSTPAT("??????? ????? ????? 101 ????? 11100 11", csrrwi , IC, if (rd != 0) { R(rd) = CSR(imm); }; CSR(imm) = src1);
-  // INSTPAT("??????? ????? ????? 110 ????? 11100 11", csrrsi , IC, R(rd) = CSR(imm); CSR(imm) |= src1);
-  // INSTPAT("??????? ????? ????? 111 ????? 11100 11", csrrci , IC, R(rd) = CSR(imm); CSR(imm) &= ~src1);
-  // /* Machine-Mode Privileged Instructions */
-  // INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , R, s->dnpc = cpu.mepc; IFDEF(CONFIG_ETRACE, etrace(s->isa.inst.val, s->pc, s->dnpc)));
+  /* Zicsr */
+  INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I, R(rd) = CSR(imm); CSR(imm) = src1);
+  INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I, R(rd) = CSR(imm); CSR(imm) |= src1);
+  INSTPAT("??????? ????? ????? 011 ????? 11100 11", csrrc  , I, R(rd) = CSR(imm); CSR(imm) &= ~src1);
+  INSTPAT("??????? ????? ????? 101 ????? 11100 11", csrrwi , IC, R(rd) = CSR(imm); CSR(imm) = src1);
+  INSTPAT("??????? ????? ????? 110 ????? 11100 11", csrrsi , IC, R(rd) = CSR(imm); CSR(imm) |= src1);
+  INSTPAT("??????? ????? ????? 111 ????? 11100 11", csrrci , IC, R(rd) = CSR(imm); CSR(imm) &= ~src1);
+  /* Machine-Mode Privileged Instructions */
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , R, s->dnpc = cpu.mepc; IFDEF(CONFIG_ETRACE, etrace(s->isa.inst.val, s->pc, s->dnpc)));
 
 
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
