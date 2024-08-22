@@ -60,6 +60,10 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   void ftrace(uint32_t instruction, word_t pc, word_t dnpc);
   ftrace(_this->isa.inst.val, _this->pc, dnpc);
 #endif
+#ifdef CONFIG_ETRACE
+  void etrace(uint32_t instruction, word_t pc);
+  etrace(_this->isa.inst.val, _this->pc);
+#endif
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 #ifdef CONFIG_WATCHPOINT
   bool scan_wp(void);
