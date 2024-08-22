@@ -114,3 +114,30 @@ void ftrace(uint32_t instruction, word_t pc, word_t dnpc) {
   INSTPAT_END();
   current_func = trace_name;
 }
+
+void etrace(uint32_t instruction, word_t pc) {
+  static int num_space = 0;
+#define INSTPAT_INST(s) (instruction)
+#define INSTPAT_MATCH(s, ... /* execute body */ ) { \
+  __VA_ARGS__ ; \
+}
+  INSTPAT_START();
+  /* ecall */
+  INSTPAT("0000000 00000 00000 000 00000 11100 11",
+    log_write(
+      ANSI_FMT(FMT_WORD ": %*sException throw: " FMT_WORD "\n", ANSI_FG_WHITE),
+      pc, num_space, "", cpu.mcause
+    );
+    num_space += 1;
+  );
+  /* mret */
+  INSTPAT("0011000 00010 00000 000 00000 11100 11",
+    num_space = num_space == 0 ? 0 : num_space - 1;
+    log_write(
+      ANSI_FMT(FMT_WORD ": %*sException return: %s@" FMT_WORD "\n", ANSI_FG_WHITE),
+      pc, num_space, "", current_func, cpu.mepc
+    );
+
+  );
+  INSTPAT_END();
+}
