@@ -23,7 +23,6 @@ word_t isa_raise_intr(word_t NO, vaddr_t epc) {
   mstatus_t* mstatus = (mstatus_t*)&cpu.mstatus;
   mstatus->mpie = mstatus->mie;
   mstatus->mie = 0;
-  // mstatus->mpp = MMODE;
   cpu.mcause = NO;
   cpu.mepc = epc;
   return cpu.mtvec;
