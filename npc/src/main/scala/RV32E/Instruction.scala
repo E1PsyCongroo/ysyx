@@ -71,12 +71,12 @@ object Instruction {
       opcode = BitPat("b1110011"), funct3 = BitPat("b000"), funct7 = BitPat("b0000000"),
       rs1 = BitPat("b00000"), rs2 = BitPat("b00001"), rd = BitPat("b00000")
     )
-    val CSRRW   = Instruction(opcode = BitPat("1110011"), funct3 = BitPat("001"))
-    val CSRRS   = Instruction(opcode = BitPat("1110011"), funct3 = BitPat("010"))
-    val CSRRC   = Instruction(opcode = BitPat("1110011"), funct3 = BitPat("011"))
-    val CSRRWi  = Instruction(opcode = BitPat("1110011"), funct3 = BitPat("101"))
-    val CSRRSi  = Instruction(opcode = BitPat("1110011"), funct3 = BitPat("110"))
-    val CSRRCi  = Instruction(opcode = BitPat("1110011"), funct3 = BitPat("111"))
+    val CSRRW   = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b001"))
+    val CSRRS   = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b010"))
+    val CSRRC   = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b011"))
+    val CSRRWI  = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b101"))
+    val CSRRSI  = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b110"))
+    val CSRRCI  = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b111"))
   }
 
   val instrTypeMap = Map(

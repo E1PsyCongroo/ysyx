@@ -268,7 +268,8 @@ class Control extends Module {
     LUI, AUIPC, JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU,
     LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTIU,
     XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
-    SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK
+    SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK,
+    CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI,
   )
   val decodeTable = new DecodeTable(
     possiblePatterns,
