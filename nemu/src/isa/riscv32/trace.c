@@ -1,6 +1,7 @@
 #include <elf.h>
 #include <common.h>
 #include <memory/paddr.h>
+#include <cpu/decode.h>
 
 typedef struct {
   char *fname;
@@ -88,27 +89,55 @@ char* trace_func(word_t dnpc) {
 void ftrace(uint32_t instruction, word_t pc, word_t dnpc) {
   static int num_space = 0;
   char *trace_name = trace_func(dnpc);
-  uint32_t opcode = BITS(instruction, 6, 0);
-  uint32_t rs1 = BITS(instruction, 19, 15);
-  uint32_t rd = BITS(instruction, 11, 7);
-  const uint32_t jal_opcode = 0b1101111;
-  const uint32_t jalr_opcode = 0b1100111;
   if (trace_name == NULL) { trace_name = "???"; }
-  if (((opcode == jal_opcode) | (opcode == jalr_opcode)) && rd == 1) {
-    /* function call (jal ra, func | jalr ra, offset(rs1)) */
+#define INSTPAT_INST(s) (instruction)
+#define INSTPAT_MATCH(s, ... /* execute body */ ) { \
+  __VA_ARGS__ ; \
+}
+  INSTPAT_START();
+  /* function call (jal ra, func | jalr ra, offset(rs1)) */
+  INSTPAT("??????? ????? ????? ??? 00001 110?1 11",
     log_write(
       ANSI_FMT(FMT_WORD ": %*scall[%s->%s@" FMT_WORD "]\n", ANSI_FG_YELLOW),
       pc, num_space, "", current_func, trace_name, dnpc
     );
     num_space += 1;
-  }
-  else if ((opcode == jalr_opcode) && (rs1 == 1) && (rd == 0)) {
-    /* function ret (jalr x0, 0(ra)) */
+  );
+  /* function ret (jalr x0, 0(ra)) */
+  INSTPAT("??????? ????? 00001 ??? 00000 11001 11",
     num_space = num_space == 0 ? 0 : num_space - 1;
     log_write(
       ANSI_FMT(FMT_WORD ": %*sret[%s->%s@" FMT_WORD "]\n", ANSI_FG_YELLOW),
       pc, num_space, "", current_func, trace_name, dnpc
     );
-  }
+  );
+  INSTPAT_END();
   current_func = trace_name;
+}
+
+void etrace(uint32_t instruction, word_t pc) {
+  static int num_space = 0;
+#define INSTPAT_INST(s) (instruction)
+#define INSTPAT_MATCH(s, ... /* execute body */ ) { \
+  __VA_ARGS__ ; \
+}
+  INSTPAT_START();
+  /* ecall */
+  INSTPAT("0000000 00000 00000 000 00000 11100 11",
+    log_write(
+      ANSI_FMT(FMT_WORD ": %*sException throw: " FMT_WORD "\n", ANSI_FG_WHITE),
+      pc, num_space, "", cpu.mcause
+    );
+    num_space += 1;
+  );
+  /* mret */
+  INSTPAT("0011000 00010 00000 000 00000 11100 11",
+    num_space = num_space == 0 ? 0 : num_space - 1;
+    log_write(
+      ANSI_FMT(FMT_WORD ": %*sException return: [%s@" FMT_WORD "]\n", ANSI_FG_WHITE),
+      pc, num_space, "", current_func, cpu.mepc
+    );
+
+  );
+  INSTPAT_END();
 }
