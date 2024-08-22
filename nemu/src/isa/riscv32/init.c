@@ -35,8 +35,8 @@ static void restart() {
   cpu.gpr[0] = 0;
 
   /* Make difftest pass */
-  cpu.mstatus = 0;
-  ((mstatus_t*)&cpu.mstatus)->mpp = MMODE;
+  mstatus_t* mstatus = (mstatus_t*)&cpu.mstatus;
+  mstatus->mpp = MMODE;
 }
 
 void init_isa() {
