@@ -35,6 +35,12 @@
   ((src2) != 0) ? ((src1) % (src2)) : (src1) \
 )
 #define ECALL(epc) isa_raise_intr(11, epc)
+#define MRET do { \
+  s->dnpc = cpu.mepc; \
+  mstatus_t* mstatus = (mstatus_t*)&cpu.mstatus; \
+  mstatus->mie = mstatus->mpie; \
+  mstatus->mpp = UMODE; \
+} while(0)
 
 enum {
   TYPE_R, TYPE_I, TYPE_IC, TYPE_S,
@@ -144,7 +150,7 @@ static int decode_exec(Decode *s) {
   INSTPAT("??????? ????? ????? 110 ????? 11100 11", csrrsi , IC, R(rd) = CSR(imm); CSR(imm) |= src1);
   INSTPAT("??????? ????? ????? 111 ????? 11100 11", csrrci , IC, R(rd) = CSR(imm); CSR(imm) &= ~src1);
   /* Machine-Mode Privileged Instructions */
-  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , R, s->dnpc = cpu.mepc);
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , R, MRET);
 
 
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));

@@ -1,18 +1,3 @@
-/***************************************************************************************
-* Copyright (c) 2014-2022 Zihao Yu, Nanjing University
-*
-* NEMU is licensed under Mulan PSL v2.
-* You can use this software according to the terms and conditions of the Mulan PSL v2.
-* You may obtain a copy of Mulan PSL v2 at:
-*          http://license.coscl.org.cn/MulanPSL2
-*
-* THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
-* EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
-* MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-*
-* See the Mulan PSL v2 for more details.
-***************************************************************************************/
-
 #include <isa.h>
 #include "local-include/reg.h"
 
@@ -28,6 +13,10 @@ void isa_reg_display() {
   for (int i = 0; i < MUXDEF(CONFIG_RVE, 16, 32); i++) {
     printf("%-8s  0x%-16x  %d\n", reg_name(i), gpr(i), gpr(i));
   }
+  printf("%-8s  0x%-16x  %d\n", "mtvec", cpu.mtvec, cpu.mtvec);
+  printf("%-8s  0x%-16x  %d\n", "mstatus", cpu.mstatus, cpu.mstatus);
+  printf("%-8s  0x%-16x  %d\n", "mcause", cpu.mcause, cpu.mcause);
+  printf("%-8s  0x%-16x  %d\n", "mepc", cpu.mepc, cpu.mepc);
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
