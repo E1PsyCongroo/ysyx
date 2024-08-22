@@ -130,7 +130,7 @@ __EXPORT void difftest_init(int port) {
       NULL,
       true);
   s->diff_init(port);
-assert(0);
+  assert(0);
 }
 
 __EXPORT void difftest_raise_intr(uint64_t NO) {
