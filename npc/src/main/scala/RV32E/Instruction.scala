@@ -170,3 +170,11 @@ object WBSrcFrom {
   val fromALU = BitPat("b0")
   val fromMem = BitPat("b1")
 }
+
+object CSRCtr {
+  def getWidth = 2
+  val csrNone = BitPat("b00")
+  val csrRW   = BitPat("b01")
+  val csrRS   = BitPat("b10")
+  val csrRC   = BitPat("b11")
+}
