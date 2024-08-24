@@ -33,8 +33,8 @@ class RVCPU(
     val inst = Input(UInt(if (extentionC) 16.W else 32.W))
     val pc = Output(UInt(xlen.W))
   })
-  val PCnext      = Wire(UInt(xlen.W))
-  val PC          = RegNext(PCnext)
+  val NextPC      = Wire(UInt(xlen.W))
+  val PC          = RegNext(NextPC)
   val Mem         = Module(new MemControl)
   val RegFile     = Module(new RegFile(xlen, if (extentionE) 4 else 5))
   val ImmGen      = Module(new ImmGen(xlen))
@@ -45,7 +45,7 @@ class RVCPU(
   val Ifetch      = Module(new Ifetch(extentionC))
 
   /* Instruction Fetch */
-  io.pc           := PCnext
+  io.pc           := NextPC
 
   val inst        = io.inst
   Ifetch.io.inst  := inst
@@ -87,7 +87,7 @@ class RVCPU(
   BrCond.io.zero      := ALU.io.zero
   val PCASrc          = Mux(BrCond.io.PCASrc, ImmGen.io.imm, 4.U)
   val PCBSrc          = Mux(BrCond.io.PCBSrc, PC, RegFile.io.rd1)
-  PCnext              := Mux(reset.asBool, PCReset.U, PCASrc + PCBSrc)
+  NextPC              := Mux(reset.asBool, PCReset.U, PCASrc + PCBSrc)
 
   /* Memory */
   Mem.io.valid        := !reset.asBool && Control.io.memValid

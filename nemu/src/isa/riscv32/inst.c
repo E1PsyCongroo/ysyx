@@ -13,6 +13,7 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
+#include "common.h"
 #include "local-include/reg.h"
 #include <cpu/cpu.h>
 #include <cpu/ifetch.h>
@@ -34,13 +35,25 @@
 #define REMU(src1, src2) ( \
   ((src2) != 0) ? ((src1) % (src2)) : (src1) \
 )
-#define ECALL(epc) isa_raise_intr(11, epc)
+
+static word_t ecall(vaddr_t epc) {
+ switch(cpu.priv) {
+  case UMODE: return isa_raise_intr(8, epc);
+  case SMODE: return isa_raise_intr(9, epc);
+  case MMODE: return isa_raise_intr(11, epc);
+  default: panic("unknow privilege mode %d", cpu.priv);
+ }
+ return 0;
+}
+#define ECALL(epc) ecall(epc)
+
 #define MRET do { \
   s->dnpc = cpu.mepc; \
   mstatus_t* mstatus = (mstatus_t*)&cpu.mstatus; \
+  cpu.priv = mstatus->mpp; \
+  mstatus->mpp = UMODE; \
   mstatus->mie = mstatus->mpie; \
   mstatus->mpie = 1; \
-  mstatus->mpp = UMODE; \
 } while(0)
 
 enum {

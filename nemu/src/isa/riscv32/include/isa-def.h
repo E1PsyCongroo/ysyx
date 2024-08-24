@@ -19,6 +19,10 @@
 #include <common.h>
 
 typedef struct {
+  enum {
+    UMODE = 0b00, SMODE = 0b01,
+    MMODE = 0b11,
+  } priv;
   word_t gpr[MUXDEF(CONFIG_RVE, 16, 32)];
   vaddr_t pc;
   word_t mepc, mstatus, mcause, mtvec;

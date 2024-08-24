@@ -34,11 +34,6 @@ typedef struct
          mxr  : 1, tvm  : 1, tw   : 1, tsr  : 1,      : 8, sd   : 1;
 } mstatus_t;
 
-enum {
-  UMODE = 0b00, SMODE = 0b01,
-  MMODE = 0b11,
-};
-
 enum riscv32_CSR {
   MSTATUS = 0x300, MTVEC = 0x305,
   MEPC = 0x341, MCAUSE = 0x342,
