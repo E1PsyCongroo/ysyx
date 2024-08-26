@@ -6,12 +6,19 @@ object Elaborate extends App {
     "disallowPackedArrays",
     "locationInfoStyle=wrapInAtSquareBracket"
   ).mkString(","))
+  // circt.stage.ChiselStage.emitSystemVerilogFile(
+  //   new RVCPU.RVCPU(
+  //     xlen       = 32,
+  //     extentionE = true,
+  //     extentionC = false,
+  //     PCReset   = BigInt("80000000", 16)
+  //   ),
+  //   args,
+  //   firtoolOptions
+  // )
   circt.stage.ChiselStage.emitSystemVerilogFile(
-    new RVCPU.RVCPU(
+    new RVCPU.CSRControl(
       xlen       = 32,
-      extentionE = true,
-      extentionC = false,
-      PCReset   = BigInt("80000000", 16)
     ),
     args,
     firtoolOptions
