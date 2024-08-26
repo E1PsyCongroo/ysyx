@@ -85,7 +85,7 @@ class MemControl extends Module {
 
   val loffset = (io.raddr(1) << 4.U) | (io.raddr(0) << 3.U)
   val lshift = rdata >> loffset
-  io.rdata := MuxCase(lshift,Seq(
+  io.rdata := MuxCase(lshift, Seq(
     memH -> Fill(16, lshift(15)) ## lshift(15, 0),
     memBu -> Fill(24, lshift(7)) ## lshift(7, 0),
     memHu -> Fill(16, 0.U(1.W)) ## lshift(15, 0),

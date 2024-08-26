@@ -172,9 +172,11 @@ object WBSrcFrom {
 }
 
 object CSRCtr {
-  def getWidth = 2
-  val csrNone = BitPat("b00")
-  val csrRW   = BitPat("b01")
-  val csrRS   = BitPat("b10")
-  val csrRC   = BitPat("b11")
+  def getWidth  = 3
+  val csrNone   = BitPat("b000")
+  val csrRW     = BitPat("b001")
+  val csrRS     = BitPat("b010")
+  val csrRC     = BitPat("b011")
+  val csrEcall  = BitPat("b100")
+  val csrMret   = BitPat("b101")
 }
