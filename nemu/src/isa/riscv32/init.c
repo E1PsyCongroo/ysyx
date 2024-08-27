@@ -15,6 +15,7 @@
 
 #include <isa.h>
 #include <memory/paddr.h>
+#include "local-include/reg.h"
 
 // this is not consistent with uint8_t
 // but it is ok since we do not access the array directly
@@ -34,7 +35,9 @@ static void restart() {
   cpu.gpr[0] = 0;
 
   /* Make difftest pass */
-  cpu.mstatus = 0x1800;
+  mstatus_t *mstatus = (mstatus_t*)&cpu.mstatus;
+  cpu.priv = MMODE;
+  mstatus->mpp = MMODE;
 }
 
 void init_isa() {

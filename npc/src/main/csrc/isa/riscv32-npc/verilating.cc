@@ -53,23 +53,28 @@ void pmem_write(paddr_t waddr, word_t wdata, char wmask) {
 
 static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
-  cpu.pc = rvcpu->rootp->RVCPU__DOT__PC;
-  cpu.gpr[0] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_0;
-  cpu.gpr[1] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_1;
-  cpu.gpr[2] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_2;
-  cpu.gpr[3] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_3;
-  cpu.gpr[4] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_4;
-  cpu.gpr[5] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_5;
-  cpu.gpr[6] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_6;
-  cpu.gpr[7] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_7;
-  cpu.gpr[8] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_8;
-  cpu.gpr[9] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_9;
+  cpu.pc      = rvcpu->rootp->RVCPU__DOT__PC;
+  cpu.gpr[0]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_0;
+  cpu.gpr[1]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_1;
+  cpu.gpr[2]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_2;
+  cpu.gpr[3]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_3;
+  cpu.gpr[4]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_4;
+  cpu.gpr[5]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_5;
+  cpu.gpr[6]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_6;
+  cpu.gpr[7]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_7;
+  cpu.gpr[8]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_8;
+  cpu.gpr[9]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_9;
   cpu.gpr[10] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_10;
   cpu.gpr[11] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_11;
   cpu.gpr[12] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_12;
   cpu.gpr[13] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_13;
   cpu.gpr[14] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_14;
   cpu.gpr[15] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_15;
+  cpu.mstatus = rvcpu->rootp->RVCPU__DOT__CSRControl__DOT__csrs_0_2;
+  cpu.mtvec   = rvcpu->rootp->RVCPU__DOT__CSRControl__DOT__csrs_1_2;
+  cpu.mepc    = rvcpu->rootp->RVCPU__DOT__CSRControl__DOT__csrs_2_2;
+  cpu.mcause  = rvcpu->rootp->RVCPU__DOT__CSRControl__DOT__csrs_3_2;
+  cpu.priv    = static_cast<decltype(cpu.priv)>(rvcpu->rootp->RVCPU__DOT__CSRControl__DOT__priv);
 }
 
 void rvcpu_init(void){

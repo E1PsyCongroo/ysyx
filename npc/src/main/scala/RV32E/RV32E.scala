@@ -33,19 +33,20 @@ class RVCPU(
     val inst = Input(UInt(if (extentionC) 16.W else 32.W))
     val pc = Output(UInt(xlen.W))
   })
-  val PCnext      = Wire(UInt(xlen.W))
-  val PC          = RegNext(PCnext)
+  val NextPC      = Wire(UInt(xlen.W))
+  val PC          = RegNext(NextPC)
   val Mem         = Module(new MemControl)
   val RegFile     = Module(new RegFile(xlen, if (extentionE) 4 else 5))
   val ImmGen      = Module(new ImmGen(xlen))
   val Control     = Module(new Control)
   val ALU         = Module(new ALU(xlen))
+  val CSRControl  = Module(new CSRControl(xlen))
   val BrCond      = Module(new BrCond)
   val EndControl  = Module(new EndControl)
   val Ifetch      = Module(new Ifetch(extentionC))
 
   /* Instruction Fetch */
-  io.pc           := PCnext
+  io.pc           := NextPC
 
   val inst        = io.inst
   Ifetch.io.inst  := inst
@@ -69,25 +70,34 @@ class RVCPU(
   EndControl.io.isEnd := Control.io.isEnd
 
   /* Instruction Execution */
-  val aluASrc = MuxLookup(Control.io.aluASrc, PC)(Seq(
-    ALUASrcFrom.fromPc.asUInt   -> PC,
-    ALUASrcFrom.fromRs1.asUInt  -> RegFile.io.rd1,
-  ))
-  val aluBSrc = MuxLookup(Control.io.aluBSrc, 4.U)(Seq(
-    ALUBSrcFrom.from4.asUInt    -> 4.U,
-    ALUBSrcFrom.fromRs2.asUInt  -> RegFile.io.rd2,
-    ALUBSrcFrom.fromImm.asUInt  -> ImmGen.io.imm,
-  ))
+  val aluASrc = MuxCase(PC, Seq(
+    ALUASrcFrom.fromPc   -> PC,
+    ALUASrcFrom.fromRs1  -> RegFile.io.rd1,
+  ).map{ case(key, data) => (Control.io.aluASrc === key, data) })
+  val aluBSrc = MuxCase(4.U, Seq(
+    ALUBSrcFrom.from4   -> 4.U,
+    ALUBSrcFrom.fromRs2 -> RegFile.io.rd2,
+    ALUBSrcFrom.fromImm -> ImmGen.io.imm,
+  ).map{ case(key, data) => (Control.io.aluBSrc === key, data) })
   ALU.io.inA          := aluASrc
   ALU.io.inB          := aluBSrc
   ALU.io.aluCtr       := Control.io.aluCtr
+
+  val csrSrc  = MuxCase(RegFile.io.rd1, Seq(
+    CSRSrcFrom.fromRs1  -> RegFile.io.rd1,
+    CSRSrcFrom.fromUimm -> rs1.pad(32)
+  ).map{ case(key, data) => (key === Control.io.csrSrc, data) })
+  CSRControl.io.csrAddr := ImmGen.io.imm
+  CSRControl.io.epc     := PC
+  CSRControl.io.csrIn   := csrSrc
+  CSRControl.io.csrCtr  := Control.io.csrCtr
 
   BrCond.io.brType    := Control.io.brType
   BrCond.io.less      := ALU.io.less
   BrCond.io.zero      := ALU.io.zero
   val PCASrc          = Mux(BrCond.io.PCASrc, ImmGen.io.imm, 4.U)
   val PCBSrc          = Mux(BrCond.io.PCBSrc, PC, RegFile.io.rd1)
-  PCnext              := Mux(reset.asBool, PCReset.U, PCASrc + PCBSrc)
+  NextPC              := Mux(reset.asBool, PCReset.U, PCASrc + PCBSrc)
 
   /* Memory */
   Mem.io.valid        := !reset.asBool && Control.io.memValid
@@ -99,10 +109,11 @@ class RVCPU(
   Mem.io.wdata        := RegFile.io.rd2
 
   /* Write Back */
-  val writeToReg = MuxLookup(Control.io.wbSrc, ALU.io.aluOut)(Seq(
-    WBSrcFrom.fromALU.asUInt -> ALU.io.aluOut,
-    WBSrcFrom.fromMem.asUInt -> Mem.io.rdata,
-  ))
+  val writeToReg = MuxCase(ALU.io.aluOut, Seq(
+    WBSrcFrom.fromALU -> ALU.io.aluOut,
+    WBSrcFrom.fromMem -> Mem.io.rdata,
+    WBSrcFrom.fromCSR -> CSRControl.io.csrOut,
+  ).map{ case(key, data) => (Control.io.wbSrc === key, data) })
   RegFile.io.we       := Control.io.regWe
   RegFile.io.wd       := writeToReg
 }

@@ -1,4 +1,3 @@
-#include "local-include/reg.h"
 #include "local-include/verilating.h"
 #include <cpu/cpu.h>
 #include <cpu/decode.h>
