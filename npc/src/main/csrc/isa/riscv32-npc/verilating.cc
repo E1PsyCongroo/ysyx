@@ -70,6 +70,7 @@ static void rvcpu_sync(void) {
   cpu.gpr[13] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_13;
   cpu.gpr[14] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_14;
   cpu.gpr[15] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_15;
+  cpu.mstatus = rvcpu->rootp.
 }
 
 void rvcpu_init(void){
