@@ -70,7 +70,11 @@ static void rvcpu_sync(void) {
   cpu.gpr[13] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_13;
   cpu.gpr[14] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_14;
   cpu.gpr[15] = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_15;
-  cpu.mstatus = rvcpu->rootp.
+  cpu.mstatus = rvcpu->rootp->RVCPU__DOT__CSRControl__DOT__csrs_0_2;
+  cpu.mtvec   = rvcpu->rootp->RVCPU__DOT__CSRControl__DOT__csrs_1_2;
+  cpu.mepc    = rvcpu->rootp->RVCPU__DOT__CSRControl__DOT__csrs_2_2;
+  cpu.mcause  = rvcpu->rootp->RVCPU__DOT__CSRControl__DOT__csrs_3_2;
+  cpu.priv    = static_cast<decltype(cpu.priv)>(rvcpu->rootp->RVCPU__DOT__CSRControl__DOT__priv);
 }
 
 void rvcpu_init(void){
