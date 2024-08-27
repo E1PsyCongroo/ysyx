@@ -165,12 +165,11 @@ object ALUBSrcFrom {
   val from4   = BitPat("b10")
 }
 
-object WBSrcFrom {
+object CSRSrcFrom {
   def getWidth = 1
-  val fromALU = BitPat("b0")
-  val fromMem = BitPat("b1")
+  val fromRs1  = BitPat("b0")
+  val fromUimm = BitPat("b1")
 }
-
 object CSRCtr {
   def getWidth  = 3
   val csrNone   = BitPat("b000")
@@ -179,4 +178,17 @@ object CSRCtr {
   val csrRC     = BitPat("b011")
   val csrEcall  = BitPat("b100")
   val csrMret   = BitPat("b101")
+}
+
+object WBSrcFrom {
+  def getWidth = 2
+  val fromALU = BitPat("b00")
+  val fromMem = BitPat("b01")
+  val fromCSR = BitPat("b10")
+}
+
+object PCSel {
+  def getWidth = 1
+  val fromCom = BitPat("b0")
+  val fromCSR = BitPat("b1")
 }

@@ -14,6 +14,7 @@
 ***************************************************************************************/
 
 #include <isa.h>
+#include <string.h>
 #include "local-include/reg.h"
 
 const char *regs[] = {
@@ -46,5 +47,22 @@ word_t isa_reg_str2val(const char *s, bool *success) {
     *success = true;
     return cpu.pc;
   }
+  else if (!strcmp(s, "mepc")) {
+    *success = true;
+    return cpu.mepc;
+  }
+  else if (!strcmp(s, "mstatus")) {
+    *success = true;
+    return cpu.mstatus;
+  }
+  else if (!strcmp(s, "mcause")) {
+    *success = true;
+    return cpu.mcause;
+  }
+  else if (!strcmp(s, "mtvec")) {
+    *success = true;
+    return cpu.mtvec;
+  }
+
   return 0;
 }
