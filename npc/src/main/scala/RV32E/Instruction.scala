@@ -77,6 +77,10 @@ object Instruction {
     val CSRRWI  = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b101"))
     val CSRRSI  = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b110"))
     val CSRRCI  = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b111"))
+    val MRET    = Instruction(
+      opcode = BitPat("b1110011"), funct3 = BitPat("b000"), funct7 = BitPat("b0011000"),
+      rs1 = BitPat("b00000"), rs2 = BitPat("b00010"), rd = BitPat("b00000")
+    )
   }
 
   val instrTypeMap = Map(
@@ -187,7 +191,7 @@ object WBSrcFrom {
   val fromCSR = BitPat("b10")
 }
 
-object PCSel {
+object PCSrcFrom {
   def getWidth = 1
   val fromCom = BitPat("b0")
   val fromCSR = BitPat("b1")
