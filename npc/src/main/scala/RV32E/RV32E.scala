@@ -3,8 +3,6 @@ package RVCPU
 import circt.stage.ChiselStage
 import chisel3._
 import chisel3.util._
-import chisel3.internal.firrtl.ir
-import scala.collection.mutable.ArrayBuffer
 
 class EndControlIO extends Bundle {
   val clock = Input(Clock())
@@ -80,10 +78,19 @@ class RVCPU(
     ALUBSrcFrom.from4   -> 4.U,
     ALUBSrcFrom.fromRs2 -> RegFile.io.rd2,
     ALUBSrcFrom.fromImm -> ImmGen.io.imm,
-  ).map { case(key, data) => (Control.io.aluBSrc === key, data) })
+  ).map{ case(key, data) => (Control.io.aluBSrc === key, data) })
   ALU.io.inA          := aluASrc
   ALU.io.inB          := aluBSrc
   ALU.io.aluCtr       := Control.io.aluCtr
+
+  val csrSrc  = MuxCase(RegFile.io.rd1, Seq(
+    CSRSrcFrom.fromRs1  -> RegFile.io.rd1,
+    CSRSrcFrom.fromUimm -> rs1.pad(32)
+  ).map{ case(key, data) => (key === Control.io.csrSrc, data) })
+  CSRControl.io.csrAddr := ImmGen.io.imm
+  CSRControl.io.epc     := PC
+  CSRControl.io.csrIn   := csrSrc
+  CSRControl.io.csrCtr  := Control.io.csrCtr
 
   BrCond.io.brType    := Control.io.brType
   BrCond.io.less      := ALU.io.less
@@ -105,6 +112,7 @@ class RVCPU(
   val writeToReg = MuxCase(ALU.io.aluOut, Seq(
     WBSrcFrom.fromALU -> ALU.io.aluOut,
     WBSrcFrom.fromMem -> Mem.io.rdata,
+    WBSrcFrom.fromCSR -> CSRControl.io.csrOut,
   ).map{ case(key, data) => (Control.io.wbSrc === key, data) })
   RegFile.io.we       := Control.io.regWe
   RegFile.io.wd       := writeToReg
