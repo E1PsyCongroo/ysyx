@@ -5,7 +5,7 @@
  *
  */
 #define CONFIG_AUDIO_CTL_MMIO 0xa0000200
-#define CONFIG_DIFFTEST_REF_NAME "none"
+#define CONFIG_DIFFTEST_REF_NAME "nemu"
 #define CONFIG_IRINGBUF_SIZE 20
 #define CONFIG_ENGINE "interpreter"
 #define CONFIG_WATCHPOINT 1
@@ -49,7 +49,7 @@
 #define CONFIG_ITRACE_COND "true"
 #define CONFIG_SB_SIZE 0x10000
 #define CONFIG_CC "gcc"
-#define CONFIG_DIFFTEST_REF_PATH "none"
+#define CONFIG_DIFFTEST_REF_PATH "$NEMU_HOME"
 #define CONFIG_RVE 1
 #define CONFIG_DTRACE_COND "true"
 #define CONFIG_CC_DEBUG 1
