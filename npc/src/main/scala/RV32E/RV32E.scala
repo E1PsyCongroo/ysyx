@@ -3,6 +3,8 @@ package RVCPU
 import circt.stage.ChiselStage
 import chisel3._
 import chisel3.util._
+import chisel3.internal.firrtl.ir
+import scala.collection.mutable.ArrayBuffer
 
 class EndControlIO extends Bundle {
   val clock = Input(Clock())
@@ -40,6 +42,7 @@ class RVCPU(
   val ImmGen      = Module(new ImmGen(xlen))
   val Control     = Module(new Control)
   val ALU         = Module(new ALU(xlen))
+  val CSRControl  = Module(new CSRControl(xlen))
   val BrCond      = Module(new BrCond)
   val EndControl  = Module(new EndControl)
   val Ifetch      = Module(new Ifetch(extentionC))

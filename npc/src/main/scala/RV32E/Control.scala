@@ -154,9 +154,20 @@ object CSRControlField extends DecodeField[Instruction, UInt] {
   import CSRCtr._
   def name: String = "CSR Control Field"
   def chiselType: UInt = UInt(CSRCtr.getWidth.W)
+  override def default: BitPat = csrNone
   def genTable(op: Instruction): BitPat = {
     op.opcode match {
-      case _ => dc
+      case ECALL.opcode => csrEcall
+      case MRET.opcode => csrMret
+      case CSRRW.opcode | CSRRWI.opcode |
+           CSRRS.opcode | CSRRSI.opcode |
+           CSRRC.opcode | CSRRCI.opcode => op.funct3 match {
+          case CSRRW.funct3 | CSRRWI.funct3 => csrRW
+          case CSRRS.funct3 | CSRRSI.funct3 => csrRS
+          case CSRRC.funct3 | CSRRCI.funct3 => csrRC
+          case _ => default
+        }
+      case _ => default
     }
   }
 }
