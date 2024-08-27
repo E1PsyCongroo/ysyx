@@ -5,30 +5,65 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
 
-import Instruction.InstructionType
+import Instruction._
+import _root_.RVCPU.Instruction.InstricitonMap.ECALL
+import _root_.RVCPU.CSRSrcFrom.fromUimm
+import _root_.RVCPU.Instruction.InstricitonMap.CSRRCI
 
 object ImmControlField extends DecodeField[Instruction, UInt] {
   def name = "Imm Control Field"
   def chiselType: UInt = UInt(ImmType.getWidth.W)
   def genTable(op: Instruction): BitPat = {
-    Instruction.immTypeMap.get(Instruction.instrTypeMap(op.opcode)) match {
-      case Some(immType) => BitPat(immType.litValue.U(width.W))
-      case None => dc
-    }
+    immTypeMap.getOrElse(instrTypeMap(op.opcode), dc)
   }
 }
 
 object RegWeControlField extends DecodeField[Instruction, Bool] {
+  import InstructionType._
   def name = "Reg We Control Field"
   def chiselType: Bool = Bool()
   def genTable(op: Instruction): BitPat = {
-    Instruction.instrTypeMap(op.opcode) match {
-      case InstructionType.RType => BitPat.Y(1)
-      case InstructionType.IType => BitPat.Y(1)
-      case InstructionType.SType => BitPat.N(1)
-      case InstructionType.BType => BitPat.N(1)
-      case InstructionType.UType => BitPat.Y(1)
-      case InstructionType.JType => BitPat.Y(1)
+    instrTypeMap(op.opcode) match {
+      case RType => BitPat.Y(1)
+      case IType => BitPat.Y(1)
+      case SType => BitPat.N(1)
+      case BType => BitPat.N(1)
+      case UType => BitPat.Y(1)
+      case JType => BitPat.Y(1)
+      case _ => dc
+    }
+  }
+}
+
+object ALUASrcControlField extends DecodeField[Instruction, UInt] {
+  import InstricitonMap._
+  import ALUASrcFrom._
+  def name: String = "ALU Asrc Control Field"
+  def chiselType: UInt = UInt(ALUASrcFrom.getWidth.W)
+  override def default: BitPat = fromRs1
+  def genTable(op: Instruction): BitPat = {
+    op.opcode match {
+      case AUIPC.opcode | JAL.opcode | JALR.opcode=> fromPc
+      case _ => default
+    }
+  }
+}
+
+object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
+  import InstructionType._
+  import InstricitonMap._
+  import ALUBSrcFrom._
+  def name: String = "ALU Bsrc Control Field"
+  def chiselType: UInt = UInt(ALUBSrcFrom.getWidth.W)
+  def genTable(op: Instruction): BitPat = {
+    instrTypeMap(op.opcode) match {
+      case RType | BType => fromRs2
+      case IType => op.opcode match {
+        case JALR.opcode => from4
+        case _ => fromImm
+      }
+      case SType | UType => fromImm
+      case JType => from4
       case _ => dc
     }
   }
@@ -38,10 +73,10 @@ object ALUControlField extends DecodeField[Instruction, UInt] {
   def name = "ALU Control Field"
   def chiselType: UInt = UInt(ALUOp.getWidth.W)
   def genTable(op: Instruction): BitPat = {
-    import Instruction.InstricitonMap._
+    import InstricitonMap._
     import InstructionType._
     import ALUOp._
-    Instruction.instrTypeMap(op.opcode) match {
+    instrTypeMap(op.opcode) match {
       case RType => op.funct3 match {
         case ADD.funct3 => op.funct7 match {
           case ADD.funct7 => aluAdd
@@ -100,27 +135,65 @@ object ALUControlField extends DecodeField[Instruction, UInt] {
   }
 }
 
+object CSRSrcControlField extends DecodeField[Instruction, UInt] {
+  import InstricitonMap._
+  import CSRSrcFrom._
+  def name: String = "CSR Src Control Field"
+  def chiselType: UInt = UInt(CSRSrcFrom.getWidth.W)
+  def genTable(op: Instruction): BitPat = {
+    op.funct3 match {
+      case CSRRW.funct3 | CSRRS.funct3 | CSRRC.funct3 => fromRs1
+      case CSRRWI.funct3 | CSRRSI.funct3 | CSRRCI.funct3 => fromUimm
+      case _ => dc
+    }
+  }
+}
+
+object CSRControlField extends DecodeField[Instruction, UInt] {
+  import InstricitonMap._
+  import CSRCtr._
+  def name: String = "CSR Control Field"
+  def chiselType: UInt = UInt(CSRCtr.getWidth.W)
+  override def default: BitPat = csrNone
+  def genTable(op: Instruction): BitPat = {
+    op.opcode match {
+      case ECALL.opcode => csrEcall
+      case MRET.opcode => csrMret
+      case CSRRW.opcode | CSRRWI.opcode |
+           CSRRS.opcode | CSRRSI.opcode |
+           CSRRC.opcode | CSRRCI.opcode => op.funct3 match {
+          case CSRRW.funct3 | CSRRWI.funct3 => csrRW
+          case CSRRS.funct3 | CSRRSI.funct3 => csrRS
+          case CSRRC.funct3 | CSRRCI.funct3 => csrRC
+          case _ => default
+        }
+      case _ => default
+    }
+  }
+}
+
 object BrControlField extends DecodeField[Instruction, UInt] {
   import BrType._
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
+  import InstructionType._
   def name: String = "Branch Control Field"
   def chiselType: UInt = UInt(BrType.getWidth.W)
-  override def default: BitPat = BitPat(brNone.litValue.U(width.W))
+  override def default: BitPat = brNone
   def genTable(op: Instruction): BitPat = {
-    Instruction.instrTypeMap(op.opcode) match {
-      case InstructionType.JType => op.opcode match {
-        case JAL.opcode => BitPat(brJ.litValue.U(width.W))
+    instrTypeMap(op.opcode) match {
+      case JType => op.opcode match {
+        case JAL.opcode => brJ
         case _ => default
       }
-      case InstructionType.IType => op.opcode match {
-        case JALR.opcode => BitPat(brJr.litValue.U(width.W))
+      case IType => op.opcode match {
+        case JALR.opcode => brJr
         case _ => default
       }
-      case InstructionType.BType => op.funct3 match {
-        case BEQ.funct3 => BitPat(brEq.litValue.U(width.W))
-        case BNE.funct3 => BitPat(brNe.litValue.U(width.W))
-        case BLT.funct3 | BLTU.funct3 => BitPat(brLt.litValue.U(width.W))
-        case BGE.funct3 | BGEU.funct3 => BitPat(brGe.litValue.U(width.W))
+      case BType => op.funct3 match {
+        case BEQ.funct3 => brEq
+        case BNE.funct3 => brNe
+        case BLT.funct3 | BLTU.funct3 => brLt
+        case BGE.funct3 | BGEU.funct3 => brGe
         case _ => default
       }
       case _ => default
@@ -129,7 +202,7 @@ object BrControlField extends DecodeField[Instruction, UInt] {
 }
 
 object MemValidControlField extends DecodeField[Instruction, Bool] {
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
   def name: String = " Mem Valid Control Field"
   def chiselType: Bool = Bool()
   override def default: BitPat = BitPat.N(1)
@@ -149,13 +222,13 @@ object MemValidControlField extends DecodeField[Instruction, Bool] {
 }
 
 object MemOpControlField extends DecodeField[Instruction, UInt] {
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
   import InstructionType._
   import MemOp._
   def name: String = "MemOp Control Field"
   def chiselType: UInt = UInt(MemOp.getWidth.W)
   def genTable(op: Instruction): BitPat = {
-    Instruction.instrTypeMap(op.opcode) match {
+    instrTypeMap(op.opcode) match {
       case IType => op.funct3 match {
         case LB.funct3 => memB
         case LH.funct3 => memH
@@ -179,69 +252,45 @@ object MemWenControlField extends DecodeField[Instruction, Bool] {
   def name: String = "Mem Wen Control Field"
   def chiselType: Bool = Bool()
   def genTable(op: Instruction): BitPat = {
-    Instruction.instrTypeMap(op.opcode) match {
+    instrTypeMap(op.opcode) match {
       case InstructionType.SType => BitPat.Y(1)
       case _ => BitPat.N(1)
     }
   }
 }
-
-object ALUASrcControlField extends DecodeField[Instruction, UInt] {
-  import Instruction.InstricitonMap._
-  import ALUASrcFrom._
-  def name: String = "ALU Asrc Control Field"
-  def chiselType: UInt = UInt(ALUASrcFrom.getWidth.W)
-  override def default: BitPat = BitPat(fromRs1.litValue.U(width.W))
+object PCSrcControlField extends DecodeField[Instruction, UInt] {
+  import InstricitonMap._
+  import PCSrcFrom._
+  def name: String = "PC Select Control Feild"
+  def chiselType: UInt = UInt(PCSrcFrom.getWidth.W)
   def genTable(op: Instruction): BitPat = {
     op.opcode match {
-      case AUIPC.opcode => BitPat(fromPc.litValue.U(width.W))
-      case JAL.opcode => BitPat(fromPc.litValue.U(width.W))
-      case JALR.opcode => BitPat(fromPc.litValue.U(width.W))
-      case _ => default
-    }
-  }
-}
-
-object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
-  import InstructionType._
-  import Instruction.InstricitonMap._
-  import ALUBSrcFrom._
-  def name: String = "ALU Bsrc Control Field"
-  def chiselType: UInt = UInt(ALUBSrcFrom.getWidth.W)
-  def genTable(op: Instruction): BitPat = {
-    Instruction.instrTypeMap(op.opcode) match {
-      case RType | BType => BitPat(fromRs2.litValue.U(width.W))
-      case IType => op.opcode match {
-        case JALR.opcode => BitPat(from4.litValue.U(width.W))
-        case _ => BitPat(fromImm.litValue.U(width.W))
-      }
-      case SType | UType => BitPat(fromImm.litValue.U(width.W))
-      case JType => BitPat(from4.litValue.U(width.W))
-      case _ => dc
+      case ECALL.opcode | MRET.opcode => fromCSR
+      case _ => fromCom
     }
   }
 }
 
 object WBSrcControlField extends DecodeField[Instruction, UInt] {
   import WBSrcFrom._
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
   def name: String = "Write Back Control Feild"
   def chiselType: UInt = UInt(WBSrcFrom.getWidth.W)
-  override def default: BitPat = BitPat(fromALU.litValue.U(width.W))
+  override def default: BitPat = fromALU
   def genTable(op: Instruction): BitPat = {
     op.opcode match {
-      case LB.opcode => BitPat(fromMem.litValue.U(width.W))
-      case LBU.opcode => BitPat(fromMem.litValue.U(width.W))
-      case LH.opcode => BitPat(fromMem.litValue.U(width.W))
-      case LHU.opcode => BitPat(fromMem.litValue.U(width.W))
-      case LW.opcode => BitPat(fromMem.litValue.U(width.W))
+      case LB.opcode | LBU.opcode | LH.opcode |
+           LHU.opcode | LW.opcode => fromMem
+      case CSRRW.opcode | CSRRWI.opcode |
+           CSRRS.opcode | CSRRSI.opcode |
+           CSRRC.opcode | CSRRCI.opcode => fromCSR
       case _ => default
     }
   }
 }
 
 object EndControlField extends DecodeField[Instruction, Bool] {
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
   def name: String = "End Control Feild"
   def chiselType: Bool = Bool()
   def genTable(op: Instruction): BitPat = {
@@ -252,7 +301,6 @@ object EndControlField extends DecodeField[Instruction, Bool] {
   }
 }
 
-
 class ControlIO extends Bundle {
   val instr = Input(UInt(32.W))
   val immType = Output(UInt(ImmType.getWidth.W))
@@ -260,7 +308,10 @@ class ControlIO extends Bundle {
   val aluASrc = Output(UInt(ALUASrcFrom.getWidth.W))
   val aluBSrc = Output(UInt(ALUBSrcFrom.getWidth.W))
   val aluCtr = Output(UInt(ALUOp.getWidth.W))
+  val csrSrc = Output(UInt(CSRSrcFrom.getWidth.W))
+  val csrCtr = Output(UInt(CSRCtr.getWidth.W))
   val brType = Output(UInt(BrType.getWidth.W))
+  val pcSrc = Output(UInt(PCSrcFrom.getWidth.W))
   val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
   val memValid = Output(Bool())
   val memWe = Output(Bool())
@@ -270,26 +321,30 @@ class ControlIO extends Bundle {
 
 class Control extends Module {
   val io = IO(new ControlIO)
-  import Instruction.InstricitonMap._
+  import InstricitonMap._
 
   val possiblePatterns = Seq(
     LUI, AUIPC, JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU,
     LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTIU,
     XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
-    SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK
+    SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK,
+    CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI,
   )
   val decodeTable = new DecodeTable(
     possiblePatterns,
     Seq(
       ImmControlField,
       RegWeControlField,
+      ALUASrcControlField,
+      ALUBSrcControlField,
       ALUControlField,
+      CSRSrcControlField,
+      CSRControlField,
       BrControlField,
       MemValidControlField,
       MemOpControlField,
       MemWenControlField,
-      ALUASrcControlField,
-      ALUBSrcControlField,
+      PCSrcControlField,
       WBSrcControlField,
       EndControlField,
     )
@@ -300,7 +355,10 @@ class Control extends Module {
   io.aluASrc      := decodeResult(ALUASrcControlField)
   io.aluBSrc      := decodeResult(ALUBSrcControlField)
   io.aluCtr       := decodeResult(ALUControlField)
+  io.csrSrc       := decodeResult(CSRSrcControlField)
+  io.csrCtr       := decodeResult(CSRControlField)
   io.brType       := decodeResult(BrControlField)
+  io.pcSrc        := decodeResult(PCSrcControlField)
   io.wbSrc        := decodeResult(WBSrcControlField)
   io.memValid     := decodeResult(MemValidControlField)
   io.memWe        := decodeResult(MemWenControlField)

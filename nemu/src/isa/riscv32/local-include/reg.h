@@ -26,6 +26,14 @@ static inline int check_reg_idx(int idx) {
 
 #define gpr(idx) (cpu.gpr[check_reg_idx(idx)])
 
+typedef struct
+{
+  word_t      : 1, sie  : 1,      : 1, mie  : 1,      : 1,
+         spie : 1, ube  : 1, mpie : 1, spp  : 1, vs   : 2,
+         mpp  : 2, fs   : 2, xs   : 2, mprv : 1, sum  : 1,
+         mxr  : 1, tvm  : 1, tw   : 1, tsr  : 1,      : 8, sd   : 1;
+} mstatus_t;
+
 enum riscv32_CSR {
   MSTATUS = 0x300, MTVEC = 0x305,
   MEPC = 0x341, MCAUSE = 0x342,

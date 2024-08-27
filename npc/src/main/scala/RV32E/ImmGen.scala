@@ -15,11 +15,11 @@ class ImmGenIO(xlen: Int = 32) extends Bundle {
 
 class ImmGen(xlen: Int = 32) extends Module {
   val io = IO(new ImmGenIO(xlen))
-  val isImmI = io.immType === ImmI.asUInt
-  val isImmS = io.immType === ImmS.asUInt
-  val isImmB = io.immType === ImmB.asUInt
-  val isImmU = io.immType === ImmU.asUInt
-  val isImmJ = io.immType === ImmJ.asUInt
+  val isImmI = io.immType === immI
+  val isImmS = io.immType === immS
+  val isImmB = io.immType === immB
+  val isImmU = io.immType === immU
+  val isImmJ = io.immType === immJ
 
   val inst = io.instr
   val imm0 = Mux(isImmI, inst(20), Mux(isImmS, inst(7), 0.U(1.W)))

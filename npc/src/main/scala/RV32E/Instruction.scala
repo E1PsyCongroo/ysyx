@@ -65,11 +65,21 @@ object Instruction {
     val FENCE   = Instruction(opcode = BitPat("b0001111"), funct3 = BitPat("b000"))
     val ECALL   = Instruction(
       opcode = BitPat("b1110011"), funct3 = BitPat("b000"), funct7 = BitPat("b0000000"),
-      rs2 = BitPat("b00000"), rs1 = BitPat("b00000"), rd = BitPat("b00000")
+      rs1 = BitPat("b00000"), rs2 = BitPat("b00000"), rd = BitPat("b00000")
     )
     val EBREAK  = Instruction(
       opcode = BitPat("b1110011"), funct3 = BitPat("b000"), funct7 = BitPat("b0000000"),
-      rs2 = BitPat("b00001"), rs1 = BitPat("b00000"), rd = BitPat("b00000")
+      rs1 = BitPat("b00000"), rs2 = BitPat("b00001"), rd = BitPat("b00000")
+    )
+    val CSRRW   = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b001"))
+    val CSRRS   = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b010"))
+    val CSRRC   = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b011"))
+    val CSRRWI  = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b101"))
+    val CSRRSI  = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b110"))
+    val CSRRCI  = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b111"))
+    val MRET    = Instruction(
+      opcode = BitPat("b1110011"), funct3 = BitPat("b000"), funct7 = BitPat("b0011000"),
+      rs1 = BitPat("b00000"), rs2 = BitPat("b00010"), rd = BitPat("b00000")
     )
   }
 
@@ -85,19 +95,30 @@ object Instruction {
     BitPat("b0110011") -> InstructionType.RType,
     BitPat("b0001111") -> InstructionType.IType,
     BitPat("b1110011") -> InstructionType.IType,
+    BitPat("b1110011") -> InstructionType.IType,
   )
 
   val immTypeMap = Map(
-    InstructionType.IType -> ImmType.ImmI,
-    InstructionType.SType -> ImmType.ImmS,
-    InstructionType.BType -> ImmType.ImmB,
-    InstructionType.UType -> ImmType.ImmU,
-    InstructionType.JType -> ImmType.ImmJ,
+    InstructionType.IType -> ImmType.immI,
+    InstructionType.SType -> ImmType.immS,
+    InstructionType.BType -> ImmType.immB,
+    InstructionType.UType -> ImmType.immU,
+    InstructionType.JType -> ImmType.immJ,
+  )
+
+  val nop = Instruction(
+    opcode = BitPat("b0010011"), funct3 = BitPat("b000"), funct7 = BitPat("b0000000"),
+    rs1 = BitPat("b00000"), rs2 = BitPat("b00000"), rd = BitPat("b00000")
   )
 }
 
-object ImmType extends ChiselEnum {
-  val ImmI, ImmS, ImmB, ImmU, ImmJ = Value
+object ImmType {
+  def getWidth = 3
+  val immI = BitPat("b000")
+  val immU = BitPat("b001")
+  val immS = BitPat("b010")
+  val immB = BitPat("b011")
+  val immJ = BitPat("b100")
 }
 
 object ALUOp {
@@ -115,27 +136,63 @@ object ALUOp {
   val aluAnd  = BitPat("b?111")
 }
 
-object BrType extends ChiselEnum {
-  val brNone, brJr, brJ, brEq, brNe, brLt, brGe = Value
+object BrType {
+  def getWidth = 3
+  val brNone  = BitPat("b000")
+  val brJ     = BitPat("b001")
+  val brJr    = BitPat("b010")
+  val brEq    = BitPat("b100")
+  val brNe    = BitPat("b101")
+  val brLt    = BitPat("b110")
+  val brGe    = BitPat("b111")
 }
 
 object MemOp {
   def getWidth = 3
-  val memB = BitPat("b000")
-  val memH = BitPat("b001")
-  val memW = BitPat("b010")
+  val memB  = BitPat("b000")
+  val memH  = BitPat("b001")
+  val memW  = BitPat("b010")
   val memBu = BitPat("b100")
   val memHu = BitPat("b101")
 }
 
-object ALUASrcFrom extends ChiselEnum {
-  val fromRs1, fromPc = Value
+object ALUASrcFrom {
+  def getWidth = 1
+  val fromRs1 = BitPat("b0")
+  val fromPc  = BitPat("b1")
 }
 
-object ALUBSrcFrom extends ChiselEnum {
-  val fromRs2, fromImm, from4 = Value
+object ALUBSrcFrom {
+  def getWidth = 2
+  val fromRs2 = BitPat("b00")
+  val fromImm = BitPat("b01")
+  val from4   = BitPat("b10")
 }
 
-object WBSrcFrom extends ChiselEnum {
-  val fromALU, fromMem = Value
+object CSRSrcFrom {
+  def getWidth = 1
+  val fromRs1  = BitPat("b0")
+  val fromUimm = BitPat("b1")
+}
+object CSRCtr {
+  def getWidth  = 3
+  val csrNone   = BitPat("b000")
+  val csrRW     = BitPat("b001")
+  val csrRS     = BitPat("b010")
+  val csrRC     = BitPat("b011")
+  val csrEcall  = BitPat("b100")
+  val csrMret   = BitPat("b101")
+}
+
+object WBSrcFrom {
+  def getWidth = 2
+  val fromALU = BitPat("b00")
+  val fromMem = BitPat("b01")
+  val fromCSR = BitPat("b10")
+}
+
+object PCSrcFrom {
+  def getWidth = 1
+  val fromCom = BitPat("b0")
+  val fromCSR = BitPat("b1")
 }
