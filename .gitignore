@@ -1,6 +1,6 @@
 *.*
 *
-# !*/
+!*/
 !/nemu/*
 !/nexus-am/*
 !/nanos-lite/*
@@ -11,3 +11,8 @@
 !README.md
 !.gitignore
 !init.sh
+/nvboard
+/fceux-am
+/yosys-sta
+/am-kernels
+/rt-thread-am
