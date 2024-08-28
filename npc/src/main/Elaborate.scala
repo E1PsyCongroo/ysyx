@@ -10,7 +10,6 @@ object Elaborate extends App {
     new RVCPU.RVCPU(
       xlen       = 32,
       extentionE = true,
-      extentionC = false,
       PCReset   = BigInt("80000000", 16)
     ),
     args,

@@ -95,7 +95,6 @@ object Instruction {
     BitPat("b0110011") -> InstructionType.RType,
     BitPat("b0001111") -> InstructionType.IType,
     BitPat("b1110011") -> InstructionType.IType,
-    BitPat("b1110011") -> InstructionType.IType,
   )
 
   val immTypeMap = Map(

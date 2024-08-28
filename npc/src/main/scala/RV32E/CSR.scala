@@ -106,6 +106,8 @@ class CSRControl(xlen: Int) extends Module {
 
   // val mstatus         = csrs(CSRAddress.mstatus).viewAs[CSRMstatus]
   val mstatus         = csrs(CSRAddress.mstatus).asTypeOf(new CSRMstatus)
+  val mstatusEn       = (io.csrAddr === CSRAddress.mstatus) ||(io.csrCtr === CSRCtr.csrEcall) ||
+                        (io.csrCtr === CSRCtr.csrMret)
   val mstatusEcallWr  = WireInit(mstatus)
   mstatusEcallWr.mpie := mstatus.mie
   mstatusEcallWr.mie  := 0.U
@@ -114,36 +116,51 @@ class CSRControl(xlen: Int) extends Module {
   mstatusMretWr.mpp   := PrivMode.U_Mode.value.U
   mstatusMretWr.mie   := mstatus.mpie
   mstatusMretWr.mpie  := 1.U
-  csrs(CSRAddress.mstatus)  := MuxCase(csrCommonWrite, Seq(
-    CSRCtr.csrNone  -> mstatus.asUInt,
-    CSRCtr.csrEcall -> mstatusEcallWr.asUInt,
-    CSRCtr.csrMret  -> mstatusMretWr.asUInt,
-  ).map { case (key, data) => (key === io.csrCtr, data) })
+  csrs(CSRAddress.mstatus)  := Mux(
+    mstatusEn,
+    MuxCase(csrCommonWrite, Seq(
+      CSRCtr.csrNone  -> mstatus.asUInt,
+      CSRCtr.csrEcall -> mstatusEcallWr.asUInt,
+      CSRCtr.csrMret  -> mstatusMretWr.asUInt,
+    ).map { case (key, data) => (key === io.csrCtr, data) }),
+    mstatus.asUInt,
+  )
 
   val mcause          = csrs(CSRAddress.mcause)
+  val mcauseEn        = (io.csrAddr === CSRAddress.mcause) ||(io.csrCtr === CSRCtr.csrEcall) ||
+                        (io.csrCtr === CSRCtr.csrMret)
   val mcauseEcallWr   = WireDefault(MuxCase(2.U, Seq(
     PrivMode.M_Mode -> 11.U,
     PrivMode.S_Mode -> 9.U,
     PrivMode.U_Mode -> 8.U,
   ).map { case (key, data) => (key === priv, data) }))
-  mcause              := MuxCase(csrCommonWrite, Seq(
-    CSRCtr.csrNone  -> mcause,
-    CSRCtr.csrEcall -> mcauseEcallWr,
-    CSRCtr.csrMret  -> mcause,
-  ).map{ case (key, data) => (key === io.csrCtr, data) })
+  mcause              := Mux(
+    mcauseEn,
+      MuxCase(csrCommonWrite, Seq(
+      CSRCtr.csrNone  -> mcause,
+      CSRCtr.csrEcall -> mcauseEcallWr,
+      CSRCtr.csrMret  -> mcause,
+    ).map{ case (key, data) => (key === io.csrCtr, data) }),
+    mcause,
+  )
 
   val mepc            = csrs(CSRAddress.mepc)
-  mepc                := MuxCase(csrCommonWrite, Seq(
-    CSRCtr.csrNone  -> mepc,
-    CSRCtr.csrEcall -> io.epc,
-    CSRCtr.csrMret  -> mepc,
-  ).map{ case (key, data) => (key === io.csrCtr, data) })
+  val mepcEn          = (io.csrAddr === CSRAddress.mepc) ||(io.csrCtr === CSRCtr.csrEcall)
+  mepc                := Mux(
+    mepcEn,
+      MuxCase(csrCommonWrite, Seq(
+      CSRCtr.csrNone  -> mepc,
+      CSRCtr.csrEcall -> io.epc,
+      CSRCtr.csrMret  -> mepc,
+    ).map{ case (key, data) => (key === io.csrCtr, data) }),
+    mepc
+  )
 
   val commonCsrs      = Seq(
     CSRAddress.mtvec
   )
   for (commCsr <- commonCsrs) {
-    csrs(commCsr)     := csrCommonWrite
+    csrs(commCsr)     := Mux(io.csrAddr === commCsr, csrCommonWrite, csrs(commCsr))
   }
 
   priv                := MuxCase(priv, Seq(

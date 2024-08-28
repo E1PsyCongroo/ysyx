@@ -6,9 +6,6 @@ import chisel3.util._
 import chisel3.util.experimental.decode._
 
 import Instruction._
-import _root_.RVCPU.Instruction.InstricitonMap.ECALL
-import _root_.RVCPU.CSRSrcFrom.fromUimm
-import _root_.RVCPU.Instruction.InstricitonMap.CSRRCI
 
 object ImmControlField extends DecodeField[Instruction, UInt] {
   def name = "Imm Control Field"
@@ -156,17 +153,12 @@ object CSRControlField extends DecodeField[Instruction, UInt] {
   def chiselType: UInt = UInt(CSRCtr.getWidth.W)
   override def default: BitPat = csrNone
   def genTable(op: Instruction): BitPat = {
-    op.opcode match {
-      case ECALL.opcode => csrEcall
-      case MRET.opcode => csrMret
-      case CSRRW.opcode | CSRRWI.opcode |
-           CSRRS.opcode | CSRRSI.opcode |
-           CSRRC.opcode | CSRRCI.opcode => op.funct3 match {
-          case CSRRW.funct3 | CSRRWI.funct3 => csrRW
-          case CSRRS.funct3 | CSRRSI.funct3 => csrRS
-          case CSRRC.funct3 | CSRRCI.funct3 => csrRC
-          case _ => default
-        }
+    op match {
+      case ECALL => csrEcall
+      case MRET => csrMret
+      case CSRRW | CSRRWI => csrRW
+      case CSRRS | CSRRSI => csrRS
+      case CSRRC | CSRRCI => csrRC
       case _ => default
     }
   }
@@ -264,8 +256,8 @@ object PCSrcControlField extends DecodeField[Instruction, UInt] {
   def name: String = "PC Select Control Feild"
   def chiselType: UInt = UInt(PCSrcFrom.getWidth.W)
   def genTable(op: Instruction): BitPat = {
-    op.opcode match {
-      case ECALL.opcode | MRET.opcode => fromCSR
+    op match {
+      case ECALL | MRET => fromCSR
       case _ => fromCom
     }
   }
@@ -278,12 +270,9 @@ object WBSrcControlField extends DecodeField[Instruction, UInt] {
   def chiselType: UInt = UInt(WBSrcFrom.getWidth.W)
   override def default: BitPat = fromALU
   def genTable(op: Instruction): BitPat = {
-    op.opcode match {
-      case LB.opcode | LBU.opcode | LH.opcode |
-           LHU.opcode | LW.opcode => fromMem
-      case CSRRW.opcode | CSRRWI.opcode |
-           CSRRS.opcode | CSRRSI.opcode |
-           CSRRC.opcode | CSRRCI.opcode => fromCSR
+    op match {
+      case LB | LBU | LH | LHU | LW => fromMem
+      case CSRRW | CSRRWI | CSRRS | CSRRSI | CSRRC | CSRRCI => fromCSR
       case _ => default
     }
   }
@@ -302,7 +291,7 @@ object EndControlField extends DecodeField[Instruction, Bool] {
 }
 
 class ControlIO extends Bundle {
-  val instr = Input(UInt(32.W))
+  val instruction = Input(UInt(32.W))
   val immType = Output(UInt(ImmType.getWidth.W))
   val regWe = Output(Bool())
   val aluASrc = Output(UInt(ALUASrcFrom.getWidth.W))
@@ -328,7 +317,7 @@ class Control extends Module {
     LB, LH, LW, LBU, LHU, SB, SH, SW, ADDI, SLTI, SLTIU,
     XORI, ORI, ANDI, SLLI, SRLI, SRAI, ADD, SUB, SLL, SLT,
     SLTU, XOR, SRL, SRA, OR, AND, FENCE, ECALL, EBREAK,
-    CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI,
+    CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI, MRET
   )
   val decodeTable = new DecodeTable(
     possiblePatterns,
@@ -349,7 +338,7 @@ class Control extends Module {
       EndControlField,
     )
   )
-  val decodeResult = decodeTable.decode(io.instr)
+  val decodeResult = decodeTable.decode(io.instruction)
   io.immType      := decodeResult(ImmControlField)
   io.regWe        := decodeResult(RegWeControlField)
   io.aluASrc      := decodeResult(ALUASrcControlField)

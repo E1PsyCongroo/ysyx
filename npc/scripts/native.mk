@@ -9,7 +9,7 @@ $(BINARY):: compile_git
 
 # Some convenient rules
 
-override ARGS ?= --log=$(BUILD_DIR)/npc-log.txt
+override ARGS ?= --log=$(BUILD_DIR)/npc-log.txt --wave=$(BUILD_DIR)/npc-wave.vcd
 ifdef ELF
 override ARGS += --elf=$(ELF)
 endif

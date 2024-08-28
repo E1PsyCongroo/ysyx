@@ -44,6 +44,7 @@ static char *log_file = NULL;
 static char *diff_so_file = NULL;
 static char *img_file = NULL;
 static char *elf_file = NULL;
+static char *wave_file = NULL;
 static int difftest_port = 1234;
 
 static long load_img() {
@@ -120,7 +121,7 @@ void init_monitor(int argc, char *argv[]) {
   IFDEF(CONFIG_DEVICE, init_device());
 
   /* Perform ISA dependent initialization. */
-  init_isa();
+  init_isa(wave_file);
 
   /* Load the image to memory. This will overwrite the built-in image. */
   long img_size = load_img();

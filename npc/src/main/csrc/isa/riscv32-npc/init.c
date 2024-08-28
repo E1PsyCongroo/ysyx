@@ -12,14 +12,14 @@ static const uint32_t img [] = {
   0xdeadbeef,  // some data
 };
 
-static void restart() {
-  rvcpu_init();
+static void restart(const char *wave_file) {
+  rvcpu_init(wave_file);
 }
 
-void init_isa() {
+void init_isa(const char *wave_file) {
   /* Load built-in image. */
   memcpy(guest_to_host(RESET_VECTOR), img, sizeof(img));
 
   /* Initialize this virtual computer system. */
-  restart();
+  restart(wave_file);
 }

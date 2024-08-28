@@ -8,9 +8,9 @@ import chisel3.experimental.BundleLiterals._
 import ImmType._
 
 class ImmGenIO(xlen: Int = 32) extends Bundle {
-  val instr = Input(UInt(32.W))
-  val immType = Input(UInt(ImmType.getWidth.W))
-  val imm = Output(UInt(xlen.W))
+  val instruction = Input(UInt(32.W))
+  val immType     = Input(UInt(ImmType.getWidth.W))
+  val imm         = Output(UInt(xlen.W))
 }
 
 class ImmGen(xlen: Int = 32) extends Module {
@@ -21,7 +21,7 @@ class ImmGen(xlen: Int = 32) extends Module {
   val isImmU = io.immType === immU
   val isImmJ = io.immType === immJ
 
-  val inst = io.instr
+  val inst = io.instruction
   val imm0 = Mux(isImmI, inst(20), Mux(isImmS, inst(7), 0.U(1.W)))
   val imm4_1 = Mux(isImmI || isImmJ, inst(24, 21), Mux(isImmS || isImmB, inst(11, 8), 0.U(4.W)))
   val imm10_5 = Mux(isImmU, 0.U(6.W), inst(30, 25))

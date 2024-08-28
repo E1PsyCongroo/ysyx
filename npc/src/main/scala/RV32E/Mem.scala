@@ -87,7 +87,7 @@ class MemControl extends Module {
   val lshift = rdata >> loffset
   io.rdata := MuxCase(lshift, Seq(
     memH -> Fill(16, lshift(15)) ## lshift(15, 0),
-    memBu -> Fill(24, lshift(7)) ## lshift(7, 0),
+    memB -> Fill(24, lshift(7)) ## lshift(7, 0),
     memHu -> Fill(16, 0.U(1.W)) ## lshift(15, 0),
     memBu -> Fill(24, 0.U(1.W)) ## lshift(7, 0),
   ).map { case(key, data) => (io.memOp === key, data) })

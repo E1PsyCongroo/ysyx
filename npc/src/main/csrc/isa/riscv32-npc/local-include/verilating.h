@@ -3,7 +3,7 @@
 
 #include <common.h>
 
-void rvcpu_init(void);
+void rvcpu_init(const char*);
 void rvcpu_exit(void);
 void rvcpu_single_cycle();
 void rvcpu_reset(int n);
