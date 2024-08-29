@@ -79,21 +79,20 @@ class EXU(xlen: Int = 32) extends Module {
   val memReaded       = RegInit(false.B)
   memReaded           := Mux(LSUFetchFire, true.B, Mux(io.in.fire, false.B, memReaded))
 
-  LSU.io.avalid       := !reset.asBool && io.in.fire && (control.memRen || control.memWen) && !memReaded
+  LSU.io.avalid       := !reset.asBool && io.in.fire && ((control.memRen && !memReaded) || control.memWen)
   LSU.io.memOp        := control.memOp
   LSU.io.raddr        := ALU.io.aluOut
-  LSU.io.wen          := control.memWen
+  LSU.io.wen          := control.memWen && io.in.fire
   LSU.io.waddr        := ALU.io.aluOut
   LSU.io.wdata        := rd2
   LSU.io.dready       := isFetch
-  val memOut          = RegEnable(LSU.io.rdata, LSUFetchFire)
 
   io.in.ready               := isExec
-  io.out.valid              := (isExec && !control.memRen && io.in.fire) || (isExec && memReaded)
+  io.out.valid              := (isExec && !control.memRen && io.in.fire) || (isFetch && LSUFetchFire)
   io.out.bits.wa            := io.in.bits.wa
   io.out.bits.pcCom         := pcASrc + pcBSrc
   io.out.bits.aluOut        := ALU.io.aluOut
-  io.out.bits.memOut        := memOut
+  io.out.bits.memOut        := LSU.io.rdata
   io.out.bits.csrOut        := CSRControl.io.csrOut
   io.out.bits.control.regWe := io.in.bits.control.regWe
   io.out.bits.control.pcSrc := io.in.bits.control.pcSrc

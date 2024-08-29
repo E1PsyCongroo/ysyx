@@ -5,20 +5,21 @@ import chisel3.util._
 
 class WBUOut(xlen: Int = 32) extends Bundle {
   val nextPc  = Output(UInt(xlen.W))
-  val wa      = Output(UInt(5.W))
-  val wbSrc   = Output(UInt(xlen.W))
-  val control = new Bundle {
-    val regWe = Bool()
+
+}
+
+class WBUIO(xlen: Int = 32, extentionE: Boolean = true) extends Bundle {
+  val in  = Flipped(DecoupledIO(new EXUOut))
+  val out = DecoupledIO(new WBUOut)
+  val RegFileAccess = new Bundle {
+    val wa = Output(UInt(if (extentionE) 4.W else 5.W))
+    val we = Output(Bool())
+    val wd = Output(UInt(xlen.W))
   }
 }
 
-class WBUIO(xlen: Int = 32) extends Bundle {
-  val in  = Flipped(DecoupledIO(new EXUOut))
-  val out = DecoupledIO(new WBUOut)
-}
-
-class WBU(xlen: Int = 32) extends Module {
-  val io = IO(new WBUIO(xlen))
+class WBU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
+  val io = IO(new WBUIO(xlen, extentionE))
 
   val sReceive :: sTransmit :: Nil = Enum(2)
   val state = RegInit(sReceive)
@@ -44,10 +45,10 @@ class WBU(xlen: Int = 32) extends Module {
     WBSrcFrom.fromCSR -> csrOut,
   ).map{ case(key, data) => (control.wbSrc === key, data) })
 
-  io.in.ready               := io.out.ready // TODO
-  io.out.valid              := io.in.fire // TODO
+  io.in.ready               := io.out.ready
+  io.out.valid              := io.in.fire
   io.out.bits.nextPc        := pcSrc
-  io.out.bits.wa            := io.in.bits.wa
-  io.out.bits.wbSrc         := wbSrc
-  io.out.bits.control.regWe := io.in.bits.control.regWe
+  io.RegFileAccess.wa       := io.in.bits.wa
+  io.RegFileAccess.we       := io.in.bits.control.regWe && io.out.valid
+  io.RegFileAccess.wd       := wbSrc
 }

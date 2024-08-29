@@ -6,11 +6,6 @@ import chisel3.util._
 class IFUOut(xlen: Int = 32) extends Bundle{
   val pc          = Output(UInt(xlen.W))
   val instruction = Output(UInt(32.W))
-  val wa          = Output(UInt(5.W))
-  val wbSrc       = Output(UInt(xlen.W))
-  val control     = new Bundle {
-    val regWe = Bool()
-  }
 }
 
 class IFUIO(xlen: Int = 32) extends Bundle {
@@ -53,22 +48,22 @@ class IFU(xlen: Int = 32, PCReset: BigInt = BigInt("80000000", 16)) extends Modu
   val isFetch   = state === sFetch
   val isExec    = state === sExec
 
-  val PC = RegEnable(nextPc, PCReset.U, io.in.fire)
-
   IFetch.io.clock   := clock
   IFetch.io.reset   := reset
   IFetch.io.pc      := nextPc
   IFetch.io.avalid  := io.in.fire
   IFetch.io.dready  := isFetch
-  val instruction   = RegEnable(IFetch.io.instruction, IFetchFire)
 
-  io.pc := PC
+  val IFUOut = Reg(new IFUOut)
+  IFUOut.instruction    := Mux(IFetchFire, IFetch.io.instruction, IFUOut.instruction)
+  IFUOut.pc             := MuxCase(IFUOut.pc, Seq(
+    reset.asBool  -> PCReset.U,
+    io.in.fire    -> nextPc,
+  ))
 
+  io.pc                     := IFUOut.pc
   io.in.ready               := isExec
   io.out.valid              := isExec
-  io.out.bits.pc            := PC
-  io.out.bits.instruction   := instruction
-  io.out.bits.wa            := io.in.bits.wa
-  io.out.bits.wbSrc         := io.in.bits.wbSrc
-  io.out.bits.control.regWe := io.in.bits.control.regWe
+  io.out.bits.pc            := IFUOut.pc
+  io.out.bits.instruction   := IFUOut.instruction
 }

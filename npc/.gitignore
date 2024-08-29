@@ -14,6 +14,7 @@
 !README.md
 !Kconfig
 !*.sv
+!wave/*
 src/main/vsrc
 include/config
 include/generated

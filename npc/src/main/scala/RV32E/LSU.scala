@@ -5,28 +5,6 @@ import chisel3.util._
 import chisel3.util.experimental.decode._
 import MemOp._
 
-class MemIO extends Bundle {
-  val avalid  = Input(Bool())
-  val aready  = Output(Bool())
-  val raddr   = Input(UInt(32.W))
-  val wen     = Input(Bool())
-  val waddr   = Input(UInt(32.W))
-  val wdata   = Input(UInt(32.W))
-  val wmask   = Input(UInt(4.W))
-
-  val dvalid  = Output(Bool())
-  val dready  = Input(Bool())
-  val rdata   = Output(UInt(32.W))
-}
-
-class Mem extends BlackBox with HasBlackBoxResource {
-  val io = IO(new MemIO{
-    val clock = Input(Clock())
-    val reset = Input(Reset())
-  })
-  addResource("/Mem.sv")
-}
-
 case class MemControlPattern(
   val memOp: BitPat
 ) extends DecodePattern {

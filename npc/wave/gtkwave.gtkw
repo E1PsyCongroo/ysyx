@@ -1,0 +1,100 @@
+[*]
+[*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
+[*] Thu Aug 29 04:25:02 2024
+[*]
+[dumpfile] "(null)"
+[savefile] "/home/focused_xy/cs/ysyx/npc/wave/gtkwave.gtkw"
+[timestart] 127
+[size] 2880 1564
+[pos] -1 -1
+*-1.044010 137 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[treeopen] TOP.RVCPU.
+[treeopen] TOP.RVCPU.EXU.
+[treeopen] TOP.RVCPU.EXU.LSU.
+[sst_width] 485
+[signals_width] 499
+[sst_expanded] 1
+[sst_vpaned_height] 520
+@28
+TOP.clock
+TOP.reset
+@200
+-IFU
+@28
+TOP.RVCPU.IFU.state[1:0]
+@22
+TOP.RVCPU.IFU.IFUOut_pc[31:0]
+TOP.RVCPU.IFU.IFUOut_instruction[31:0]
+@28
+TOP.RVCPU.IFU.io_out_valid
+@200
+-IDU
+@28
+TOP.RVCPU.IDU.io_out_ready
+@22
+TOP.RVCPU.IDU.io_RegFileAccess_ra1[3:0]
+TOP.RVCPU.IDU.io_RegFileAccess_ra2[3:0]
+TOP.RVCPU.IDU.io_RegFileReturn_rd1[31:0]
+TOP.RVCPU.IDU.io_RegFileReturn_rd2[31:0]
+TOP.RVCPU.IDU.io_out_bits_imm[31:0]
+@28
+TOP.RVCPU.IDU.io_out_valid
+@200
+-EXU
+@28
+TOP.RVCPU.EXU.state
+@22
+TOP.RVCPU.EXU.io_out_bits_aluOut[31:0]
+TOP.RVCPU.EXU.io_out_bits_csrOut[31:0]
+@200
+-Mem
+@28
+TOP.RVCPU.EXU.io_out_valid
+TOP.RVCPU.EXU.LSU.io_aready
+@29
+TOP.RVCPU.EXU.LSU.io_avalid
+@28
+TOP.RVCPU.EXU.LSU.io_wen
+TOP.RVCPU.EXU.LSU.io_dvalid
+TOP.RVCPU.EXU.LSU.io_dready
+@22
+TOP.RVCPU.EXU.LSU.io_rdata[31:0]
+TOP.RVCPU.EXU.LSU.Mem.raddr[31:0]
+TOP.RVCPU.EXU.LSU.Mem.read_data[31:0]
+TOP.RVCPU.EXU.LSU.Mem.rdata[31:0]
+TOP.RVCPU.EXU.LSU.Mem.wmask[3:0]
+TOP.RVCPU.EXU.LSU.Mem.wdata[31:0]
+TOP.RVCPU.EXU.LSU.Mem.waddr[31:0]
+@28
+TOP.RVCPU.EXU.LSU.Mem.wen
+TOP.RVCPU.EXU.LSU.Mem.state
+@22
+TOP.RVCPU.EXU.LSU.lshift[31:0]
+TOP.RVCPU.EXU.LSU.Mem.read_data[31:0]
+TOP.RVCPU.EXU.LSU.Mem.rdata[31:0]
+@200
+-WBU
+@22
+TOP.RVCPU.WBU.io_out_bits_nextPc[31:0]
+@28
+TOP.RVCPU.WBU.io_RegFileAccess_we
+@22
+TOP.RVCPU.WBU.io_RegFileAccess_wa[3:0]
+TOP.RVCPU.WBU.io_RegFileAccess_wd[31:0]
+@28
+TOP.RVCPU.WBU.io_out_valid
+@200
+-RegFile
+@22
+TOP.RVCPU.RegFile.io_ra1[3:0]
+TOP.RVCPU.RegFile.io_ra2[3:0]
+TOP.RVCPU.RegFile.io_rd1[31:0]
+TOP.RVCPU.RegFile.io_rd2[31:0]
+@28
+TOP.RVCPU.RegFile.io_we
+@22
+TOP.RVCPU.RegFile.io_wa[3:0]
+TOP.RVCPU.RegFile.io_wd[31:0]
+[pattern_trace] 1
+[pattern_trace] 0

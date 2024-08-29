@@ -18,7 +18,17 @@ class RVCPU (
   val IFU = Module(new IFU(xlen, PCReset))
   val IDU = Module(new IDU(xlen, extentionE))
   val EXU = Module(new EXU(xlen))
-  val WBU = Module(new WBU(xlen))
+  val WBU = Module(new WBU(xlen, extentionE))
+
+  val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
+
+  RegFile.io.ra1 := IDU.io.RegFileAccess.ra1
+  RegFile.io.ra2 := IDU.io.RegFileAccess.ra2
+  IDU.io.RegFileReturn.rd1 := RegFile.io.rd1
+  IDU.io.RegFileReturn.rd2 := RegFile.io.rd2
+  RegFile.io.wa  := WBU.io.RegFileAccess.wa
+  RegFile.io.we  := WBU.io.RegFileAccess.we
+  RegFile.io.wd  := WBU.io.RegFileAccess.wd
 
   StageConnect(IFU.io.out, IDU.io.in)
   StageConnect(IDU.io.out, EXU.io.in)

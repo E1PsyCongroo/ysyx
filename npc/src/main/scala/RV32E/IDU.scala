@@ -26,9 +26,17 @@ class IDUOut(xlen: Int = 32) extends Bundle {
   }
 }
 
-class IDUIO(xlen: Int = 32) extends Bundle {
+class IDUIO(xlen: Int = 32, extentionE: Boolean = true) extends Bundle {
   val in  = Flipped(DecoupledIO(new IFUOut))
   val out = DecoupledIO(new IDUOut)
+  val RegFileAccess = new Bundle {
+    val ra1 = Output(UInt(if (extentionE) 4.W else 5.W))
+    val ra2 = Output(UInt(if (extentionE) 4.W else 5.W))
+  }
+  val RegFileReturn = new Bundle {
+    val rd1 = Input(UInt(xlen.W))
+    val rd2 = Input(UInt(xlen.W))
+  }
 }
 
 class EndControlIO extends Bundle {
@@ -42,7 +50,7 @@ class EndControl extends BlackBox with HasBlackBoxResource {
 }
 
 class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
-  val io = IO(new IDUIO(xlen))
+  val io = IO(new IDUIO(xlen, extentionE))
 
   val sReceive :: sTransmit :: Nil = Enum(2)
   val state = RegInit(sReceive)
@@ -51,7 +59,6 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
     sTransmit -> Mux(io.out.fire & !io.in.fire, sReceive, sTransmit)
   ))
 
-  val RegFile     = Module(new RegFile(xlen, if (extentionE) 4 else 5))
   val ImmGen      = Module(new ImmGen(xlen))
   val Control     = Module(new Control)
   val EndControl  = Module(new EndControl)
@@ -60,11 +67,9 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
   val rs1         = instruction(19, 15)
   val rs2         = instruction(24, 20)
   val rd          = instruction(11, 7)
-  RegFile.io.ra1      := rs1
-  RegFile.io.ra2      := rs2
-  RegFile.io.wa       := io.in.bits.wa
-  RegFile.io.we       := io.in.bits.control.regWe && io.in.fire
-  RegFile.io.wd       := io.in.bits.wbSrc
+
+  io.RegFileAccess.ra1 := rs1
+  io.RegFileAccess.ra2 := rs2
 
   ImmGen.io.instruction := instruction
   ImmGen.io.immType     := Control.io.immType
@@ -78,8 +83,8 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
   io.in.ready                   := io.out.ready
   io.out.valid                  := io.in.fire
   io.out.bits.pc                := io.in.bits.pc
-  io.out.bits.rd1               := RegFile.io.rd1
-  io.out.bits.rd2               := RegFile.io.rd2
+  io.out.bits.rd1               := io.RegFileReturn.rd1
+  io.out.bits.rd2               := io.RegFileReturn.rd2
   io.out.bits.wa                := rd
   io.out.bits.imm               := ImmGen.io.imm
   io.out.bits.uimm              := rs1.pad(32)
