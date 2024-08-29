@@ -6,7 +6,6 @@ import chisel3.util._
 
 class RVCPUIO (xlen: Int = 32) extends Bundle {
   val pc          = Output(UInt(xlen.W))
-  val instruction = Input(UInt(32.W))
 }
 
 class RVCPU (
@@ -27,7 +26,6 @@ class RVCPU (
   StageConnect(WBU.io.out, IFU.io.in)
 
   io.pc               := IFU.io.pc
-  IFU.io.instruction  := io.instruction
 }
 
 object StageConnect {

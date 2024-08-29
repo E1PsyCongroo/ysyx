@@ -50,7 +50,7 @@ VERILATOR 											:= verilator
 VERILATOR_CFLAGS 								?= --MMD --build --cc -O3 --x-assign fast --x-initial fast --noassert --trace
 
 # Verilating
-.stamp.verilog: $(CHISELSRCS)
+.stamp.verilog: $(CHISELSRCS) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	@echo + VERILOG $^
 	@mkdir -p $(VSRC_DIR)

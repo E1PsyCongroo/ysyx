@@ -5,7 +5,8 @@
 
 void rvcpu_init(const char*);
 void rvcpu_exit(void);
-void rvcpu_single_cycle();
+void rvcpu_single_cycle(void);
+void rvcpu_single_exec(void);
 void rvcpu_reset(int n);
 uint32_t rvcpu_ifetch(vaddr_t *pc, int len);
 

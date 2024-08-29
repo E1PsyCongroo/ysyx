@@ -27,7 +27,9 @@ class EXU(xlen: Int = 32) extends Module {
   val ALU         = Module(new ALU(xlen))
   val CSRControl  = Module(new CSRControl(xlen))
   val BrCond      = Module(new BrCond)
-  val Mem         = Module(new MemControl)
+  val LSU         = Module(new LSU)
+  val LSUSetAddrFire  = LSU.io.avalid && LSU.io.aready
+  val LSUFetchFire    = LSU.io.dvalid && LSU.io.dready
 
   val pc      = io.in.bits.pc
   val imm     = io.in.bits.imm
@@ -35,6 +37,16 @@ class EXU(xlen: Int = 32) extends Module {
   val rd1     = io.in.bits.rd1
   val rd2     = io.in.bits.rd2
   val control = io.in.bits.control
+
+  val sExec :: sFetch :: Nil = Enum(2)
+  val state = RegInit(sExec)
+  state := MuxLookup(state, sExec)(Seq(
+    sExec     -> Mux(LSUSetAddrFire && control.memRen, sFetch, sExec),
+    sFetch    -> Mux(LSUFetchFire, sExec, sFetch),
+  ))
+
+  val isExec    = state === sExec
+  val isFetch   = state === sFetch
 
   val aluASrc = MuxCase(pc, Seq(
     ALUASrcFrom.fromPc   -> pc,
@@ -56,7 +68,7 @@ class EXU(xlen: Int = 32) extends Module {
   CSRControl.io.csrAddr := imm
   CSRControl.io.epc     := pc
   CSRControl.io.csrIn   := csrSrc
-  CSRControl.io.csrCtr  := control.csrCtr
+  CSRControl.io.csrCtr  := Mux(isExec && io.in.fire, control.csrCtr, CSRCtr.csrNone.value.U)
 
   BrCond.io.brType    := control.brType
   BrCond.io.less      := ALU.io.less
@@ -64,28 +76,24 @@ class EXU(xlen: Int = 32) extends Module {
   val pcASrc          = Mux(BrCond.io.PCASrc, imm, 4.U)
   val pcBSrc          = Mux(BrCond.io.PCBSrc, pc, rd1)
 
-  Mem.io.valid        := !reset.asBool && control.memValid
-  Mem.io.memOp        := control.memOp
-  Mem.io.raddr        := ALU.io.aluOut
+  val memReaded       = RegInit(false.B)
+  memReaded           := Mux(LSUFetchFire, true.B, Mux(io.in.fire, false.B, memReaded))
 
-  Mem.io.wen          := control.memWe
-  Mem.io.waddr        := ALU.io.aluOut
-  Mem.io.wdata        := rd2
+  LSU.io.avalid       := !reset.asBool && io.in.fire && (control.memRen || control.memWen) && !memReaded
+  LSU.io.memOp        := control.memOp
+  LSU.io.raddr        := ALU.io.aluOut
+  LSU.io.wen          := control.memWen
+  LSU.io.waddr        := ALU.io.aluOut
+  LSU.io.wdata        := rd2
+  LSU.io.dready       := isFetch
+  val memOut          = RegEnable(LSU.io.rdata, LSUFetchFire)
 
-  val sReceive :: sTransmit :: Nil = Enum(2)
-  val state = RegInit(sReceive)
-  state := MuxLookup(state, sReceive)(Seq(
-    sReceive  -> Mux(io.in.fire & !io.out.fire, sTransmit, sReceive),
-    sTransmit -> Mux(io.out.fire & !io.in.fire, sReceive, sTransmit)
-  ))
-
-  io.in.ready := true.B   // TODO
-
-  io.out.valid              := true.B  // TODO
+  io.in.ready               := isExec
+  io.out.valid              := (isExec && !control.memRen && io.in.fire) || (isExec && memReaded)
   io.out.bits.wa            := io.in.bits.wa
   io.out.bits.pcCom         := pcASrc + pcBSrc
   io.out.bits.aluOut        := ALU.io.aluOut
-  io.out.bits.memOut        := Mem.io.rdata
+  io.out.bits.memOut        := memOut
   io.out.bits.csrOut        := CSRControl.io.csrOut
   io.out.bits.control.regWe := io.in.bits.control.regWe
   io.out.bits.control.pcSrc := io.in.bits.control.pcSrc

@@ -15,30 +15,59 @@ class IFUOut(xlen: Int = 32) extends Bundle{
 
 class IFUIO(xlen: Int = 32) extends Bundle {
   val pc          = Output(UInt(xlen.W))
-  val instruction = Input(UInt(32.W))
   val in          = Flipped(DecoupledIO(new WBUOut))
   val out         = DecoupledIO(new IFUOut)
+}
+
+class IFetch(xlen: Int = 32) extends BlackBox with HasBlackBoxResource {
+  val io = IO(new Bundle {
+    val clock       = Input(Clock())
+    val reset       = Input(Reset())
+    val pc          = Input(UInt(xlen.W))
+    val avalid      = Input(Bool())
+    val aready      = Output(Bool())
+    val instruction = Output(UInt(32.W))
+    val dvalid      = Output(Bool())
+    val dready      = Input(Bool())
+  })
+  addResource("/IFetch.sv")
 }
 
 class IFU(xlen: Int = 32, PCReset: BigInt = BigInt("80000000", 16)) extends Module {
   val io = IO(new IFUIO(xlen))
 
   val nextPc = Mux(reset.asBool, PCReset.U, io.in.bits.nextPc)
-  val PC = RegEnable(nextPc, io.in.fire)
-  io.pc := nextPc
+  val IFetch = Module(new IFetch(xlen))
+  val IFetchSetAddrFire = IFetch.io.avalid && IFetch.io.aready
+  val IFetchFire = IFetch.io.dvalid && IFetch.io.dready
 
-  val sReceive :: sTransmit :: Nil = Enum(2)
-  val state = RegInit(sReceive)
-  state := MuxLookup(state, sReceive)(Seq(
-    sReceive  -> Mux(io.in.fire & !io.out.fire, sTransmit, sReceive),
-    sTransmit -> Mux(io.out.fire & !io.in.fire, sReceive, sTransmit)
+  val sSetAddr :: sFetch :: sExec :: Nil = Enum(3)
+  val state = RegInit(sFetch)
+  state := MuxLookup(state, sSetAddr)(Seq(
+    sSetAddr  -> Mux(IFetchSetAddrFire, sFetch, sSetAddr),
+    sFetch    -> Mux(IFetchFire, sExec, sFetch),
+    sExec     -> Mux(io.in.fire && IFetchSetAddrFire, sFetch, sExec),
   ))
 
-  io.in.ready := true.B // TODO
+  val isSetAddr = state === sSetAddr
+  val isFetch   = state === sFetch
+  val isExec    = state === sExec
 
-  io.out.valid              := true.B // TODO
+  val PC = RegEnable(nextPc, PCReset.U, io.in.fire)
+
+  IFetch.io.clock   := clock
+  IFetch.io.reset   := reset
+  IFetch.io.pc      := nextPc
+  IFetch.io.avalid  := io.in.fire
+  IFetch.io.dready  := isFetch
+  val instruction   = RegEnable(IFetch.io.instruction, IFetchFire)
+
+  io.pc := PC
+
+  io.in.ready               := isExec
+  io.out.valid              := isExec
   io.out.bits.pc            := PC
-  io.out.bits.instruction   := io.instruction
+  io.out.bits.instruction   := instruction
   io.out.bits.wa            := io.in.bits.wa
   io.out.bits.wbSrc         := io.in.bits.wbSrc
   io.out.bits.control.regWe := io.in.bits.control.regWe

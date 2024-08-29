@@ -2,6 +2,7 @@
 #include <VRVCPU.h>
 #include <VRVCPU___024root.h>
 #include <VRVCPU__Dpi.h>
+#include <cstdlib>
 #include <verilated_vcd_c.h>
 
 extern "C" {
@@ -90,6 +91,7 @@ void rvcpu_init(const char* wave_file){
   rvcpu->trace(tfp, 5);
   if (wave_file) {
     tfp->open(wave_file);
+    Log("Wave is written to %s", wave_file);
   }
   rvcpu->clock = 1;
   rvcpu_sync();
@@ -109,14 +111,23 @@ void rvcpu_single_cycle(void) {
   rvcpu->clock = 0; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
   rvcpu_sync();
-  // printf("pc: " FMT_WORD ", inst: " FMT_WORD ", npc: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__PC, rvcpu->io_inst, rvcpu->io_nextPc);
+  if (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state == 2) {
+    printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__IFU__DOT__PC, rvcpu->rootp->RVCPU__DOT__IFU__DOT__instruction);
+  }
   /* time up */
-  uint32_t pc = rvcpu->io_pc;
   rvcpu->clock = 1; rvcpu->eval();
-  cur_inst = rvcpu->io_instruction = vaddr_ifetch(pc, 4); rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
   rvcpu_sync();
   g_nr_guest_cycle++;
+}
+
+void rvcpu_single_exec(void) {
+  while (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state != 2) {
+    rvcpu_single_cycle();
+  }
+  while (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state == 2) {
+    rvcpu_single_cycle();
+  }
 }
 
 void rvcpu_reset(int n) {
