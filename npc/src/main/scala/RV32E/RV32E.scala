@@ -9,6 +9,7 @@ class RVCPUIO (xlen: Int = 32) extends Bundle {
 }
 
 class RVCPU (
+  awidth: Int = 32,
   xlen: Int = 32,
   extentionE: Boolean = true,
   PCReset: BigInt = BigInt("80000000", 16)
@@ -18,9 +19,12 @@ class RVCPU (
   val IFU = Module(new IFU(xlen, PCReset))
   val IDU = Module(new IDU(xlen, extentionE))
   val EXU = Module(new EXU(xlen))
+  val LSU = Module(new LSU(awidth, xlen))
   val WBU = Module(new WBU(xlen, extentionE))
 
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
+  val AXILiteMem = Module(new AXILiteMem(awidth, xlen, 4))
+  AXILiteMem.io <> LSU.io.AXI
 
   RegFile.io.ra1 := IDU.io.RegFileAccess.ra1
   RegFile.io.ra2 := IDU.io.RegFileAccess.ra2
@@ -33,6 +37,8 @@ class RVCPU (
   StageConnect(IFU.io.out, IDU.io.in)
   StageConnect(IDU.io.out, EXU.io.in)
   StageConnect(EXU.io.out, WBU.io.in)
+  StageConnect(EXU.io.memAccess, LSU.io.memAccess)
+  StageConnect(EXU.io.memReturn, LSU.io.memReturn)
   StageConnect(WBU.io.out, IFU.io.in)
 
   io.pc               := IFU.io.pc

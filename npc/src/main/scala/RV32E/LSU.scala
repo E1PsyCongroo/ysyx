@@ -24,39 +24,17 @@ object WmaskFeild extends DecodeField[MemControlPattern, UInt] {
   }
 }
 
-class LSUIO extends Bundle {
-  val avalid  = Input(Bool())
-  val aready  = Output(Bool())
-  val memOp   = Input(UInt(MemOp.getWidth.W))
-  val raddr   = Input(UInt(32.W))
-  val wen     = Input(Bool())
-  val waddr   = Input(UInt(32.W))
-  val wdata   = Input(UInt(32.W))
-
-  val dvalid  = Output(Bool())
-  val dready  = Input(Bool())
-  val rdata   = Output(UInt(32.W))
+class LSUIO(awidth:Int = 32, xlen: Int = 32) extends Bundle {
+  val memAccess = Flipped(DecoupledIO(new MemAccess(awidth, xlen)))
+  val memReturn = DecoupledIO(new MemReturn(xlen))
+  val AXI       = Flipped(new AXILiteIO(awidth, xlen))
 }
 
-class LSU extends Module {
-  val io = IO(new LSUIO)
-
+class LSU(awidth:Int = 32 ,xlen:Int = 32) extends Module {
+  val io = IO(new LSUIO(awidth, xlen))
+withReset(!reset.asBool) {
+  val memOp = io.memAccess.bits.memOp
   val wmask = WireDefault(0.U(4.W))
-  val Mem = Module(new Mem)
-  Mem.io.clock  := clock
-  Mem.io.reset  := reset
-
-  Mem.io.avalid := io.avalid
-  io.aready     := Mem.io.aready
-  Mem.io.raddr  := io.raddr
-  Mem.io.wen    := io.wen
-  Mem.io.waddr  := io.waddr
-  Mem.io.wdata  := io.wdata
-  Mem.io.wmask  := wmask
-
-  Mem.io.dready := io.dready
-  io.dvalid     := Mem.io.dvalid
-  val rdata = Mem.io.rdata
 
   val possiblePatterns = Seq(
     MemControlPattern(memW),
@@ -66,16 +44,47 @@ class LSU extends Module {
     MemControlPattern(memBu),
   )
   val decodeTable = new DecodeTable(possiblePatterns, Seq(WmaskFeild))
-  val mask = decodeTable.decode(io.memOp)(WmaskFeild)
+  val mask = decodeTable.decode(memOp)(WmaskFeild)
+  wmask := mask << io.memAccess.bits.waddr(1, 0)
 
-  wmask := mask << io.waddr(1, 0)
+  /* Write address channel */
+  io.AXI.awvalid := io.memAccess.valid && io.memAccess.bits.wen
+  io.AXI.awid    := DontCare
+  io.AXI.awaddr  := io.memAccess.bits.waddr
+  io.AXI.awport  := DontCare
 
-  val loffset = (io.raddr(1) << 4.U) | (io.raddr(0) << 3.U)
+  /* Write data channel */
+  io.AXI.wvalid  := io.memAccess.valid && io.memAccess.bits.wen
+  io.AXI.wdata   := io.memAccess.bits.wdata
+  io.AXI.wstarb  := wmask
+
+  /* Write response channel */
+  io.AXI.bready  := true.B
+
+  /* Read address channel */
+  io.AXI.arvalid := io.memAccess.valid && io.memAccess.bits.ren
+  io.AXI.arid    := DontCare
+  io.AXI.araddr  := io.memAccess.bits.raddr
+  io.AXI.arport  := DontCare
+
+  /* Read data channel */
+  io.AXI.rready  := io.memReturn.ready
+  io.AXI.rid     := DontCare
+
+  io.memAccess.ready      := io.AXI.awready && io.AXI.wready && io.AXI.arready
+  io.memReturn.valid      := io.AXI.arvalid
+
+  val rdata = io.AXI.rdata
+  val raddr = io.memAccess.bits.raddr
+  val loffset = (raddr(1) << 4.U) | (raddr(0) << 3.U)
   val lshift = rdata >> loffset
-  io.rdata := MuxCase(lshift, Seq(
+
+  io.memReturn.bits.rdata := MuxCase(lshift, Seq(
     memH -> Fill(16, lshift(15)) ## lshift(15, 0),
     memB -> Fill(24, lshift(7)) ## lshift(7, 0),
     memHu -> Fill(16, 0.U(1.W)) ## lshift(15, 0),
     memBu -> Fill(24, 0.U(1.W)) ## lshift(7, 0),
-  ).map { case(key, data) => (io.memOp === key, data) })
+  ).map { case(key, data) => (memOp === key, data) })
+
+}
 }

@@ -22,25 +22,26 @@ class Mem extends BlackBox with HasBlackBoxResource {
   addResource("/Mem.sv")
 }
 
-class AXILiteMem(awith:Int = 32, dwith:Int = 32, size:Int = 4) extends RawModule {
-  require(log2Ceil(size) < awith)
-  require(log2Ceil(size) < dwith)
+class AXILiteMem(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module {
+  require(log2Ceil(size) < awidth)
+  require(log2Ceil(size) < dwidth)
 
-  val io = IO(new AXILiteIO(awith, dwith))
+  val io = IO(new AXILiteIO(awidth, dwidth))
   val Mem = Module(new Mem)
-withClockAndReset (io.aclk, !io.aresetn.asBool) {
-  io.awid := DontCare // for manager is optional, so not realised
-  io.bid  := DontCare // for manager is optional, so not realised
-  io.rid  := DontCare // for manager is optional, so not realised
+  Mem.io.clock := clock
+withReset (!reset.asBool) {
+  val awid    = DontCare // for manager is optional, so not realised
+  val bid     = DontCare // for manager is optional, so not realised
+  val rid     = DontCare // for manager is optional, so not realised
 
-  io.awport := DontCare // for subordinate is optional, so not realised
-  io.arport := DontCare // for subordinate is optional, so not realised
+  val awport  = DontCare // for subordinate is optional, so not realised
+  val arport  = DontCare // for subordinate is optional, so not realised
 
-  val awfire = io.awvalid && io.awready
-  val wfire  = io.wvalid && io.wready
-  val bfire  = io.bvalid && io.bready
-  val arfire = io.arvalid && io.arready
-  val rfire  = io.rvalid && io.rready
+  val awfire  = io.awvalid && io.awready
+  val wfire   = io.wvalid && io.wready
+  val bfire   = io.bvalid && io.bready
+  val arfire  = io.arvalid && io.arready
+  val rfire   = io.rvalid && io.rready
 
   val sIdle :: sWaitWaddr :: sWaitWdata :: sWrite :: sRead :: Nil = Enum(5)
   val state = RegInit(sIdle)
@@ -69,7 +70,7 @@ withClockAndReset (io.aclk, !io.aresetn.asBool) {
   awready         := isIdle || isWaitWaddr
 
   val writeAddr   = RegEnable(io.awaddr, awfire)
-  val alignedWriteAddr = writeAddr(awith-1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
+  val alignedWriteAddr = writeAddr(awidth-1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
   val writeAddrAligned = writeAddr === alignedWriteAddr
   assert(writeAddrAligned)
 
@@ -81,10 +82,11 @@ withClockAndReset (io.aclk, !io.aresetn.asBool) {
   val writeMask   = RegEnable(io.wstarb, wfire)
 
   /* Write response channel */
-  val bvalid      = RegEnable(Bool(), false.B, isWrite)
-  val bresp       = RegEnable(UInt(2.W), "b00".U(2.W), isRead)
-  bvalid          := Mux(bfire, false.B, true.B)
-  bresp           := TransactionResponse.okey
+  val bvalid      = RegInit(false.B)
+  bvalid          := Mux(isWrite, Mux(bfire, false.B, true.B), bvalid)
+
+  val bresp       = RegInit(TransactionResponse.okey.asUInt)
+  bresp           := Mux(isWrite, TransactionResponse.okey.asUInt, bresp)
   Mem.io.waddr    := Mux(awfire, io.awaddr, writeAddr)
   Mem.io.wdata    := Mux(wfire, io.wdata, writeData)
   Mem.io.wmask    := Mux(wfire, io.wstarb, writeMask)
@@ -92,10 +94,10 @@ withClockAndReset (io.aclk, !io.aresetn.asBool) {
 
   /* Read address channel */
   val arready     = RegInit(true.B)
-
   arready         := isIdle
+
   val readAddr    = RegEnable(io.araddr, arfire)
-  val alignedReadAddr = readAddr(awith-1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
+  val alignedReadAddr = readAddr(awidth-1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
   val readAddrAligned = readAddr === alignedReadAddr
   assert(readAddrAligned)
   Mem.io.ren      := arfire
@@ -103,9 +105,10 @@ withClockAndReset (io.aclk, !io.aresetn.asBool) {
   val readData    = RegEnable(Mem.io.rdata, arfire)
 
   /* Read data channel */
-  val rvalid      = RegEnable(Bool(), false.B, isRead)
-  val rdata       = RegEnable(UInt(dwith.W), 0.U, isRead)
-  val rresp       = RegEnable(UInt(2.W), "b00".U(2.W), isRead)
+  val rvalid      = RegInit(false.B)
+
+  val rdata       = RegEnable(readData, 0.U, isRead)
+  val rresp       = RegInit(TransactionResponse.okey.asUInt)
 
   val delay       = 5
   val delayCount  = RegInit(0.U(log2Ceil(delay).W))
@@ -114,10 +117,20 @@ withClockAndReset (io.aclk, !io.aresetn.asBool) {
     (isRead && !isFetch) -> (delayCount + 1.U),
     (isRead && isFetch) -> delayCount,
   ))
-  rvalid          := Mux(rfire, false.B, Mux(rvalid, rvalid, isFetch))
-  rdata           := readData
-  rresp           := TransactionResponse.okey
+  rvalid          := Mux(isRead, Mux(rfire, false.B, Mux(rvalid, rvalid, isFetch)), rvalid)
+  rresp           := Mux(isRead && isFetch, TransactionResponse.okey.asUInt, rresp)
 
+  /* IO bind */
+  io.awready := awready
+  io.wready  := wready
+  io.bvalid  := bvalid
+  io.bid     := bid
+  io.bresp   := bresp
+  io.arready := arready
+  io.rvalid  := rvalid
+  io.rid     := rid
+  io.rdata   := rdata
+  io.rresp   := rresp
 }
 }
 
