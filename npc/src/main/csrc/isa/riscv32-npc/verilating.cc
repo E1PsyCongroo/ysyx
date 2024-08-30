@@ -144,6 +144,10 @@ void rvcpu_reset(int n) {
   rvcpu->reset = 0; rvcpu->eval();
   g_nr_guest_cycle = 0;
 
+  // for (int i = 0; i < 50; i++) {
+  //   rvcpu_single_cycle();
+  // }
+  // exit(0);
 }
 
 uint32_t rvcpu_ifetch(vaddr_t *pc, int len) {

@@ -22,21 +22,20 @@ class IFU(xlen: Int = 32, PCReset: BigInt = BigInt("80000000", 16)) extends Modu
   val arfire  = io.AXIManager.arvalid && io.AXIManager.arready
   val rfire   = io.AXIManager.rvalid && io.AXIManager.rready
 
-  val sFetch :: sExec :: sReset :: Nil = Enum(3)
-  val state = RegInit(sReset)
-  state := MuxLookup(state, sReset)(Seq(
+  val sFetch :: sExec :: sSetAddr :: Nil = Enum(3)
+  val state = RegInit(sSetAddr)
+  state := MuxLookup(state, sSetAddr)(Seq(
+    sSetAddr  -> Mux(arfire, sFetch, sSetAddr),
     sFetch    -> Mux(rfire, sExec, sFetch),
-    sExec     -> Mux(io.in.fire, sFetch, sExec),
-    sReset    -> Mux(arfire, sFetch, sReset),
+    sExec     -> Mux(io.in.fire, sSetAddr, sExec),
   ))
 
   val isFetch   = state === sFetch
   val isExec    = state === sExec
-  val isReset   = state === sReset
+  val isSetAddr = state === sSetAddr
 
-  val nextPc      = Mux(isReset, PCReset.U, io.in.bits.nextPc)
-  val pc          = RegEnable(nextPc, PCReset.U, io.in.fire)
-  val instruction = RegEnable(io.AXIManager.rdata, Instruction.nop.bitPat.value.U, rfire || isReset)
+  val pc          = RegEnable(io.in.bits.nextPc, PCReset.U, io.in.fire)
+  val instruction = RegEnable(io.AXIManager.rdata, Instruction.nop.bitPat.value.U, rfire)
 
   /* IO bind */
   /* Write address channel */
@@ -54,17 +53,17 @@ class IFU(xlen: Int = 32, PCReset: BigInt = BigInt("80000000", 16)) extends Modu
   io.AXIManager.bready    := true.B
 
   /* Read address channel */
-  io.AXIManager.arvalid   := isReset || io.in.fire
+  io.AXIManager.arvalid   := isSetAddr
   io.AXIManager.arid      := DontCare
-  io.AXIManager.araddr    := nextPc
+  io.AXIManager.araddr    := pc
   io.AXIManager.arport    := DontCare
 
   /* Read data channel */
   io.AXIManager.rready    := isFetch
 
-  io.pc                     := pc
-  io.in.ready               := isExec
-  io.out.valid              := isExec
-  io.out.bits.pc            := pc
-  io.out.bits.instruction   := instruction
+  io.pc                   := pc
+  io.in.ready             := isExec
+  io.out.valid            := isExec
+  io.out.bits.pc          := pc
+  io.out.bits.instruction := instruction
 }

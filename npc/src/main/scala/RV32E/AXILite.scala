@@ -1,5 +1,6 @@
 package RVCPU
 
+import util._
 import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
@@ -44,4 +45,101 @@ object TransactionResponse extends ChiselEnum{
   val exokay  = Value("b01".U)
   val slverr  = Value("b10".U)
   val decerr  = Value("b11".U)
+}
+
+
+class AXILiteArbiter(awidth: Int = 32, dwidth: Int = 32, managerNum: Int) extends Module {
+  val io = IO(new Bundle {
+    val AXISubordinates   = Vec(managerNum, new AXILiteSubordinateIO(awidth, dwidth))
+    val AXIMananger       = Flipped(new AXILiteSubordinateIO(awidth, dwidth))
+  })
+
+  val writeRequests       = VecInit(io.AXISubordinates.map(
+    manager => (manager.awvalid || manager.wvalid)
+  )).asUInt
+  val readRequests        = VecInit(io.AXISubordinates.map(
+    manager => manager.arvalid
+  )).asUInt
+  val requests            = writeRequests | readRequests
+  val selected            = PriorityEncoder(requests)
+  val isWriteTransaction  = writeRequests(selected)
+  val isReadTransaction   = readRequests(selected)
+  assert(!(isWriteTransaction && isReadTransaction))
+  val selectedReg         = RegEnable(selected, isWriteTransaction || isReadTransaction)
+  val selectedManager     = io.AXISubordinates(selectedReg)
+  val bfire               = selectedManager.bvalid && selectedManager.bready
+  val rfire               = selectedManager.rvalid && selectedManager.rready
+
+  val sIdle :: sWaitWrite :: sWaitRead :: Nil = Enum(3)
+  val state = RegInit(sIdle)
+  state := MuxLookup(state, sIdle)(Seq(
+    sIdle       -> MuxCase(sIdle, Seq(
+      isWriteTransaction  -> sWaitWrite,
+      isReadTransaction   -> sWaitRead,
+    )),
+    sWaitWrite  -> Mux(bfire, sIdle, sWaitWrite),
+    sWaitRead   -> Mux(rfire, sIdle, sWaitRead),
+  ))
+
+  val isIdle      = state === sIdle
+  val isWaitWrite = state === sWaitWrite
+  val isWaitRead  = state === sWaitRead
+
+
+  val nonResp     = Wire(new AXILiteSubordinateIO(awidth, dwidth))
+  /* Write address channel */
+  nonResp.awready := false.B
+
+  /* Write data channel */
+  nonResp.wready  := false.B
+
+  /* Write response channel */
+  nonResp.bvalid  := false.B
+  nonResp.bid     := DontCare
+  nonResp.bresp   := DontCare
+
+  /* Read address channel */
+  nonResp.arready := false.B
+
+  /* Read data channel */
+  nonResp.rvalid  := false.B
+  nonResp.rid     := DontCare
+  nonResp.rdata   := DontCare
+  nonResp.rresp   := DontCare
+
+  val nonTrans      = Wire(Flipped(new AXILiteSubordinateIO(awidth, dwidth)))
+  /* Write address channel */
+  nonTrans.awvalid  := false.B
+  nonTrans.awid     := DontCare
+  nonTrans.awaddr   := DontCare
+  nonTrans.awport   := DontCare
+
+  /* Write data channel */
+  nonTrans.wvalid   := false.B
+  nonTrans.wdata    := DontCare
+  nonTrans.wstarb   := DontCare
+
+  /* Write response channel */
+  nonTrans.bready   := false.B
+
+  /* Read address channel */
+  nonTrans.arvalid  := false.B
+  nonTrans.arid     := DontCare
+  nonTrans.araddr   := DontCare
+  nonTrans.arport   := DontCare
+
+  /* Read data channel */
+  nonTrans.rready   := false.B
+
+  nonTrans <> nonResp
+
+  for (i <- 0 until managerNum) {
+    io.AXISubordinates(i) <> nonResp
+  }
+
+  when (isWaitWrite || isWaitRead) {
+    io.AXISubordinates(selectedReg) <> io.AXIMananger
+  }.otherwise {
+    nonTrans <> io.AXIMananger
+  }
 }

@@ -43,6 +43,7 @@ withReset (!reset.asBool) {
   val bfire   = io.bvalid && io.bready
   val arfire  = io.arvalid && io.arready
   val rfire   = io.rvalid && io.rready
+  assert(!(arfire && (awfire || wfire)))
 
   val sIdle :: sWaitWaddr :: sWaitWdata :: sWrite :: sRead :: Nil = Enum(5)
   val state = RegInit(sIdle)
@@ -111,9 +112,7 @@ withReset (!reset.asBool) {
   val rdata       = WireDefault(readData)
   val rresp       = WireDefault(TransactionResponse.okey.asUInt)
 
-  val LSFR        = Module(new LSFR)
-  LSFR.io.next    := rfire
-  val delay       = LSFR.io.out
+  val delay       = LSFR(rfire)
   val delayCount  = RegInit(0.U(delay.getWidth.W))
   val isFetch     = delayCount === delay - 1.U
   delayCount      := MuxCase(0.U, Seq(
