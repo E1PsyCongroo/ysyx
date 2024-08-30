@@ -1,9 +1,10 @@
-package RVCPU
+package rvcpu.utility
 
 import util._
 import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
+import chisel3.SpecifiedDirection.Flip
 
 class AXILiteSubordinateIO(awidth:Int = 32, dwidth: Int = 32) extends Bundle {
   /* Write address channel */

@@ -8,10 +8,11 @@ object Elaborate extends App {
   ).mkString(","))
 
   circt.stage.ChiselStage.emitSystemVerilogFile(
-    new RVCPU.RVCPU(
-      xlen       = 32,
-      extentionE = true,
-      PCReset   = BigInt("80000000", 16)
+    new rvcpu.NPC(
+      awidth      = 32,
+      xlen        = 32,
+      extentionE  = true,
+      PCReset     = BigInt("80000000", 16)
     ),
     args,
     firtoolOptions

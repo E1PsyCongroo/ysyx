@@ -7,7 +7,7 @@ CFLAGS  += -fPIC -fvisibility=hidden
 LDFLAGS += -shared -fPIC
 endif
 
-PRJ 														:= RVCPU
+PRJ 														:= NPC
 WORK_DIR  											:= $(shell pwd)
 BUILD_DIR 											:= $(WORK_DIR)/build
 OBJ_DIR  												:= $(BUILD_DIR)/obj-$(NAME)$(SO)

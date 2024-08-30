@@ -1,6 +1,6 @@
-package RVCPU
+package rvcpu.core
 
-import circt.stage.ChiselStage
+import rvcpu._
 import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
@@ -174,13 +174,3 @@ class CSRControl(xlen: Int) extends Module {
   ).map { case (key, data) => (key === io.csrCtr, data) })
 }
 
-object CSRControl extends App {
-  val firtoolOptions = Array("--lowering-options=" + List(
-    // make yosys happy
-    // see https://github.com/llvm/circt/blob/main/docs/VerilogGeneration.md
-    "disallowLocalVariables",
-    "disallowPackedArrays",
-    "locationInfoStyle=wrapInAtSquareBracket"
-  ).reduce(_ + "," + _))
-  ChiselStage.emitSystemVerilogFile(new CSRControl(xlen=32), Array("--target-dir", "generate"), firtoolOptions)
-}

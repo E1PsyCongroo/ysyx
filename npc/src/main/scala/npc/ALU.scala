@@ -1,6 +1,7 @@
-package RVCPU
+package rvcpu.core
 
-import circt.stage.ChiselStage
+import rvcpu._
+import rvcpu.utility._
 import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
@@ -147,15 +148,4 @@ class ALU(xlen: Int = 32) extends Module {
   io.aluOut := aluOut
   io.less := less
   io.zero := zero
-}
-
-object ALU extends App {
-  val firtoolOptions = Array("--lowering-options=" + List(
-    // make yosys happy
-    // see https://github.com/llvm/circt/blob/main/docs/VerilogGeneration.md
-    "disallowLocalVariables",
-    "disallowPackedArrays",
-    "locationInfoStyle=wrapInAtSquareBracket"
-  ).reduce(_ + "," + _))
-  ChiselStage.emitSystemVerilogFile(new ALU(), Array("--target-dir", "generate"), firtoolOptions)
 }

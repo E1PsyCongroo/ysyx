@@ -1,8 +1,9 @@
-package RVCPU
+package rvcpu.core
 
+import rvcpu._
+import rvcpu.utility._
 import chisel3._
 import chisel3.util._
-import chisel3.SpecifiedDirection.Flip
 
 class IFUOut(xlen: Int = 32) extends Bundle{
   val pc          = Output(UInt(xlen.W))

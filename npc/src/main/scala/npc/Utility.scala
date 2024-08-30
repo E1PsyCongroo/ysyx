@@ -1,8 +1,28 @@
-package RVCPU
+package rvcpu.utility
 
-import circt.stage.ChiselStage
 import chisel3._
 import chisel3.util._
+
+class Adder(width: Int) extends Module {
+  val io = IO(new Bundle {
+    val ina      = Input(SInt(width.W))
+    val inb      = Input(SInt(width.W))
+    val addSub   = Input(Bool())
+    val carry    = Output(Bool())
+    val zero     = Output(Bool())
+    val overflow = Output(Bool())
+    val result   = Output(SInt(width.W))
+  })
+  val tA     = io.ina.asUInt
+  val tB     = io.inb.asUInt
+  val tnoCin = (Fill(width, io.addSub.asUInt) ^ tB)
+  val result = Wire(UInt((width + 1).W))
+  result      := tA +& tnoCin +& io.addSub.asUInt
+  io.result   := result(width - 1, 0).asSInt
+  io.carry    := result(width).asBool
+  io.zero     := ~(io.result.asUInt.orR)
+  io.overflow := (tA(width - 1) === tnoCin(width - 1)) && (result(width - 1) =/= tA(width - 1))
+}
 
 class BarrelShift(w: Int) extends Module {
   val io = IO(new Bundle {
@@ -28,13 +48,21 @@ class BarrelShift(w: Int) extends Module {
   io.out := Cat(barrelshift(io.in.asBools, log2Up(w)).reverse) // 实例化一个有log2(w)级的桶形移位器
 }
 
-object BarrelShift extends App {
-  val firtoolOptions = Array("--lowering-options=" + List(
-    // make yosys happy
-    // see https://github.com/llvm/circt/blob/main/docs/VerilogGeneration.md
-    "disallowLocalVariables",
-    "disallowPackedArrays",
-    "locationInfoStyle=wrapInAtSquareBracket"
-  ).reduce(_ + "," + _))
-  ChiselStage.emitSystemVerilogFile(new BarrelShift(32), Array("--target-dir", "generate"), firtoolOptions)
+class LSFR extends Module {
+  val io = IO(new Bundle {
+    val next = Input(Bool())
+    val out = Output(UInt(8.W))
+  })
+  val reg    = RegInit(1.U(8.W))
+  val newBit = reg(4) ^ reg(3) ^ reg(2) ^ reg(0)
+  reg    := Mux(io.next, Mux(reg === 0.U, 1.U, newBit ## reg(7, 1)), reg)
+  io.out := reg
+}
+
+object LSFR {
+  def apply(next: Bool) = {
+    val lsfr = Module(new LSFR)
+    lsfr.io.next  := next
+    lsfr.io.out
+  }
 }
