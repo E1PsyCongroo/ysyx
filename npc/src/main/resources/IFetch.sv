@@ -1,4 +1,4 @@
-import "DPI-C" function int unsigned ifetch(input int unsigned raddr);
+import "DPI-C" function int unsigned rvcpu_pmem_ifetch(input int unsigned raddr);
 
 module IFetch (
   input clock,
@@ -38,7 +38,7 @@ module IFetch (
       dvalid <= 0;
     end
     if (state == 1) begin
-      instruction <= ifetch(read_addr);
+      instruction <= rvcpu_pmem_ifetch(read_addr);
       dvalid  <= 1;
     end
   end

@@ -1,8 +1,6 @@
-#include "common.h"
 #include <VRVCPU.h>
 #include <VRVCPU___024root.h>
 #include <VRVCPU__Dpi.h>
-#include <cstdlib>
 #include <verilated_vcd_c.h>
 
 extern "C" {
@@ -26,19 +24,14 @@ void sim_end() {
   set_npc_state(NPC_END, cpu.pc, 0);
 }
 
-word_t ifetch(paddr_t raddr) {
-  cur_inst = vaddr_ifetch(raddr, 4);
-  return cur_inst;
-}
-
-word_t pmem_read(paddr_t raddr) {
+word_t rvcpu_pmem_read(paddr_t raddr) {
   // 总是读取地址为`raddr & ~0x3u`的4字节返回
   // if (!in_pmem(raddr)) return 0;
   // printf("RVCPU read: " FMT_PADDR "\n", raddr);
   return vaddr_read(raddr & ~0x3u, 4);
 }
 
-void pmem_write(paddr_t waddr, word_t wdata, char wmask) {
+void rvcpu_pmem_write(paddr_t waddr, word_t wdata, char wmask) {
   // 总是往地址为`waddr & ~0x3u`的4字节按写掩码`wmask`写入`wdata`
   // `wmask`中每比特表示`wdata`中1个字节的掩码,
   // 如`wmask = 0x3`代表只写入最低2个字节, 内存中的其它字节保持不变
@@ -80,6 +73,8 @@ static void rvcpu_sync(void) {
   cpu.mcause  = rvcpu->rootp->RVCPU__DOT__EXU__DOT__CSRControl__DOT__csrs_3_2;
   cpu.priv    = static_cast<decltype(cpu.priv)>
                 (rvcpu->rootp->RVCPU__DOT__EXU__DOT__CSRControl__DOT__priv);
+  /* synchronizing instruction with rvcpu */
+  cur_inst    = rvcpu->rootp->RVCPU__DOT__IFU__DOT__IFUOut_instruction;
 }
 
 void rvcpu_init(const char* wave_file){
@@ -110,7 +105,7 @@ void rvcpu_single_cycle(void) {
   /* time down */
   rvcpu->clock = 0; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
-  rvcpu_sync();
+  // rvcpu_sync();
   // if (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state == 2) {
   //   printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__IFU__DOT__IFUOut_pc, rvcpu->rootp->RVCPU__DOT__IFU__DOT__IFUOut_instruction);
   // }
@@ -122,12 +117,12 @@ void rvcpu_single_cycle(void) {
 }
 
 void rvcpu_single_exec(void) {
-  /* Fetch Instruction */
-  while (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state != 2) {
-    rvcpu_single_cycle();
-  }
   /* Execute Instruction */
   while (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state == 2) {
+    rvcpu_single_cycle();
+  }
+  /* Fetch Instruction */
+  while (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state != 2) {
     rvcpu_single_cycle();
   }
 }
@@ -136,7 +131,15 @@ void rvcpu_reset(int n) {
   rvcpu->reset = 1; rvcpu->eval();
   while (n -- > 0) rvcpu_single_cycle();
   rvcpu->reset = 0; rvcpu->eval();
+  /* Fetch Instruction */
+  while (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state != 2) {
+    rvcpu_single_cycle();
+  }
   g_nr_guest_cycle = 0;
+  // for (int i = 0; i < 50; i++) {
+  //   rvcpu_single_cycle();
+  // }
+  // exit(0);
 }
 
 uint32_t rvcpu_ifetch(vaddr_t *pc, int len) {

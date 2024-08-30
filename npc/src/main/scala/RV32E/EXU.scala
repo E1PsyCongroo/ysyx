@@ -90,7 +90,7 @@ class EXU(xlen: Int = 32) extends Module {
   val memReaded       = RegInit(false.B)
   memReaded           := Mux(io.memReturn.fire, true.B, Mux(io.in.fire, false.B, memReaded))
 
-  io.memAccess.valid      := !reset.asBool && io.in.fire && ((control.memRen && !memReaded) || control.memWen)
+  io.memAccess.valid      := !reset.asBool && io.in.fire
   io.memAccess.bits.ren   := control.memRen
   io.memAccess.bits.memOp := control.memOp
   io.memAccess.bits.raddr := ALU.io.aluOut

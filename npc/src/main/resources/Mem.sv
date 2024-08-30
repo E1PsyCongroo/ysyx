@@ -1,5 +1,5 @@
-import "DPI-C" function int unsigned pmem_read(input int unsigned raddr);
-import "DPI-C" function void pmem_write(input int unsigned waddr, input int unsigned wdata, input byte wmask);
+import "DPI-C" function int unsigned rvcpu_pmem_read(input int unsigned raddr);
+import "DPI-C" function void rvcpu_pmem_write(input int unsigned waddr, input int unsigned wdata, input byte wmask);
 
 module Mem(
   input clock,
@@ -15,7 +15,7 @@ module Mem(
 
   always @(*) begin
     if (ren) begin
-      rdata = pmem_read(raddr);
+      rdata = rvcpu_pmem_read(raddr);
     end
     else begin
       rdata = 0;
@@ -24,7 +24,7 @@ module Mem(
 
   always @(posedge clock) begin
     if (wen) begin
-      pmem_write(waddr, wdata, {4'b0, wmask});
+      rvcpu_pmem_write(waddr, wdata, {4'b0, wmask});
     end
   end
 endmodule

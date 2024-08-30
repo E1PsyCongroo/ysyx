@@ -72,7 +72,7 @@ withReset(!reset.asBool) {
   io.AXI.rid     := DontCare
 
   io.memAccess.ready      := io.AXI.awready && io.AXI.wready && io.AXI.arready
-  io.memReturn.valid      := io.AXI.arvalid
+  io.memReturn.valid      := io.AXI.rvalid
 
   val rdata = io.AXI.rdata
   val raddr = io.memAccess.bits.raddr

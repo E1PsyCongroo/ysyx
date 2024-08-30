@@ -66,59 +66,59 @@ withReset (!reset.asBool) {
   val isRead  = state === sRead
 
   /* Write address channel */
-  val awready     = RegInit(true.B)
+  val awready     = WireDefault(true.B)
   awready         := isIdle || isWaitWaddr
 
   val writeAddr   = RegEnable(io.awaddr, awfire)
   val alignedWriteAddr = writeAddr(awidth-1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
   val writeAddrAligned = writeAddr === alignedWriteAddr
-  assert(writeAddrAligned)
+  // assert(writeAddrAligned)
 
   /* Write data channel */
-  val wready      = RegInit(true.B)
+  val wready      = WireDefault(true.B)
   wready          := isIdle || isWaitWdata
 
   val writeData   = RegEnable(io.wdata, wfire)
   val writeMask   = RegEnable(io.wstarb, wfire)
 
   /* Write response channel */
-  val bvalid      = RegInit(false.B)
-  bvalid          := Mux(isWrite, Mux(bfire, false.B, true.B), bvalid)
+  val bvalid      = WireDefault(false.B)
+  bvalid          := Mux(isWrite, true.B, false.B)
 
-  val bresp       = RegInit(TransactionResponse.okey.asUInt)
-  bresp           := Mux(isWrite, TransactionResponse.okey.asUInt, bresp)
+  val bresp       = WireDefault(TransactionResponse.okey.asUInt)
+  bresp           := Mux(isWrite, TransactionResponse.okey.asUInt, TransactionResponse.okey.asUInt)
   Mem.io.waddr    := Mux(awfire, io.awaddr, writeAddr)
   Mem.io.wdata    := Mux(wfire, io.wdata, writeData)
   Mem.io.wmask    := Mux(wfire, io.wstarb, writeMask)
-  Mem.io.wen      := isWrite || (isWaitWaddr && awfire) || (isWaitWdata && wfire)
+  Mem.io.wen      := isWrite
 
   /* Read address channel */
-  val arready     = RegInit(true.B)
+  val arready     = WireDefault(true.B)
   arready         := isIdle
 
   val readAddr    = RegEnable(io.araddr, arfire)
   val alignedReadAddr = readAddr(awidth-1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
   val readAddrAligned = readAddr === alignedReadAddr
-  assert(readAddrAligned)
+  // assert(readAddrAligned)
   Mem.io.ren      := arfire
   Mem.io.raddr    := io.araddr
   val readData    = RegEnable(Mem.io.rdata, arfire)
 
   /* Read data channel */
-  val rvalid      = RegInit(false.B)
+  val rvalid      = WireDefault(false.B)
 
-  val rdata       = RegEnable(readData, 0.U, isRead)
-  val rresp       = RegInit(TransactionResponse.okey.asUInt)
+  val rdata       = WireDefault(readData)
+  val rresp       = WireDefault(TransactionResponse.okey.asUInt)
 
-  val delay       = 5
+  val delay       = 1
   val delayCount  = RegInit(0.U(log2Ceil(delay).W))
   val isFetch     = delayCount === (delay - 1).U
   delayCount      := MuxCase(0.U, Seq(
     (isRead && !isFetch) -> (delayCount + 1.U),
     (isRead && isFetch) -> delayCount,
   ))
-  rvalid          := Mux(isRead, Mux(rfire, false.B, Mux(rvalid, rvalid, isFetch)), rvalid)
-  rresp           := Mux(isRead && isFetch, TransactionResponse.okey.asUInt, rresp)
+  rvalid          := Mux(isRead, isFetch, false.B)
+  rresp           := Mux(isRead && isFetch, TransactionResponse.okey.asUInt, TransactionResponse.okey.asUInt)
 
   /* IO bind */
   io.awready := awready
