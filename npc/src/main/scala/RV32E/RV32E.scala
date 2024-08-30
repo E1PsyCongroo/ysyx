@@ -21,13 +21,16 @@ class RVCPU (
   val EXU = Module(new EXU(xlen))
   val LSU = Module(new LSU(awidth, xlen))
   val WBU = Module(new WBU(xlen, extentionE))
-  EXU.io.memAccess <> LSU.io.memAccess
-  EXU.io.memReturn <> LSU.io.memReturn
+  EXU.io.AXIManager <> LSU.io.AXISubordinate
+  LSU.io.memOp  := EXU.io.memOp
 
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
+  val InstructionMem = Module(new AXILiteMem(awidth, xlen, 4))
+  InstructionMem.reset := !reset.asBool
+  IFU.io.AXIManager <> InstructionMem.io
   val AXILiteMem = Module(new AXILiteMem(awidth, xlen, 4))
   AXILiteMem.reset  := !reset.asBool
-  AXILiteMem.io <> LSU.io.AXI
+  LSU.io.AXIManager <> AXILiteMem.io
 
   RegFile.io.ra1 := IDU.io.RegFileAccess.ra1
   RegFile.io.ra2 := IDU.io.RegFileAccess.ra2

@@ -1,5 +1,6 @@
 package RVCPU
 
+import util._
 import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
@@ -26,7 +27,7 @@ class AXILiteMem(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module 
   require(log2Ceil(size) < awidth)
   require(log2Ceil(size) < dwidth)
 
-  val io = IO(new AXILiteIO(awidth, dwidth))
+  val io = IO(new AXILiteSubordinateIO(awidth, dwidth))
   val Mem = Module(new Mem)
   Mem.io.clock := clock
 withReset (!reset.asBool) {
@@ -110,9 +111,11 @@ withReset (!reset.asBool) {
   val rdata       = WireDefault(readData)
   val rresp       = WireDefault(TransactionResponse.okey.asUInt)
 
-  val delay       = 1
-  val delayCount  = RegInit(0.U(log2Ceil(delay).W))
-  val isFetch     = delayCount === (delay - 1).U
+  val LSFR        = Module(new LSFR)
+  LSFR.io.next    := rfire
+  val delay       = LSFR.io.out
+  val delayCount  = RegInit(0.U(delay.getWidth.W))
+  val isFetch     = delayCount === delay - 1.U
   delayCount      := MuxCase(0.U, Seq(
     (isRead && !isFetch) -> (delayCount + 1.U),
     (isRead && isFetch) -> delayCount,

@@ -16,24 +16,11 @@ class EXUOut(xlen: Int = 32) extends Bundle {
   }
 }
 
-class MemAccess(awidth:Int = 32, xlen:Int = 32) extends Bundle {
-  val memOp   = Output(UInt(MemOp.getWidth.W))
-  val ren     = Input(Bool())
-  val raddr   = Input(UInt(awidth.W))
-  val wen     = Input(Bool())
-  val waddr   = Input(UInt(awidth.W))
-  val wdata   = Input(UInt(xlen.W))
-}
-
-class MemReturn(xlen: Int = 32) extends Bundle {
-  val rdata   = Output(UInt(xlen.W))
-}
-
 class EXUIO(awidth:Int = 32, xlen: Int = 32) extends Bundle {
-  val in  = Flipped(DecoupledIO(new IDUOut))
-  val out = DecoupledIO(new EXUOut)
-  val memAccess = DecoupledIO(new MemAccess(awidth, xlen))
-  val memReturn = Flipped(DecoupledIO(new MemReturn(xlen)))
+  val in          = Flipped(DecoupledIO(new IDUOut))
+  val out         = DecoupledIO(new EXUOut)
+  val AXIManager  = Flipped(new AXILiteSubordinateIO(awidth, xlen))
+  val memOp       = Output(UInt(MemOp.getWidth.W))
 }
 
 class EXU(xlen: Int = 32) extends Module {
@@ -49,15 +36,26 @@ class EXU(xlen: Int = 32) extends Module {
   val rd2     = io.in.bits.rd2
   val control = io.in.bits.control
 
-  val sExec :: sFetch :: Nil = Enum(2)
+  val awfire  = io.AXIManager.awvalid && io.AXIManager.awready
+  val wfire   = io.AXIManager.wvalid && io.AXIManager.wready
+  val bfire   = io.AXIManager.bvalid && io.AXIManager.bready
+  val arfire  = io.AXIManager.arvalid && io.AXIManager.arready
+  val rfire   = io.AXIManager.rvalid && io.AXIManager.rready
+
+  val sExec :: sWrite :: sRead :: Nil = Enum(3)
   val state = RegInit(sExec)
   state := MuxLookup(state, sExec)(Seq(
-    sExec     -> Mux(io.memAccess.fire && control.memRen, sFetch, sExec),
-    sFetch    -> Mux(io.memReturn.fire, sExec, sFetch),
+    sExec     -> MuxCase(sExec, Seq(
+      (awfire && wfire) -> sWrite,
+      arfire            -> sRead,
+    )),
+    sWrite   -> Mux(bfire, sExec, sWrite),
+    sRead    -> Mux(rfire, sExec, sRead),
   ))
 
   val isExec    = state === sExec
-  val isFetch   = state === sFetch
+  val isWrite   = state === sWrite
+  val isRead    = state === sRead
 
   val aluASrc = MuxCase(pc, Seq(
     ALUASrcFrom.fromPc   -> pc,
@@ -88,24 +86,42 @@ class EXU(xlen: Int = 32) extends Module {
   val pcBSrc          = Mux(BrCond.io.PCBSrc, pc, rd1)
 
   val memReaded       = RegInit(false.B)
-  memReaded           := Mux(io.memReturn.fire, true.B, Mux(io.in.fire, false.B, memReaded))
+  memReaded           := Mux(rfire, true.B, Mux(io.in.fire, false.B, memReaded))
 
-  io.memAccess.valid      := !reset.asBool && io.in.fire
-  io.memAccess.bits.ren   := control.memRen
-  io.memAccess.bits.memOp := control.memOp
-  io.memAccess.bits.raddr := ALU.io.aluOut
-  io.memAccess.bits.wen   := control.memWen
-  io.memAccess.bits.waddr := ALU.io.aluOut
-  io.memAccess.bits.wdata := rd2
+  /* IO bind */
+  /* Write address channel */
+  io.AXIManager.awvalid := io.in.fire && control.memWen
+  io.AXIManager.awid    := DontCare
+  io.AXIManager.awaddr  := ALU.io.aluOut
+  io.AXIManager.awport  := DontCare
 
-  io.memReturn.ready      := isFetch
+  /* Write data channel */
+  io.AXIManager.wvalid  := io.in.fire && control.memWen
+  io.AXIManager.wdata   := rd2
+  io.AXIManager.wstarb  := DontCare
+
+  /* Write response channel */
+  io.AXIManager.bready  := isWrite
+
+  /* Read address channel */
+  io.AXIManager.arvalid := io.in.fire && control.memRen
+  io.AXIManager.arid    := DontCare
+  io.AXIManager.araddr  := ALU.io.aluOut
+  io.AXIManager.arport  := DontCare
+
+  /* Read data channel */
+  io.AXIManager.rready  := isRead
+
+  /* With AXI read address channel && write address channel */
+  io.memOp          := control.memOp
 
   io.in.ready               := isExec
-  io.out.valid              := (isExec && !control.memRen && io.in.fire) || (isFetch && io.memReturn.fire)
+  io.out.valid              := (isExec && io.in.fire && !control.memRen && !control.memWen) ||
+                               (isRead && rfire) ||  (isWrite && bfire)
   io.out.bits.wa            := io.in.bits.wa
   io.out.bits.pcCom         := pcASrc + pcBSrc
   io.out.bits.aluOut        := ALU.io.aluOut
-  io.out.bits.memOut        := io.memReturn.bits.rdata
+  io.out.bits.memOut        := io.AXIManager.rdata
   io.out.bits.csrOut        := CSRControl.io.csrOut
   io.out.bits.control.regWe := io.in.bits.control.regWe
   io.out.bits.control.pcSrc := io.in.bits.control.pcSrc

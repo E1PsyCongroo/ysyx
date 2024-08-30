@@ -2,68 +2,69 @@ package RVCPU
 
 import chisel3._
 import chisel3.util._
+import chisel3.SpecifiedDirection.Flip
 
 class IFUOut(xlen: Int = 32) extends Bundle{
   val pc          = Output(UInt(xlen.W))
   val instruction = Output(UInt(32.W))
 }
 
-class IFUIO(xlen: Int = 32) extends Bundle {
+class IFUIO(awidth:Int = 32, xlen: Int = 32) extends Bundle {
   val pc          = Output(UInt(xlen.W))
   val in          = Flipped(DecoupledIO(new WBUOut))
   val out         = DecoupledIO(new IFUOut)
-}
-
-class IFetch(xlen: Int = 32) extends BlackBox with HasBlackBoxResource {
-  val io = IO(new Bundle {
-    val clock       = Input(Clock())
-    val reset       = Input(Reset())
-    val pc          = Input(UInt(xlen.W))
-    val avalid      = Input(Bool())
-    val aready      = Output(Bool())
-    val instruction = Output(UInt(32.W))
-    val dvalid      = Output(Bool())
-    val dready      = Input(Bool())
-  })
-  addResource("/IFetch.sv")
+  val AXIManager  = Flipped(new AXILiteSubordinateIO(awidth, xlen))
 }
 
 class IFU(xlen: Int = 32, PCReset: BigInt = BigInt("80000000", 16)) extends Module {
   val io = IO(new IFUIO(xlen))
 
-  val nextPc = Mux(reset.asBool, PCReset.U, io.in.bits.nextPc)
-  val IFetch = Module(new IFetch(xlen))
-  val IFetchSetAddrFire = IFetch.io.avalid && IFetch.io.aready
-  val IFetchFire = IFetch.io.dvalid && IFetch.io.dready
+  val arfire  = io.AXIManager.arvalid && io.AXIManager.arready
+  val rfire   = io.AXIManager.rvalid && io.AXIManager.rready
 
-  val sSetAddr :: sFetch :: sExec :: Nil = Enum(3)
-  val state = RegInit(sFetch)
-  state := MuxLookup(state, sSetAddr)(Seq(
-    sSetAddr  -> Mux(IFetchSetAddrFire, sFetch, sSetAddr),
-    sFetch    -> Mux(IFetchFire, sExec, sFetch),
-    sExec     -> Mux(io.in.fire && IFetchSetAddrFire, sFetch, sExec),
+  val sFetch :: sExec :: sReset :: Nil = Enum(3)
+  val state = RegInit(sReset)
+  state := MuxLookup(state, sReset)(Seq(
+    sFetch    -> Mux(rfire, sExec, sFetch),
+    sExec     -> Mux(io.in.fire, sFetch, sExec),
+    sReset    -> Mux(arfire, sFetch, sReset),
   ))
 
-  val isSetAddr = state === sSetAddr
   val isFetch   = state === sFetch
   val isExec    = state === sExec
+  val isReset   = state === sReset
 
-  IFetch.io.clock   := clock
-  IFetch.io.reset   := reset
-  IFetch.io.pc      := nextPc
-  IFetch.io.avalid  := io.in.fire
-  IFetch.io.dready  := isFetch
+  val nextPc      = Mux(isReset, PCReset.U, io.in.bits.nextPc)
+  val pc          = RegEnable(nextPc, PCReset.U, io.in.fire)
+  val instruction = RegEnable(io.AXIManager.rdata, Instruction.nop.bitPat.value.U, rfire || isReset)
 
-  val IFUOut = Reg(new IFUOut)
-  IFUOut.instruction    := Mux(IFetchFire, IFetch.io.instruction, IFUOut.instruction)
-  IFUOut.pc             := MuxCase(IFUOut.pc, Seq(
-    reset.asBool  -> PCReset.U,
-    io.in.fire    -> nextPc,
-  ))
+  /* IO bind */
+  /* Write address channel */
+  io.AXIManager.awvalid   := false.B
+  io.AXIManager.awid      := DontCare
+  io.AXIManager.awaddr    := DontCare
+  io.AXIManager.awport    := DontCare
 
-  io.pc                     := IFUOut.pc
+  /* Write data channel */
+  io.AXIManager.wvalid    := false.B
+  io.AXIManager.wdata     := DontCare
+  io.AXIManager.wstarb    := DontCare
+
+  /* Write response channel */
+  io.AXIManager.bready    := true.B
+
+  /* Read address channel */
+  io.AXIManager.arvalid   := isReset || io.in.fire
+  io.AXIManager.arid      := DontCare
+  io.AXIManager.araddr    := nextPc
+  io.AXIManager.arport    := DontCare
+
+  /* Read data channel */
+  io.AXIManager.rready    := isFetch
+
+  io.pc                     := pc
   io.in.ready               := isExec
   io.out.valid              := isExec
-  io.out.bits.pc            := IFUOut.pc
-  io.out.bits.instruction   := IFUOut.instruction
+  io.out.bits.pc            := pc
+  io.out.bits.instruction   := instruction
 }

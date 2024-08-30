@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
 
-class AXILiteIO(awidth:Int = 32, dwidth: Int = 32) extends Bundle {
+class AXILiteSubordinateIO(awidth:Int = 32, dwidth: Int = 32) extends Bundle {
   /* Write address channel */
   val awvalid = Input(Bool())
   val awready = Output(Bool())

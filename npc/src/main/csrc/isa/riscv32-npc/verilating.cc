@@ -4,6 +4,7 @@
 #include <verilated_vcd_c.h>
 
 extern "C" {
+#include <common.h>
 #include <isa.h>
 #include <memory/vaddr.h>
 #include <memory/paddr.h>
@@ -20,8 +21,18 @@ static uint32_t cur_inst;
 uint64_t g_nr_guest_cycle = 0;
 // void nvboard_bind_all_pins(TOP_NAME* top);
 
+enum {
+  RVCPU_FETCH = 0,
+  RVCPU_EXEC  = 1,
+  RVCPU_RESET = 2,
+};
+
 void sim_end() {
   set_npc_state(NPC_END, cpu.pc, 0);
+}
+
+word_t rvcpu_pmem_ifetch(paddr_t raddr) {
+  return vaddr_ifetch(raddr, 4);
 }
 
 word_t rvcpu_pmem_read(paddr_t raddr) {
@@ -50,7 +61,7 @@ void rvcpu_pmem_write(paddr_t waddr, word_t wdata, char wmask) {
 
 static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
-  cpu.pc      = rvcpu->rootp->RVCPU__DOT__IFU__DOT__IFUOut_pc;
+  cpu.pc      = rvcpu->rootp->RVCPU__DOT__IFU__DOT__pc;
   cpu.gpr[0]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_0;
   cpu.gpr[1]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_1;
   cpu.gpr[2]  = rvcpu->rootp->RVCPU__DOT__RegFile__DOT__reg_2;
@@ -74,7 +85,7 @@ static void rvcpu_sync(void) {
   cpu.priv    = static_cast<decltype(cpu.priv)>
                 (rvcpu->rootp->RVCPU__DOT__EXU__DOT__CSRControl__DOT__priv);
   /* synchronizing instruction with rvcpu */
-  cur_inst    = rvcpu->rootp->RVCPU__DOT__IFU__DOT__IFUOut_instruction;
+  cur_inst    = rvcpu->rootp->RVCPU__DOT__IFU__DOT__instruction;
 }
 
 void rvcpu_init(const char* wave_file){
@@ -105,9 +116,9 @@ void rvcpu_single_cycle(void) {
   /* time down */
   rvcpu->clock = 0; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
-  // rvcpu_sync();
-  // if (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state == 2) {
-  //   printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__IFU__DOT__IFUOut_pc, rvcpu->rootp->RVCPU__DOT__IFU__DOT__IFUOut_instruction);
+  rvcpu_sync();
+  // if (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state == RVCPU_EXEC) {
+  //   printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->RVCPU__DOT__IFU__DOT__pc, rvcpu->rootp->RVCPU__DOT__IFU__DOT__instruction);
   // }
   /* time up */
   rvcpu->clock = 1; rvcpu->eval();
@@ -117,12 +128,12 @@ void rvcpu_single_cycle(void) {
 }
 
 void rvcpu_single_exec(void) {
-  /* Execute Instruction */
-  while (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state == 2) {
+  /* Fetch Instruction */
+  while (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state != RVCPU_EXEC) {
     rvcpu_single_cycle();
   }
-  /* Fetch Instruction */
-  while (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state != 2) {
+  /* Execute Instruction */
+  while (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state == RVCPU_EXEC) {
     rvcpu_single_cycle();
   }
 }
@@ -131,15 +142,8 @@ void rvcpu_reset(int n) {
   rvcpu->reset = 1; rvcpu->eval();
   while (n -- > 0) rvcpu_single_cycle();
   rvcpu->reset = 0; rvcpu->eval();
-  /* Fetch Instruction */
-  while (rvcpu->rootp->RVCPU__DOT__IFU__DOT__state != 2) {
-    rvcpu_single_cycle();
-  }
   g_nr_guest_cycle = 0;
-  // for (int i = 0; i < 50; i++) {
-  //   rvcpu_single_cycle();
-  // }
-  // exit(0);
+
 }
 
 uint32_t rvcpu_ifetch(vaddr_t *pc, int len) {
