@@ -1,7 +1,5 @@
 package rvcpu.core
 
-import rvcpu._
-import circt.stage.ChiselStage
 import chisel3._
 import chisel3.util._
 

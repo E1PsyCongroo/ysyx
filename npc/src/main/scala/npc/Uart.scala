@@ -3,34 +3,15 @@ package rvcpu.dev
 import rvcpu.utility._
 import chisel3._
 import chisel3.util._
-import chisel3.util.experimental.decode._
 
-class MemIO extends Bundle {
-  val ren     = Input(Bool())
-  val raddr   = Input(UInt(32.W))
-  val rdata   = Output(UInt(32.W))
+import Dev.uartAddr
 
-  val wen     = Input(Bool())
-  val waddr   = Input(UInt(32.W))
-  val wdata   = Input(UInt(32.W))
-  val wmask   = Input(UInt(4.W))
-}
-
-class Mem extends BlackBox with HasBlackBoxResource {
-  val io = IO(new MemIO{
-    val clock = Input(Clock())
-  })
-  addResource("/Mem.sv")
-}
-
-class AXILiteMem(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module {
+class Uart(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module {
   require(log2Ceil(size) < awidth)
   require(log2Ceil(size) < dwidth)
 
   val io = IO(new AXILiteSubordinateIO(awidth, dwidth))
-  val Mem = Module(new Mem)
-  Mem.io.clock := clock
-
+withReset (!reset.asBool) {
   val awid    = DontCare // for manager is optional, so not realised
   val bid     = DontCare // for manager is optional, so not realised
   val rid     = DontCare // for manager is optional, so not realised
@@ -43,6 +24,7 @@ class AXILiteMem(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module 
   val bfire   = io.bvalid && io.bready
   val arfire  = io.arvalid && io.arready
   val rfire   = io.rvalid && io.rready
+  assert(!(arfire && (awfire || wfire)))
 
   val sIdle :: sWaitWaddr :: sWaitWdata :: sWrite :: sRead :: Nil = Enum(5)
   val state = RegInit(sIdle)
@@ -60,11 +42,11 @@ class AXILiteMem(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module 
     sRead       -> Mux(rfire, sIdle, sRead),
   ))
 
-  val isIdle      = state === sIdle
+  val isIdle  = state === sIdle
   val isWaitWaddr = state === sWaitWaddr
   val isWaitWdata = state === sWaitWdata
-  val isWrite     = state === sWrite
-  val isRead      = state === sRead
+  val isWrite = state === sWrite
+  val isRead  = state === sRead
 
   /* Write address channel */
   val awready     = WireDefault(true.B)
@@ -86,12 +68,15 @@ class AXILiteMem(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module 
   val bvalid      = WireDefault(false.B)
   bvalid          := Mux(isWrite, true.B, false.B)
 
+  val writeValid  = (writeMask === 1.U) && (writeAddr >= uartAddr.start.U && writeAddr <= uartAddr.end.U)
   val bresp       = WireDefault(TransactionResponse.okey.asUInt)
-  bresp           := TransactionResponse.okey.asUInt
-  Mem.io.waddr    := writeAddr
-  Mem.io.wdata    := writeData
-  Mem.io.wmask    := writeMask
-  Mem.io.wen      := isWrite
+  bresp           := MuxCase(TransactionResponse.okey.asUInt, Seq(
+    (isWrite && writeValid)   -> TransactionResponse.okey.asUInt,
+    (isWrite && !writeValid)  -> TransactionResponse.decerr.asUInt,
+  ))
+  when (isWrite && writeValid) {
+    printf("%c", writeData(7, 0))
+  }
 
   /* Read address channel */
   val arready     = WireDefault(true.B)
@@ -101,26 +86,15 @@ class AXILiteMem(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module 
   val alignedReadAddr = readAddr(awidth-1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
   val readAddrAligned = readAddr === alignedReadAddr
   // assert(readAddrAligned)
-  Mem.io.ren      := arfire
-  Mem.io.raddr    := io.araddr
-  val readData    = RegEnable(Mem.io.rdata, arfire)
 
   /* Read data channel */
-  // val delay       = LSFR(rfire)
-  val delay       = 1.U(1.W)
-  val delayCount  = RegInit(0.U(delay.getWidth.W))
-  val isFetch     = delayCount === delay - 1.U
-  delayCount      := MuxCase(0.U, Seq(
-    (isRead && !isFetch) -> (delayCount + 1.U),
-    (isRead && isFetch) -> delayCount,
-  ))
-
   val rvalid      = WireDefault(false.B)
-  rvalid          := Mux(isRead, isFetch, false.B)
+  rvalid          := Mux(isRead, true.B, false.B)
 
-  val rdata       = WireDefault(readData)
+  val rdata       = WireDefault(0.U(dwidth.W))
   val rresp       = WireDefault(TransactionResponse.okey.asUInt)
-  rresp           := TransactionResponse.okey.asUInt
+
+  rresp           := TransactionResponse.slverr.asUInt
 
   /* IO bind */
   io.awready := awready
@@ -134,4 +108,4 @@ class AXILiteMem(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module 
   io.rdata   := rdata
   io.rresp   := rresp
 }
-
+}

@@ -1,7 +1,7 @@
 package rvcpu.core
 
-import rvcpu._
 import rvcpu.utility._
+import rvcpu.dev._
 import chisel3._
 import chisel3.util._
 

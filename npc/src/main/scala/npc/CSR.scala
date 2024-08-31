@@ -1,10 +1,8 @@
 package rvcpu.core
 
-import rvcpu._
 import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
-import chisel3.experimental.dataview._
 
 object CSR {
   object PrivMode {
@@ -55,29 +53,6 @@ class CSRMstatus extends Bundle {
   val wpri3 = UInt(1.W)
 }
 
-// object CSRMstatus {
-//   implicit val mstatusView: DataView[UInt, CSRMstatus] = DataView[UInt, CSRMstatus](
-//     _ => new CSRMstatus,
-//     _(31)     -> _.sd,
-//     _(22)     -> _.tsr,
-//     _(21)     -> _.tw,
-//     _(20)     -> _.tvm,
-//     _(19)     -> _.mxr,
-//     _(18)     -> _.sum,
-//     _(17)     -> _.mprv,
-//     _(16, 15) -> _.xs,
-//     _(14, 13) -> _.fs,
-//     _(12, 11) -> _.mpp,
-//     _(10, 9)  -> _.vs,
-//     _(8)      -> _.spp,
-//     _(7)      -> _.mpie,
-//     _(6)      -> _.ube,
-//     _(5)      -> _.spie,
-//     _(3)      -> _.mie,
-//     _(1)      -> _.sie
-//   )
-// }
-
 class CSRControlIO(xlen: Int) extends Bundle {
   val csrCtr  = Input(UInt(CSRCtr.getWidth.W))
   val csrAddr = Input(UInt(CSRAddress.getWidth.W))
@@ -104,7 +79,6 @@ class CSRControl(xlen: Int) extends Module {
     CSRCtr.csrRC -> csrClear,
   ).map { case (key, data) => (key === io.csrCtr, data) }))
 
-  // val mstatus         = csrs(CSRAddress.mstatus).viewAs[CSRMstatus]
   val mstatus         = csrs(CSRAddress.mstatus).asTypeOf(new CSRMstatus)
   val mstatusEn       = (io.csrAddr === CSRAddress.mstatus) ||(io.csrCtr === CSRCtr.csrEcall) ||
                         (io.csrCtr === CSRCtr.csrMret)
