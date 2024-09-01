@@ -1,22 +1,22 @@
 [*]
 [*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
-[*] Sat Aug 31 09:02:35 2024
+[*] Sun Sep  1 05:15:21 2024
 [*]
 [dumpfile] "/home/focused_xy/cs/ysyx/npc/build/npc-wave.vcd"
-[dumpfile_mtime] "Sat Aug 31 09:02:08 2024"
-[dumpfile_size] 35747
+[dumpfile_mtime] "Sun Sep  1 05:12:47 2024"
+[dumpfile_size] 4194053771
 [savefile] "/home/focused_xy/cs/ysyx/npc/wave/gtkwave.gtkw"
-[timestart] 6
-[size] 2880 1564
+[timestart] 681565
+[size] 2560 1384
 [pos] -1 -1
-*-2.244010 21 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-2.844010 681617 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.NPC.
 [treeopen] TOP.NPC.RVCPU.
 [sst_width] 485
 [signals_width] 499
 [sst_expanded] 1
-[sst_vpaned_height] 556
+[sst_vpaned_height] 518
 @28
 TOP.clock
 TOP.reset
@@ -39,6 +39,10 @@ TOP.NPC.RVCPU.io_IFUAXIManager_rready
 TOP.NPC.RVCPU.io_LSUAXIManager_awvalid
 @22
 TOP.NPC.RVCPU.io_LSUAXIManager_awaddr[31:0]
+@24
+TOP.NPC.RVCPU.LSU.loffset[7:0]
+@23
+TOP.NPC.RVCPU.LSU.io_AXIManager_rdata[31:0]
 @28
 TOP.NPC.RVCPU.io_LSUAXIManager_awready
 TOP.NPC.RVCPU.io_LSUAXIManager_wvalid
@@ -55,10 +59,8 @@ TOP.NPC.RVCPU.io_LSUAXIManager_rready
 @28
 TOP.NPC.Xbar.state[2:0]
 TOP.NPC.Xbar.managerSelectReg
-@23
+@22
 TOP.NPC.Xbar.transAddr[31:0]
-@28
-TOP.NPC.Xbar.subordinateSelect
 @200
 -Memory
 @28
@@ -72,5 +74,12 @@ TOP.NPC.AXILiteMem.rvalid
 -Uart
 @28
 TOP.NPC.Uart.state[2:0]
+TOP.NPC.Uart.awfire
+TOP.NPC.Uart.wfire
+TOP.NPC.Uart.bvalid
+TOP.NPC.Uart.arfire
+TOP.NPC.Uart.rvalid
+@22
+TOP.NPC.Uart.writeAddr[31:0]
 [pattern_trace] 1
 [pattern_trace] 0

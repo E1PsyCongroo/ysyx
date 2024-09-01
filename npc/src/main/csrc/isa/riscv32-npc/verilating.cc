@@ -1,6 +1,8 @@
 #include <VNPC.h>
 #include <VNPC___024root.h>
 #include <VNPC__Dpi.h>
+#include <cstdint>
+#include <cstdlib>
 #include <verilated_vcd_c.h>
 
 extern "C" {
@@ -48,15 +50,21 @@ void rvcpu_pmem_write(paddr_t waddr, word_t wdata, char wmask) {
   // 如`wmask = 0x3`代表只写入最低2个字节, 内存中的其它字节保持不变
   // if (!in_pmem(waddr)) return;
   // printf("NPC write: " FMT_PADDR "\n", waddr);
+
   word_t bit_mask = 0;
   int len = 0;
+  paddr_t addr = waddr;
+  uint32_t offset = 0;
   for (uint32_t i = 0; i < sizeof(word_t); i++) {
     if (wmask & (1 << i)) {
       bit_mask |= (0xFF << (len * 8));
       len++;
+      addr = waddr + offset;
+    } else {
+      offset += 1;
     }
   }
-  vaddr_write(waddr, len, wdata & bit_mask);
+  vaddr_write(addr, len, wdata & bit_mask);
 }
 
 static void rvcpu_sync(void) {
@@ -117,9 +125,9 @@ void rvcpu_single_cycle(void) {
   rvcpu->clock = 0; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
   rvcpu_sync();
-  if (rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__state == RVCPU_EXEC) {
-    printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__pc, rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__instruction);
-  }
+  // if (rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__state == RVCPU_EXEC) {
+  //   printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__pc, rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__instruction);
+  // }
   /* time up */
   rvcpu->clock = 1; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
@@ -144,7 +152,7 @@ void rvcpu_reset(int n) {
   rvcpu->reset = 0; rvcpu->eval();
   g_nr_guest_cycle = 0;
 
-  // for (int i = 0; i < 50; i++) {
+  // for (int i = 0; i < 600; i++) {
   //   rvcpu_single_cycle();
   // }
   // exit(0);

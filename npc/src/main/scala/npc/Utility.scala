@@ -66,3 +66,19 @@ object LSFR {
     lsfr.io.out
   }
 }
+
+class SkipDifftest extends BlackBox with HasBlackBoxResource {
+  val io = IO(new Bundle {
+    val clock = Input(Clock())
+    val skip  = Input(Bool())
+  })
+  addResource("/SkipDifftest.sv")
+}
+
+object SkipDifftest {
+  def apply(clock: Clock, skip: Bool) = {
+    val SkipDifftest = Module(new SkipDifftest)
+    SkipDifftest.io.clock := clock
+    SkipDifftest.io.skip  := skip
+  }
+}

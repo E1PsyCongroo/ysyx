@@ -35,7 +35,6 @@ class LSUIO(awidth:Int = 32, xlen: Int = 32) extends Bundle {
 
 class LSU(awidth:Int = 32 ,xlen:Int = 32) extends Module {
   val io = IO(new LSUIO(awidth, xlen))
-withReset(!reset.asBool) {
   val wmask = WireDefault(0.U(4.W))
 
   val possiblePatterns = Seq(
@@ -51,8 +50,8 @@ withReset(!reset.asBool) {
 
   val arfire  = io.AXIManager.arvalid && io.AXIManager.arready
   val memOp   = RegEnable(io.memOp, arfire)
-  val raddr   = RegEnable(io.AXISubordinate.araddr, arfire)
-  val loffset = (raddr(1) << 4.U) | (raddr(0) << 3.U)
+  val raddr   = io.AXISubordinate.araddr
+  val loffset = RegEnable((raddr(1) << 4.U) | (raddr(0) << 3.U), arfire)
   val lshift  = io.AXIManager.rdata >> loffset
 
   val rdata   = MuxCase(lshift, Seq(
@@ -67,7 +66,7 @@ withReset(!reset.asBool) {
   io.AXIManager.awvalid := io.AXISubordinate.awvalid
   io.AXISubordinate.awready  := io.AXIManager.awready
   io.AXIManager.awid    := DontCare
-  io.AXIManager.awaddr  := io.AXISubordinate.awaddr
+  io.AXIManager.awaddr  := io.AXISubordinate.awaddr(31, 2) ## "b00".U(2.W)
   io.AXIManager.awport  := DontCare
 
   /* Write data channel */
@@ -86,7 +85,7 @@ withReset(!reset.asBool) {
   io.AXIManager.arvalid := io.AXISubordinate.arvalid
   io.AXISubordinate.arready  := io.AXIManager.arready
   io.AXIManager.arid    := DontCare
-  io.AXIManager.araddr  := io.AXISubordinate.araddr
+  io.AXIManager.araddr  := io.AXISubordinate.araddr(31, 2) ## "b00".U(2.W)
   io.AXIManager.arport  := DontCare
 
   /* Read data channel */
@@ -94,7 +93,5 @@ withReset(!reset.asBool) {
   io.AXIManager.rready  := io.AXISubordinate.rready
   io.AXISubordinate.rid      := DontCare
   io.AXISubordinate.rdata    := rdata
-  io.AXISubordinate.rresp    := io.AXIManager.rready
-
-}
+  io.AXISubordinate.rresp    := io.AXIManager.rresp
 }

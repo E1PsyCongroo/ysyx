@@ -5,6 +5,7 @@ import rvcpu.dev._
 import rvcpu.utility._
 import chisel3._
 import chisel3.util._
+import _root_.circt.stage.CLI
 
 class RVCPUIO(awidth:Int = 32, xlen: Int = 32) extends Bundle {
   val pc              = Output(UInt(xlen.W))
@@ -68,17 +69,6 @@ object StageConnect {
   }
 }
 
-// class NPC (
-//   awidth: Int = 32,
-//   xlen: Int = 32,
-//   extentionE: Boolean = true,
-//   PCReset: BigInt = BigInt("80000000", 16)
-// ) extends Module {
-//   val RVCPU           = Module(new RVCPU(awidth, xlen, extentionE, PCReset))
-//   val AXILiteMem      = Module(new AXILiteMem(awidth, xlen, 4))
-//   AXILiteArbiter(awidth, xlen, Seq(RVCPU.io.IFUAXIManager, RVCPU.io.LSUAXIManager)) <> AXILiteMem.io
-// }
-
 class NPC (
   awidth: Int = 32,
   xlen: Int = 32,
@@ -88,6 +78,7 @@ class NPC (
   val RVCPU           = Module(new RVCPU(awidth, xlen, extentionE, PCReset))
   val AXILiteMem      = Module(new AXILiteMem(awidth, xlen, 4))
   val Uart            = Module(new Uart(awidth, xlen, 4))
+  val CLINT           = Module(new CLINT(awidth, xlen, 4))
   AXILiteXbar(
     awidth,
     xlen,
@@ -98,6 +89,7 @@ class NPC (
     Seq(
       (rvcpu.dev.Dev.memoryAddr, AXILiteMem.io),
       (rvcpu.dev.Dev.uartAddr, Uart.io),
+      (rvcpu.dev.Dev.mtimeAddr, CLINT.io),
     ),
   )
 }

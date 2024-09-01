@@ -212,7 +212,7 @@ class AXILiteXbar(
   val validSubordinates = VecInit(areas.map(area => (transAddr >= area(0) && transAddr <= area(1)))).asUInt
   val subordinateSelect = WireDefault(Mux(
     isWaitWdata || isWaitBresp || isWaitRresp,
-    PriorityEncoder(validSubordinates),
+    Mux(validSubordinates =/= 0.U, PriorityEncoder(validSubordinates), 0.U),
     0.U(log2Ceil(subordinates.length).W),
   ))
 

@@ -11,7 +11,7 @@ class Uart(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module {
   require(log2Ceil(size) < dwidth)
 
   val io = IO(new AXILiteSubordinateIO(awidth, dwidth))
-withReset (!reset.asBool) {
+
   val awid    = DontCare // for manager is optional, so not realised
   val bid     = DontCare // for manager is optional, so not realised
   val rid     = DontCare // for manager is optional, so not realised
@@ -42,11 +42,11 @@ withReset (!reset.asBool) {
     sRead       -> Mux(rfire, sIdle, sRead),
   ))
 
-  val isIdle  = state === sIdle
+  val isIdle      = state === sIdle
   val isWaitWaddr = state === sWaitWaddr
   val isWaitWdata = state === sWaitWdata
-  val isWrite = state === sWrite
-  val isRead  = state === sRead
+  val isWrite     = state === sWrite
+  val isRead      = state === sRead
 
   /* Write address channel */
   val awready     = WireDefault(true.B)
@@ -55,7 +55,7 @@ withReset (!reset.asBool) {
   val writeAddr   = RegEnable(io.awaddr, awfire)
   val alignedWriteAddr = writeAddr(awidth-1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
   val writeAddrAligned = writeAddr === alignedWriteAddr
-  // assert(writeAddrAligned)
+  assert(writeAddrAligned)
 
   /* Write data channel */
   val wready      = WireDefault(true.B)
@@ -76,6 +76,7 @@ withReset (!reset.asBool) {
   ))
   when (isWrite && writeValid) {
     printf("%c", writeData(7, 0))
+    SkipDifftest(clock, isWrite && writeValid)
   }
 
   /* Read address channel */
@@ -85,7 +86,7 @@ withReset (!reset.asBool) {
   val readAddr    = RegEnable(io.araddr, arfire)
   val alignedReadAddr = readAddr(awidth-1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
   val readAddrAligned = readAddr === alignedReadAddr
-  // assert(readAddrAligned)
+  assert(readAddrAligned)
 
   /* Read data channel */
   val rvalid      = WireDefault(false.B)
@@ -107,5 +108,4 @@ withReset (!reset.asBool) {
   io.rid     := rid
   io.rdata   := rdata
   io.rresp   := rresp
-}
 }
