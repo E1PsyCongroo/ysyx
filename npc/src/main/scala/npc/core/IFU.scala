@@ -1,5 +1,6 @@
 package rvcpu.core
 
+import rvcpu.axi4._
 import rvcpu.dev._
 import rvcpu.utility._
 import chisel3._
@@ -11,24 +12,23 @@ class IFUOut(xlen: Int = 32) extends Bundle{
 }
 
 class IFUIO(awidth:Int = 32, xlen: Int = 32) extends Bundle {
-  val pc          = Output(UInt(xlen.W))
   val in          = Flipped(DecoupledIO(new WBUOut))
   val out         = DecoupledIO(new IFUOut)
-  val AXIManager  = Flipped(new AXILiteSubordinateIO(awidth, xlen))
+  val master   = new AXI4MasterIO
 }
 
 class IFU(xlen: Int = 32, PCReset: BigInt = BigInt("80000000", 16)) extends Module {
   val io = IO(new IFUIO(xlen))
 
-  val arfire  = io.AXIManager.arvalid && io.AXIManager.arready
-  val rfire   = io.AXIManager.rvalid && io.AXIManager.rready
+  val arfire  = io.master.arvalid && io.master.arready
+  val rfire   = io.master.rvalid && io.master.rready
 
   val sFetch :: sExec :: sSetAddr :: Nil = Enum(3)
   val state = RegInit(sSetAddr)
   state := MuxLookup(state, sSetAddr)(Seq(
     sSetAddr  -> Mux(arfire, sFetch, sSetAddr),
     sFetch    -> Mux(rfire, sExec, sFetch),
-    sExec     -> Mux(io.in.fire, sSetAddr, sExec),
+    sExec     -> Mux(io.out.fire, sSetAddr, sExec),
   ))
 
   val isFetch   = state === sFetch
@@ -36,33 +36,32 @@ class IFU(xlen: Int = 32, PCReset: BigInt = BigInt("80000000", 16)) extends Modu
   val isSetAddr = state === sSetAddr
 
   val pc          = RegEnable(io.in.bits.nextPc, PCReset.U, io.in.fire)
-  val instruction = RegEnable(io.AXIManager.rdata, Instruction.nop.bitPat.value.U, rfire)
+  val instruction = RegEnable(io.master.rdata, Instruction.nop.bitPat.value.U, rfire)
 
   /* IO bind */
-  /* Write address channel */
-  io.AXIManager.awvalid   := false.B
-  io.AXIManager.awid      := DontCare
-  io.AXIManager.awaddr    := DontCare
-  io.AXIManager.awport    := DontCare
+  io.master.awvalid    := false.B
+  io.master.awaddr     := DontCare
+  io.master.awid       := DontCare
+  io.master.awlen      := 0.U
+  io.master.awsize     := "b101".U
+  io.master.awburst    := "b01".U
 
-  /* Write data channel */
-  io.AXIManager.wvalid    := false.B
-  io.AXIManager.wdata     := DontCare
-  io.AXIManager.wstarb    := DontCare
+  io.master.wvalid     := false.B
+  io.master.wdata      := DontCare
+  io.master.wstarb     := DontCare
+  io.master.wlast      := DontCare
 
-  /* Write response channel */
-  io.AXIManager.bready    := true.B
+  io.master.bready     := false.B
 
-  /* Read address channel */
-  io.AXIManager.arvalid   := isSetAddr
-  io.AXIManager.arid      := DontCare
-  io.AXIManager.araddr    := pc
-  io.AXIManager.arport    := DontCare
+  io.master.arvalid    := isSetAddr
+  io.master.araddr     := pc
+  io.master.arid       := DontCare
+  io.master.arlen      := 0.U
+  io.master.arsize     := "b101".U
+  io.master.arbrust    := "b01".U
 
-  /* Read data channel */
-  io.AXIManager.rready    := isFetch
+  io.master.rready     := isFetch
 
-  io.pc                   := pc
   io.in.ready             := isExec
   io.out.valid            := isExec
   io.out.bits.pc          := pc

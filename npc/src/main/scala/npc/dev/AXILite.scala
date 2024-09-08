@@ -1,5 +1,6 @@
-package rvcpu.dev
+package rvcpu.dev.unuse
 
+import rvcpu.dev._
 import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
@@ -38,14 +39,6 @@ class AXILiteSubordinateIO(awidth:Int = 32, dwidth: Int = 32) extends Bundle {
   val rdata   = Output(UInt(dwidth.W))
   val rresp   = Output(UInt(2.W))
 }
-
-object TransactionResponse extends ChiselEnum{
-  val okey    = Value("b00".U)
-  val exokay  = Value("b01".U)
-  val slverr  = Value("b10".U)
-  val decerr  = Value("b11".U)
-}
-
 
 class AXILiteArbiter(awidth: Int = 32, dwidth: Int = 32, managerNum: Int) extends Module {
   val io = IO(new Bundle {

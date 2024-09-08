@@ -1,16 +1,14 @@
 package rvcpu
 
 import rvcpu.core._
+import rvcpu.axi4._
 import rvcpu.dev._
 import rvcpu.utility._
 import chisel3._
 import chisel3.util._
-import _root_.circt.stage.CLI
 
 class RVCPUIO(awidth:Int = 32, xlen: Int = 32) extends Bundle {
-  val pc              = Output(UInt(xlen.W))
-  val IFUAXIManager   = Flipped(new AXILiteSubordinateIO(awidth, xlen))
-  val LSUAXIManager   = Flipped(new AXILiteSubordinateIO(awidth, xlen))
+  val master   = new AXI4MasterIO
 }
 
 class RVCPU (
@@ -24,10 +22,10 @@ class RVCPU (
   val IFU = Module(new IFU(xlen, PCReset))
   val IDU = Module(new IDU(xlen, extentionE))
   val EXU = Module(new EXU(xlen))
-  val LSU = Module(new LSU(awidth, xlen))
+  val LSU = Module(new LSU(xlen))
   val WBU = Module(new WBU(xlen, extentionE))
-  EXU.io.AXIManager <> LSU.io.AXISubordinate
-  LSU.io.memOp  := EXU.io.memOp
+  EXU.io.LSUIn <> LSU.io.in
+  LSU.io.out <> EXU.io.LSUOut
 
   val RegFile    = Module(new RegFile(xlen, if (extentionE) 4 else 5))
   RegFile.io.ra1 := IDU.io.RegFileAccess.ra1
@@ -43,9 +41,7 @@ class RVCPU (
   StageConnect(EXU.io.out, WBU.io.in)
   StageConnect(WBU.io.out, IFU.io.in)
 
-  io.pc             := IFU.io.pc
-  io.IFUAXIManager  <> IFU.io.AXIManager
-  io.LSUAXIManager  <> LSU.io.AXIManager
+  io.master <> AXI4Arbiter(Seq(IFU.io.master, LSU.io.master))
 }
 
 object StageConnect {
@@ -79,13 +75,8 @@ class NPC (
   val AXILiteMem      = Module(new AXILiteMem(awidth, xlen, 4))
   val Uart            = Module(new Uart(awidth, xlen, 4))
   val CLINT           = Module(new CLINT(awidth, xlen, 4))
-  AXILiteXbar(
-    awidth,
-    xlen,
-    Seq(
-      RVCPU.io.IFUAXIManager,
-      RVCPU.io.LSUAXIManager,
-    ),
+  AXI4Xbar(
+    RVCPU.io.master,
     Seq(
       (rvcpu.dev.Dev.memoryAddr, AXILiteMem.io),
       (rvcpu.dev.Dev.uartAddr, Uart.io),

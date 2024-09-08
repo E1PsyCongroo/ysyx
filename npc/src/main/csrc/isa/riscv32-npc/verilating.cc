@@ -125,9 +125,11 @@ void rvcpu_single_cycle(void) {
   rvcpu->clock = 0; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
   rvcpu_sync();
-  // if (rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__state == RVCPU_EXEC) {
-  //   printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__pc, rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__instruction);
-  // }
+
+  if (rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__state == RVCPU_EXEC) {
+    printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__pc, rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__instruction);
+  }
+
   /* time up */
   rvcpu->clock = 1; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
@@ -152,10 +154,10 @@ void rvcpu_reset(int n) {
   rvcpu->reset = 0; rvcpu->eval();
   g_nr_guest_cycle = 0;
 
-  // for (int i = 0; i < 600; i++) {
-  //   rvcpu_single_cycle();
-  // }
-  // exit(0);
+  for (int i = 0; i < 600; i++) {
+    rvcpu_single_cycle();
+  }
+  exit(0);
 }
 
 uint32_t rvcpu_ifetch(vaddr_t *pc, int len) {

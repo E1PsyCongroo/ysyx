@@ -1,5 +1,6 @@
 package rvcpu.dev
 
+import rvcpu.axi4._
 import rvcpu.utility._
 import chisel3._
 import chisel3.util._
@@ -27,16 +28,9 @@ class AXILiteMem(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module 
   require(log2Ceil(size) < awidth)
   require(log2Ceil(size) < dwidth)
 
-  val io = IO(new AXILiteSubordinateIO(awidth, dwidth))
+  val io  = IO(new AXI4SlaveIO)
   val Mem = Module(new Mem)
   Mem.io.clock := clock
-
-  val awid    = DontCare // for manager is optional, so not realised
-  val bid     = DontCare // for manager is optional, so not realised
-  val rid     = DontCare // for manager is optional, so not realised
-
-  val awport  = DontCare // for subordinate is optional, so not realised
-  val arport  = DontCare // for subordinate is optional, so not realised
 
   val awfire  = io.awvalid && io.awready
   val wfire   = io.wvalid && io.wready
@@ -106,7 +100,8 @@ class AXILiteMem(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module 
   val readData    = RegEnable(Mem.io.rdata, arfire)
 
   /* Read data channel */
-  val delay       = LSFR(rfire)
+  // val delay       = LSFR(rfire)
+  val delay       = 1.U(1.W)
   val delayCount  = RegInit(0.U(delay.getWidth.W))
   val isFetch     = delayCount === delay - 1.U
   delayCount      := MuxCase(0.U, Seq(
@@ -121,16 +116,17 @@ class AXILiteMem(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module 
   val rresp       = WireDefault(TransactionResponse.okey.asUInt)
   rresp           := TransactionResponse.okey.asUInt
 
-  /* IO bind */
+  /* io.bind */
   io.awready := awready
   io.wready  := wready
   io.bvalid  := bvalid
-  io.bid     := bid
   io.bresp   := bresp
+  io.bid     := DontCare
   io.arready := arready
   io.rvalid  := rvalid
-  io.rid     := rid
   io.rdata   := rdata
   io.rresp   := rresp
+  io.rlast   := true.B
+  io.rid     := DontCare
 }
 

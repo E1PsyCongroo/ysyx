@@ -5,7 +5,6 @@ import chisel3.util._
 
 class WBUOut(xlen: Int = 32) extends Bundle {
   val nextPc  = Output(UInt(xlen.W))
-
 }
 
 class WBUIO(xlen: Int = 32, extentionE: Boolean = true) extends Bundle {

@@ -1,22 +1,22 @@
 [*]
 [*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
-[*] Sun Sep  1 05:15:21 2024
+[*] Sun Sep  8 10:01:46 2024
 [*]
 [dumpfile] "/home/focused_xy/cs/ysyx/npc/build/npc-wave.vcd"
-[dumpfile_mtime] "Sun Sep  1 05:12:47 2024"
-[dumpfile_size] 4194053771
+[dumpfile_mtime] "Sun Sep  8 09:55:12 2024"
+[dumpfile_size] 216059
 [savefile] "/home/focused_xy/cs/ysyx/npc/wave/gtkwave.gtkw"
-[timestart] 681565
-[size] 2560 1384
+[timestart] 8
+[size] 2880 1564
 [pos] -1 -1
-*-2.844010 681617 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-1.944010 24 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.NPC.
 [treeopen] TOP.NPC.RVCPU.
 [sst_width] 485
 [signals_width] 499
 [sst_expanded] 1
-[sst_vpaned_height] 518
+[sst_vpaned_height] 595
 @28
 TOP.clock
 TOP.reset
@@ -28,37 +28,26 @@ TOP.NPC.RVCPU.IFU.state[1:0]
 @22
 TOP.NPC.RVCPU.IFU.pc[31:0]
 TOP.NPC.RVCPU.IFU.instruction[31:0]
-@28
-TOP.NPC.RVCPU.io_IFUAXIManager_arvalid
-TOP.NPC.RVCPU.io_IFUAXIManager_arready
-TOP.NPC.RVCPU.io_IFUAXIManager_rvalid
-TOP.NPC.RVCPU.io_IFUAXIManager_rready
 @200
 -EXU
-@28
-TOP.NPC.RVCPU.io_LSUAXIManager_awvalid
-@22
-TOP.NPC.RVCPU.io_LSUAXIManager_awaddr[31:0]
 @24
 TOP.NPC.RVCPU.LSU.loffset[7:0]
-@23
-TOP.NPC.RVCPU.LSU.io_AXIManager_rdata[31:0]
-@28
-TOP.NPC.RVCPU.io_LSUAXIManager_awready
-TOP.NPC.RVCPU.io_LSUAXIManager_wvalid
-TOP.NPC.RVCPU.io_LSUAXIManager_wready
-TOP.NPC.RVCPU.io_LSUAXIManager_bvalid
-TOP.NPC.RVCPU.io_LSUAXIManager_bready
-TOP.NPC.RVCPU.io_LSUAXIManager_arvalid
-TOP.NPC.RVCPU.io_LSUAXIManager_arready
-TOP.NPC.RVCPU.io_LSUAXIManager_rvalid
-TOP.NPC.RVCPU.io_LSUAXIManager_rready
+@29
+TOP.NPC.RVCPU.LSU.io_master_awvalid
 @200
 -Dev
+-Arbiter
+@28
+TOP.NPC.RVCPU.io_master_Arbiter.io_masters_1_awvalid
+TOP.NPC.RVCPU.io_master_Arbiter.io_slave_awvalid
+TOP.NPC.RVCPU.io_master_Arbiter.io_slave_wvalid
+TOP.NPC.RVCPU.io_master_Arbiter.io_slave_arvalid
+TOP.NPC.RVCPU.io_master_Arbiter.io_slave_arready
+@200
 -Xbar
 @28
-TOP.NPC.Xbar.state[2:0]
-TOP.NPC.Xbar.managerSelectReg
+TOP.NPC.Xbar.state[1:0]
+TOP.NPC.Xbar.io_master_arvalid
 @22
 TOP.NPC.Xbar.transAddr[31:0]
 @200

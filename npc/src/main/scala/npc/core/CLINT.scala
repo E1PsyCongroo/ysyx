@@ -1,23 +1,19 @@
-package rvcpu.dev
+package rvcpu.core
 
+import rvcpu.axi4._
 import rvcpu.utility._
+import rvcpu.dev._
 import chisel3._
 import chisel3.util._
 
-import Dev.uartAddr
+import Dev.mtimeAddr
 
-class Uart(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module {
+class CLINT(awidth:Int = 32, xlen:Int = 32, size: Int = 4) extends Module {
   require(log2Ceil(size) < awidth)
-  require(log2Ceil(size) < dwidth)
+  require(log2Ceil(size) < xlen)
 
-  val io = IO(new AXILiteSubordinateIO(awidth, dwidth))
-
-  val awid    = DontCare // for manager is optional, so not realised
-  val bid     = DontCare // for manager is optional, so not realised
-  val rid     = DontCare // for manager is optional, so not realised
-
-  val awport  = DontCare // for subordinate is optional, so not realised
-  val arport  = DontCare // for subordinate is optional, so not realised
+  val io    = IO(new AXI4SlaveIO)
+  val mtime = RegInit(0.U(64.W))
 
   val awfire  = io.awvalid && io.awready
   val wfire   = io.wvalid && io.wready
@@ -47,6 +43,7 @@ class Uart(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module {
   val isWaitWdata = state === sWaitWdata
   val isWrite     = state === sWrite
   val isRead      = state === sRead
+  SkipDifftest(clock, isWrite || isRead)
 
   /* Write address channel */
   val awready     = WireDefault(true.B)
@@ -68,16 +65,18 @@ class Uart(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module {
   val bvalid      = WireDefault(false.B)
   bvalid          := Mux(isWrite, true.B, false.B)
 
-  val writeValid  = (writeMask === 1.U) && (writeAddr >= uartAddr.start.U && writeAddr <= uartAddr.end.U)
+  val writeLow    = writeAddrAligned === mtimeAddr.start.U
+  val writeHigh   = writeAddrAligned === (mtimeAddr.start.U + 4.U)
+  mtime           := MuxCase(mtime + 1.U, Seq(
+    (isWrite && writeLow)  -> (mtime(63, 32) ## writeData),
+    (isWrite && writeHigh) -> (writeData ## mtime(31, 0)),
+  ))
+
+  val waddrValid  = writeLow || writeHigh
   val bresp       = WireDefault(TransactionResponse.okey.asUInt)
   bresp           := MuxCase(TransactionResponse.okey.asUInt, Seq(
-    (isWrite && writeValid)   -> TransactionResponse.okey.asUInt,
-    (isWrite && !writeValid)  -> TransactionResponse.decerr.asUInt,
+    (isWrite && !waddrValid)  -> TransactionResponse.decerr.asUInt,
   ))
-  when (isWrite && writeValid) {
-    printf("%c", writeData(7, 0))
-    SkipDifftest(clock, isWrite && writeValid)
-  }
 
   /* Read address channel */
   val arready     = WireDefault(true.B)
@@ -92,20 +91,29 @@ class Uart(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module {
   val rvalid      = WireDefault(false.B)
   rvalid          := Mux(isRead, true.B, false.B)
 
-  val rdata       = WireDefault(0.U(dwidth.W))
+  val rdata       = Wire(UInt(xlen.W))
+  val readLow     = alignedReadAddr === mtimeAddr.start.U
+  val readHigh    = alignedReadAddr === (mtimeAddr.start.U + 4.U)
+  rdata           := MuxCase(DontCare, Seq(
+    (isRead && readLow)  -> mtime(31, 0),
+    (isRead && readHigh) -> mtime(63, 32),
+  ))
+  val raddrValid  = readLow || readHigh
   val rresp       = WireDefault(TransactionResponse.okey.asUInt)
+  rresp           := MuxCase(TransactionResponse.okey.asUInt, Seq(
+    (isRead && !raddrValid)  -> TransactionResponse.decerr.asUInt,
+  ))
 
-  rresp           := TransactionResponse.slverr.asUInt
-
-  /* IO bind */
+  /* io.bind */
   io.awready := awready
   io.wready  := wready
   io.bvalid  := bvalid
-  io.bid     := bid
   io.bresp   := bresp
+  io.bid     := DontCare
   io.arready := arready
   io.rvalid  := rvalid
-  io.rid     := rid
   io.rdata   := rdata
   io.rresp   := rresp
+  io.rlast   := true.B
+  io.rid     := DontCare
 }
