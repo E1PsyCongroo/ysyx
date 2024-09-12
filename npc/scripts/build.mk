@@ -8,6 +8,7 @@ LDFLAGS += -shared -fPIC
 endif
 
 PRJ 														:= NPC
+TOP_MODULE 											:= ysyxSoCFull
 WORK_DIR  											:= $(shell pwd)
 BUILD_DIR 											:= $(WORK_DIR)/build
 OBJ_DIR  												:= $(BUILD_DIR)/obj-$(NAME)$(SO)
@@ -20,13 +21,15 @@ CONSTR_DIR											:= $(SRC_DIR)/constr
 CHISEL_SRC_DIR									:= $(SRC_DIR)/scala
 
 VERILATOR_ROOT									:= /home/focused_xy/.conda/envs/ysyx/share/verilator
-VERILATOR_INC_PATH 							:= $(VERILATOR_ROOT)/include $(VERILATOR_ROOT)/include/vltstd
-INC_PATH 												:= $(WORK_DIR)/include $(VERILATOR_INC_PATH) $(VERILATOR_DIR) $(INC_PATH)
+INC_PATH 												:= $(WORK_DIR)/include $(VERILATOR_ROOT)/include $(VERILATOR_ROOT)/include/vltstd	\
+																	 $(VERILATOR_DIR) $(INC_PATH)
 BINARY   												:= $(BUILD_DIR)/$(NAME)$(SO)
 
 
 # Project sources
 VSRCS 													?= $(shell find $(VSRC_DIR) -type f -name "*.v" -or -name "*.sv")
+VSRCS 													+= $(shell find $(YSYXSOC_HOME)/perip -type f -name "*.v" -or -name "*.sv")
+VSRCS														+= $(YSYXSOC_HOME)/build/ysyxSoCFull.v
 CHISELSRCS											?= $(shell find $(CHISEL_SRC_DIR) -type f -name "*.scala" -or -name "*.sc")
 CHISELSRCS											+= $(SRC_DIR)/Elaborate.scala
 RESOURCES												?= $(shell find $(RESOURCES_DIR) -type f -name "*.v" -or -name "*.sv")
@@ -47,7 +50,9 @@ LDFLAGS 												:= -O2 $(LDFLAGS)
 
 # Verilator flags
 VERILATOR 											:= verilator
-VERILATOR_CFLAGS 								?= --MMD --build --cc -O3 --x-assign fast --x-initial fast --noassert --trace
+VERILATOR_INC_PATH 							:= $(YSYXSOC_HOME)/perip/uart16550/rtl $(YSYXSOC_HOME)/perip/spi/rtl
+VERILATOR_INCLUDES							= $(addprefix -I, $(VERILATOR_INC_PATH))
+VERILATOR_CFLAGS 								:= --MMD --build --cc -O3 --x-assign fast --x-initial fast --autoflush --noassert --trace --timescale "1ns/1ns" --no-timing $(VERILATOR_INCLUDES)
 
 # Verilating
 .stamp.verilog: $(CHISELSRCS) $(RESOURCES)
@@ -61,7 +66,7 @@ $(VERILATOR_DIR)/lib$(PRJ).%: .stamp.verilog
 	@echo + VERILATOR $(VSRCS)
 	@mkdir -p $(VERILATOR_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
-		--top-module $(PRJ) $(VSRCS) \
+		--top-module $(TOP_MODULE) $(VSRCS) \
 		--lib-create $(PRJ) --Mdir $(VERILATOR_DIR)
 
 # NVBOARD

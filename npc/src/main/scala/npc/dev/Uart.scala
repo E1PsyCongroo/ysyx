@@ -56,7 +56,7 @@ class Uart(awidth:Int = 32, dwidth:Int = 32, size:Int = 4) extends Module {
   wready          := isIdle || isWaitWdata
 
   val writeData   = RegEnable(io.wdata, wfire)
-  val writeMask   = RegEnable(io.wstarb, wfire)
+  val writeMask   = RegEnable(io.wstrb, wfire)
 
   /* Write response channel */
   val bvalid      = WireDefault(false.B)

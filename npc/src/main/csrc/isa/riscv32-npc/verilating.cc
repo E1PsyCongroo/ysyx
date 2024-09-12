@@ -1,6 +1,6 @@
-#include <VNPC.h>
-#include <VNPC___024root.h>
-#include <VNPC__Dpi.h>
+#include <VysyxSoCFull.h>
+#include <VysyxSoCFull___024root.h>
+#include <VysyxSoCFull__Dpi.h>
 #include <cstdint>
 #include <cstdlib>
 #include <verilated_vcd_c.h>
@@ -16,7 +16,7 @@ extern "C" {
 
 extern "C"{
 
-static VNPC* rvcpu = nullptr;
+static VysyxSoCFull* rvcpu = nullptr;
 static VerilatedContext* contextp = nullptr;
 static VerilatedVcdC* tfp = nullptr;
 static uint32_t cur_inst;
@@ -24,9 +24,10 @@ uint64_t g_nr_guest_cycle = 0;
 // void nvboard_bind_all_pins(TOP_NAME* top);
 
 enum {
-  RVCPU_FETCH = 0,
-  RVCPU_EXEC  = 1,
-  RVCPU_RESET = 2,
+  RVCPU_IDLE    = 0,
+  RVCPU_SETADDR = 1,
+  RVCPU_FETCH   = 2,
+  RVCPU_EXEC    = 3,
 };
 
 void sim_end() {
@@ -67,39 +68,48 @@ void rvcpu_pmem_write(paddr_t waddr, word_t wdata, char wmask) {
   vaddr_write(addr, len, wdata & bit_mask);
 }
 
-static void rvcpu_sync(void) {
-  /* synchronizing cpu with rvcpu */
-  cpu.pc      = rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__pc;
-  cpu.gpr[0]  = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_0;
-  cpu.gpr[1]  = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_1;
-  cpu.gpr[2]  = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_2;
-  cpu.gpr[3]  = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_3;
-  cpu.gpr[4]  = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_4;
-  cpu.gpr[5]  = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_5;
-  cpu.gpr[6]  = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_6;
-  cpu.gpr[7]  = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_7;
-  cpu.gpr[8]  = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_8;
-  cpu.gpr[9]  = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_9;
-  cpu.gpr[10] = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_10;
-  cpu.gpr[11] = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_11;
-  cpu.gpr[12] = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_12;
-  cpu.gpr[13] = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_13;
-  cpu.gpr[14] = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_14;
-  cpu.gpr[15] = rvcpu->rootp->NPC__DOT__RVCPU__DOT__RegFile__DOT__reg_15;
-  cpu.mstatus = rvcpu->rootp->NPC__DOT__RVCPU__DOT__EXU__DOT__CSRControl__DOT__csrs_0_2;
-  cpu.mtvec   = rvcpu->rootp->NPC__DOT__RVCPU__DOT__EXU__DOT__CSRControl__DOT__csrs_1_2;
-  cpu.mepc    = rvcpu->rootp->NPC__DOT__RVCPU__DOT__EXU__DOT__CSRControl__DOT__csrs_2_2;
-  cpu.mcause  = rvcpu->rootp->NPC__DOT__RVCPU__DOT__EXU__DOT__CSRControl__DOT__csrs_3_2;
-  cpu.priv    = static_cast<decltype(cpu.priv)>
-                (rvcpu->rootp->NPC__DOT__RVCPU__DOT__EXU__DOT__CSRControl__DOT__priv);
-  /* synchronizing instruction with rvcpu */
-  cur_inst    = rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__instruction;
+void flash_read(int32_t addr, int32_t *data) {
+  assert(0);
 }
 
-void rvcpu_init(const char* wave_file){
+void mrom_read(int32_t addr, int32_t *data) {
+  *data = vaddr_read(addr, 4);
+}
+
+static void rvcpu_sync(void) {
+  /* synchronizing cpu with rvcpu */
+  cpu.pc      = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__pc;
+  cpu.gpr[0]  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_0;
+  cpu.gpr[1]  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_1;
+  cpu.gpr[2]  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_2;
+  cpu.gpr[3]  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_3;
+  cpu.gpr[4]  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_4;
+  cpu.gpr[5]  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_5;
+  cpu.gpr[6]  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_6;
+  cpu.gpr[7]  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_7;
+  cpu.gpr[8]  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_8;
+  cpu.gpr[9]  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_9;
+  cpu.gpr[10] = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_10;
+  cpu.gpr[11] = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_11;
+  cpu.gpr[12] = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_12;
+  cpu.gpr[13] = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_13;
+  cpu.gpr[14] = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_14;
+  cpu.gpr[15] = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_15;
+  cpu.mstatus = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_0_2;
+  cpu.mtvec   = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_1_2;
+  cpu.mepc    = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_2_2;
+  cpu.mcause  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_3_2;
+  cpu.priv    = static_cast<decltype(cpu.priv)>
+                (rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__priv);
+  /* synchronizing instruction with rvcpu */
+  cur_inst    = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__instruction;
+}
+
+void rvcpu_init(const char* wave_file, int argc, char** argv){
+  Verilated::commandArgs(argc, argv);
   Verilated::traceEverOn(true);
   contextp = new VerilatedContext;
-  rvcpu = new VNPC {contextp};
+  rvcpu = new VysyxSoCFull {contextp};
   tfp = new VerilatedVcdC;
   contextp->traceEverOn(true);
   rvcpu->trace(tfp, 5);
@@ -126,9 +136,9 @@ void rvcpu_single_cycle(void) {
   contextp->timeInc(1); tfp->dump(contextp->time());
   rvcpu_sync();
 
-  if (rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__state == RVCPU_EXEC) {
-    printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__pc, rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__instruction);
-  }
+  // if (rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__state == RVCPU_EXEC) {
+  //   printf("pc: " FMT_WORD ", inst: " FMT_WORD "\n", rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__pc, rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__instruction);
+  // }
 
   /* time up */
   rvcpu->clock = 1; rvcpu->eval();
@@ -138,12 +148,12 @@ void rvcpu_single_cycle(void) {
 }
 
 void rvcpu_single_exec(void) {
-  /* Fetch Instruction */
-  while (rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__state != RVCPU_EXEC) {
+  /* Exec Instruction */
+  while (rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__state != RVCPU_IDLE) {
     rvcpu_single_cycle();
   }
-  /* Execute Instruction */
-  while (rvcpu->rootp->NPC__DOT__RVCPU__DOT__IFU__DOT__state == RVCPU_EXEC) {
+  /* Fetch Instruction */
+  while (rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__state == RVCPU_IDLE) {
     rvcpu_single_cycle();
   }
 }
@@ -154,10 +164,10 @@ void rvcpu_reset(int n) {
   rvcpu->reset = 0; rvcpu->eval();
   g_nr_guest_cycle = 0;
 
-  for (int i = 0; i < 600; i++) {
-    rvcpu_single_cycle();
-  }
-  exit(0);
+  // for (int i = 0; i < 600; i++) {
+  //   rvcpu_single_cycle();
+  // }
+  // exit(0);
 }
 
 uint32_t rvcpu_ifetch(vaddr_t *pc, int len) {

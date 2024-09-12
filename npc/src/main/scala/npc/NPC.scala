@@ -8,7 +8,9 @@ import chisel3._
 import chisel3.util._
 
 class RVCPUIO(awidth:Int = 32, xlen: Int = 32) extends Bundle {
-  val master   = new AXI4MasterIO
+  val interrupt = Input(Bool())
+  val master    = new AXI4MasterIO
+  val slave     = new AXI4SlaveIO
 }
 
 class RVCPU (
@@ -42,6 +44,7 @@ class RVCPU (
   StageConnect(WBU.io.out, IFU.io.in)
 
   io.master <> AXI4Arbiter(Seq(IFU.io.master, LSU.io.master))
+  io.slave <> AXI4Slave.nonResp
 }
 
 object StageConnect {

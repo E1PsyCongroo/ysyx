@@ -29,6 +29,7 @@ object WmaskFeild extends DecodeField[MemControlPattern, UInt] {
 }
 
 class LSUOut(xlen: Int = 32) extends Bundle {
+  val bresp     = Output(UInt(2.W))
   val rdata     = Output(UInt(xlen.W))
 }
 
@@ -40,6 +41,8 @@ class LSUIO(xlen: Int = 32) extends Bundle {
 
 class LSU(xlen:Int = 32) extends Module {
   val io = IO(new LSUIO(xlen))
+
+  val in    = RegEnable(io.in.bits, io.in.fire)
   val wmask = WireDefault(0.U(4.W))
 
   val possiblePatterns = Seq(
@@ -48,67 +51,92 @@ class LSU(xlen:Int = 32) extends Module {
     MemControlPattern(memB),
     MemControlPattern(memHu),
     MemControlPattern(memBu),
-    )
+  )
   val decodeTable = new DecodeTable(possiblePatterns, Seq(WmaskFeild))
-  val mask = decodeTable.decode(io.in.bits.memOp)(WmaskFeild)
-  wmask := mask << io.in.bits.waddr(1, 0)
+  val mask = decodeTable.decode(in.memOp)(WmaskFeild)
+  wmask := mask << in.waddr(1, 0)
 
-  val memOp   = RegEnable(io.in.bits.memOp, io.in.fire)
-  val raddr   = io.in.bits.raddr
-  val loffset = RegEnable((raddr(1) << 4.U) | (raddr(0) << 3.U), io.in.fire)
+  val raddr   = in.raddr
+  val loffset = WireDefault(raddr(1, 0) << 3.U)
   val lshift  = io.master.rdata >> loffset
 
   val rdata   = MuxCase(lshift, Seq(
-    memH -> Fill(16, lshift(15)) ## lshift(15, 0),
-    memB -> Fill(24, lshift(7)) ## lshift(7, 0),
+    memH  -> Fill(16, lshift(15)) ## lshift(15, 0),
+    memB  -> Fill(24, lshift(7)) ## lshift(7, 0),
     memHu -> Fill(16, 0.U(1.W)) ## lshift(15, 0),
     memBu -> Fill(24, 0.U(1.W)) ## lshift(7, 0),
-  ).map { case(key, data) => (memOp === key, data) })
+  ).map { case(key, data) => (in.memOp === key, data) })
 
-  val bfire = io.master.bvalid && io.master.bready
-  val rfire = io.master.rvalid && io.master.rready
+  val awfire  = io.master.awvalid && io.master.awready
+  val wfire   = io.master.wvalid && io.master.wready
+  val bfire   = io.master.bvalid && io.master.bready
+  val arfire  = io.master.arvalid && io.master.arready
+  val rfire   = io.master.rvalid && io.master.rready
 
-  val sIdle :: sWrite :: sRead :: Nil = Enum(3)
+  val sIdle :: sSetWrite :: sSetWaddr :: sSetWdata :: sWaitBresp :: sSetRaddr :: sWaitRead :: sSendOut :: Nil = Enum(8)
   val state = RegInit(sIdle)
   state := MuxLookup(state, sIdle)(Seq(
-    sIdle     -> MuxCase(sIdle, Seq(
-      (io.in.fire && io.in.bits.wen) -> sWrite,
-      (io.in.fire && io.in.bits.ren) -> sRead,
+    sIdle       -> MuxCase(sIdle, Seq(
+      (io.in.fire && io.in.bits.wen) -> sSetWrite,
+      (io.in.fire && io.in.bits.ren) -> sSetRaddr,
     )),
-    sWrite   -> Mux(bfire, sIdle, sWrite),
-    sRead    -> Mux(rfire, sIdle, sRead),
+    sSetWrite   -> MuxCase(sSetWrite, Seq(
+      (awfire && wfire) -> sWaitBresp,
+      awfire            -> sSetWdata,
+      wfire             -> sSetWaddr,
+    )),
+    sSetWaddr   -> Mux(awfire, sWaitBresp, sSetWaddr),
+    sSetWdata   -> Mux(wfire, sWaitBresp, sSetWdata),
+    sWaitBresp  -> MuxCase(sWaitBresp, Seq(
+      (bfire && io.out.fire)  -> sIdle,
+      bfire                   -> sSendOut,
+    )),
+    sSetRaddr   -> Mux(arfire, sWaitRead, sSetRaddr),
+    sWaitRead   -> MuxCase(sWaitRead, Seq(
+      (rfire && io.out.fire)  -> sIdle,
+      rfire                   -> sSendOut
+    )),
+    sSendOut    -> Mux(io.out.fire, sIdle, sSendOut),
   ))
 
-  val isIdle    = state === sIdle
-  val isWrite   = state === sWrite
-  val isRead    = state === sRead
+  val isIdle      = state === sIdle
+  val isSetWrite  = state === sSetWrite
+  val isSetWaddr  = state === sSetWaddr
+  val isSetWdata  = state === sSetWdata
+  val isWaitBresp = state === sWaitBresp
+  val isSetRaddr  = state === sSetRaddr
+  val isWaitRead  = state === sWaitRead
+  val isSendOut   = state === sSendOut
 
+  assert(!bfire || io.master.bresp === "b00".U(2.W))
+  assert(!rfire || io.master.rresp === "b00".U(2.W))
   /* IO bind */
   io.in.ready         := isIdle
 
-  io.out.valid        := isRead && rfire
-  io.out.bits.rdata   := rdata
+  io.out.valid        := isSendOut
+  io.out.bits.bresp   := RegEnable(io.master.bresp, bfire)
+  io.out.bits.rdata   := RegEnable(rdata, rfire)
 
-  io.master.awvalid   := io.in.fire && io.in.bits.wen
-  io.master.awaddr    := io.in.bits.waddr
+  io.master.awvalid   := isSetWrite || isSetWaddr
+  io.master.awaddr    := in.waddr(31, 2) ## "b00".U(2.W)
   io.master.awid      := DontCare
   io.master.awlen     := 0.U
-  io.master.awsize    := "b101".U
+  io.master.awsize    := "b010".U
   io.master.awburst   := "b01".U
 
-  io.master.wvalid    := io.in.fire && io.in.bits.wen
-  io.master.wdata     := io.in.bits.wdata
-  io.master.wstarb    := wmask
-  io.master.wlast     := io.in.fire
+  io.master.wvalid    := isSetWrite || isSetWdata
+  io.master.wdata     := in.wdata << (in.waddr(1, 0) << 3.U)
+  io.master.wstrb     := wmask
+  io.master.wlast     := isSetWrite || isSetWdata
 
-  io.master.bready    := isWrite
+  io.master.bready    := isWaitBresp
 
-  io.master.arvalid   := io.in.fire && io.in.bits.ren
-  io.master.araddr    := io.in.bits.raddr
+  io.master.arvalid   := isSetRaddr
+  io.master.araddr    := in.raddr(31, 2) ## "b00".U(2.W)
   io.master.arid      := DontCare
   io.master.arlen     := 0.U
-  io.master.arsize    := "b101".U
-  io.master.arbrust   := "b01".U
+  io.master.arsize    := "b010".U
+  io.master.arburst   := "b01".U
 
-  io.master.rready    := isRead
+  io.master.rready    := isWaitRead
 }

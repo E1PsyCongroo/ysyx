@@ -20,12 +20,13 @@ class WBUIO(xlen: Int = 32, extentionE: Boolean = true) extends Bundle {
 class WBU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
   val io = IO(new WBUIO(xlen, extentionE))
 
-  val sReceive :: sTransmit :: Nil = Enum(2)
-  val state = RegInit(sReceive)
-  state := MuxLookup(state, sReceive)(Seq(
-    sReceive  -> Mux(io.in.fire & !io.out.fire, sTransmit, sReceive),
-    sTransmit -> Mux(io.out.fire & !io.in.fire, sReceive, sTransmit)
+  val sExec :: Nil = Enum(1)
+  val state = RegInit(sExec)
+  state := MuxLookup(state, sExec)(Seq(
+    sExec -> sExec
   ))
+
+  val isExec = state === sExec
 
   val pcCom   = io.in.bits.pcCom
   val aluOut  = io.in.bits.aluOut
@@ -45,7 +46,7 @@ class WBU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
   ).map{ case(key, data) => (control.wbSrc === key, data) })
 
   io.in.ready               := io.out.ready
-  io.out.valid              := io.in.fire
+  io.out.valid              := io.in.valid
   io.out.bits.nextPc        := pcSrc
   io.RegFileAccess.wa       := io.in.bits.wa
   io.RegFileAccess.we       := io.in.bits.control.regWe && io.out.valid

@@ -37,26 +37,35 @@ class EXUIO(awidth:Int = 32, xlen: Int = 32) extends Bundle {
 
 class EXU(xlen: Int = 32) extends Module {
   val io          = IO(new EXUIO(xlen))
+
   val ALU         = Module(new ALU(xlen))
   val CSRControl  = Module(new CSRControl(xlen))
   val BrCond      = Module(new BrCond)
 
-  val pc      = io.in.bits.pc
-  val imm     = io.in.bits.imm
-  val uimm    = io.in.bits.uimm
-  val rd1     = io.in.bits.rd1
-  val rd2     = io.in.bits.rd2
-  val control = io.in.bits.control
-
-  val sExec :: sRead :: Nil = Enum(2)
-  val state = RegInit(sExec)
-  state := MuxLookup(state, sExec)(Seq(
-    sExec    -> Mux(io.LSUIn.fire && io.LSUIn.bits.ren, sRead, sExec),
-    sRead    -> Mux(io.out.fire, sExec, sRead),
+  val sIdle :: sSendLSUReq :: sWaitLSURes :: sExec :: Nil = Enum(4)
+  val state = RegInit(sIdle)
+  state := MuxLookup(state, sIdle)(Seq(
+    sIdle       -> MuxCase(sIdle, Seq(
+      (io.in.fire && (io.in.bits.control.memWen || io.in.bits.control.memRen)) -> sSendLSUReq,
+      (io.in.fire)  -> sExec
+    )),
+    sSendLSUReq -> Mux(io.LSUIn.fire, sWaitLSURes, sSendLSUReq),
+    sWaitLSURes -> Mux(io.LSUOut.fire, sExec, sWaitLSURes),
+    sExec       -> Mux(io.out.fire, sIdle, sExec),
   ))
 
-  val isExec    = state === sExec
-  val isRead    = state === sRead
+  val isIdle        = state === sIdle
+  val isSendLSUReq  = state === sSendLSUReq
+  val isWaitLSURes  = state === sWaitLSURes
+  val isExec        = state === sExec
+
+  val in      = RegEnable(io.in.bits, io.in.fire)
+  val pc      = in.pc
+  val imm     = in.imm
+  val uimm    = in.uimm
+  val rd1     = in.rd1
+  val rd2     = in.rd2
+  val control = in.control
 
   val aluASrc = MuxCase(pc, Seq(
     ALUASrcFrom.fromPc   -> pc,
@@ -78,7 +87,7 @@ class EXU(xlen: Int = 32) extends Module {
   CSRControl.io.csrAddr := imm
   CSRControl.io.epc     := pc
   CSRControl.io.csrIn   := csrSrc
-  CSRControl.io.csrCtr  := Mux(isExec && io.in.fire, control.csrCtr, CSRCtr.csrNone.value.U)
+  CSRControl.io.csrCtr  := Mux(isExec , control.csrCtr, CSRCtr.csrNone.value.U)
 
   BrCond.io.brType    := control.brType
   BrCond.io.less      := ALU.io.less
@@ -87,7 +96,7 @@ class EXU(xlen: Int = 32) extends Module {
   val pcBSrc          = Mux(BrCond.io.PCBSrc, pc, rd1)
 
   /* IO bind */
-  io.LSUIn.valid            := isExec && io.in.fire
+  io.LSUIn.valid            := isSendLSUReq
   io.LSUIn.bits.memOp       := control.memOp
   io.LSUIn.bits.ren         := control.memRen
   io.LSUIn.bits.raddr       := ALU.io.aluOut
@@ -95,15 +104,15 @@ class EXU(xlen: Int = 32) extends Module {
   io.LSUIn.bits.waddr       := ALU.io.aluOut
   io.LSUIn.bits.wdata       := rd2
 
-  io.LSUOut.ready           := isRead
+  io.LSUOut.ready           := isWaitLSURes
+  val lsuOut                = RegEnable(io.LSUOut.bits, io.LSUOut.fire)
 
-  io.in.ready               := isExec
-  io.out.valid              := (isExec && io.in.fire && !control.memRen && !control.memWen) ||
-                               (isRead && io.LSUOut.fire)
+  io.in.ready               := isIdle
+  io.out.valid              := isExec
   io.out.bits.wa            := io.in.bits.wa
   io.out.bits.pcCom         := pcASrc + pcBSrc
   io.out.bits.aluOut        := ALU.io.aluOut
-  io.out.bits.memOut        := io.LSUOut.bits.rdata
+  io.out.bits.memOut        := lsuOut.rdata
   io.out.bits.csrOut        := CSRControl.io.csrOut
   io.out.bits.control.regWe := io.in.bits.control.regWe
   io.out.bits.control.pcSrc := io.in.bits.control.pcSrc

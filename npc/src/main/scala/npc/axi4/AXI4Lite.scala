@@ -14,7 +14,7 @@ class AXI4LiteMasterIO extends Bundle {
   val wready   = Input(Bool())
   val wvalid   = Output(Bool())
   val wdata    = Output(UInt(32.W))
-  val wstarb   = Output(UInt(4.W))
+  val wstrb   = Output(UInt(4.W))
 
   /* Write response channel */
   val bready   = Output(Bool())
@@ -43,7 +43,7 @@ class AXI4LiteSlaveIO extends Bundle {
   val wready   = Output(Bool())
   val wvalid   = Input(Bool())
   val wdata    = Input(UInt(32.W))
-  val wstarb   = Input(UInt(4.W))
+  val wstrb   = Input(UInt(4.W))
 
   /* Write response channel */
   val bready   = Input(Bool())
@@ -122,7 +122,7 @@ class AXI4LiteArbiter(masterNum: Int) extends Module {
   /* Write data channel */
   nonTrans.wvalid   := false.B
   nonTrans.wdata    := DontCare
-  nonTrans.wstarb   := DontCare
+  nonTrans.wstrb   := DontCare
   /* Write response channel */
   nonTrans.bready   := false.B
   /* Read address channel */
@@ -245,7 +245,7 @@ class AXI4LiteInterconnect(
   /* Write data channel */
   nonTrans.wvalid   := false.B
   nonTrans.wdata    := DontCare
-  nonTrans.wstarb   := DontCare
+  nonTrans.wstrb   := DontCare
   /* Write response channel */
   nonTrans.bready   := false.B
   /* Read address channel */

@@ -28,7 +28,7 @@ class AXI4MasterIO extends AXI4LiteMasterIO {
   val arid     = Output(UInt(4.W))
   val arlen    = Output(UInt(8.W))
   val arsize   = Output(UInt(3.W))
-  val arbrust  = Output(UInt(2.W))
+  val arburst  = Output(UInt(2.W))
 
   /* Read data channel */
   val rlast    = Input(Bool())
@@ -48,7 +48,7 @@ object AXI4Master {
     /* Write data channel */
     nonTrans.wvalid   := false.B
     nonTrans.wdata    := DontCare
-    nonTrans.wstarb   := DontCare
+    nonTrans.wstrb   := DontCare
     nonTrans.wlast    := DontCare
     /* Write response channel */
     nonTrans.bready   := false.B
@@ -58,7 +58,7 @@ object AXI4Master {
     nonTrans.arid     := DontCare
     nonTrans.arlen    := DontCare
     nonTrans.arsize   := DontCare
-    nonTrans.arbrust  := DontCare
+    nonTrans.arburst  := DontCare
     /* Read data channel */
     nonTrans.rready   := false.B
     nonTrans
@@ -82,7 +82,7 @@ class AXI4SlaveIO extends AXI4LiteSlaveIO {
   val arid     = Input(UInt(4.W))
   val arlen    = Input(UInt(8.W))
   val arsize   = Input(UInt(3.W))
-  val arbrust  = Input(UInt(2.W))
+  val arburst  = Input(UInt(2.W))
 
   /* Read data channel */
   val rlast    = Output(Bool())
@@ -118,6 +118,13 @@ class AXI4Arbiter(masterNum: Int) extends Module {
     val slave    = new AXI4MasterIO
   })
 
+  val sIdle :: sWaitWrite :: sWaitRead :: Nil = Enum(3)
+  val state = RegInit(sIdle)
+
+  val isIdle      = state === sIdle
+  val isWaitWrite = state === sWaitWrite
+  val isWaitRead  = state === sWaitRead
+
   val writeRequests       = VecInit(io.masters.map(
     master => (master.awvalid || master.wvalid)
   )).asUInt
@@ -129,13 +136,11 @@ class AXI4Arbiter(masterNum: Int) extends Module {
   val isWriteTransaction  = writeRequests(selected)
   val isReadTransaction   = readRequests(selected)
   assert(!(isWriteTransaction && isReadTransaction))
-  val selectedReg         = RegNext(selected, 0.U)
+  val selectedReg         = RegEnable(selected, 0.U, isIdle)
   val selectedMaster      = io.masters(selectedReg)
   val bfire               = selectedMaster.bvalid && selectedMaster.bready
   val rfire               = selectedMaster.rvalid && selectedMaster.rready
 
-  val sIdle :: sWaitWrite :: sWaitRead :: Nil = Enum(3)
-  val state = RegInit(sIdle)
   state := MuxLookup(state, sIdle)(Seq(
     sIdle       -> MuxCase(sIdle, Seq(
       isWriteTransaction  -> sWaitWrite,
@@ -144,10 +149,6 @@ class AXI4Arbiter(masterNum: Int) extends Module {
     sWaitWrite  -> Mux(bfire, sIdle, sWaitWrite),
     sWaitRead   -> Mux(rfire, sIdle, sWaitRead),
   ))
-
-  val isIdle      = state === sIdle
-  val isWaitWrite = state === sWaitWrite
-  val isWaitRead  = state === sWaitRead
 
   val nonResp     = AXI4Slave.nonResp
   val nonTrans    = AXI4Master.nonTrans

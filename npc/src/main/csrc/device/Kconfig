@@ -7,6 +7,29 @@ menuconfig DEVICE
 
 if DEVICE
 
+menuconfig HAS_MROM
+  bool "Enable MROM"
+  default y
+
+if HAS_MROM
+config MROM_ADDR
+  hex "Physical address of the MROM"
+  default 0x20000000
+
+config MROM_SIZE
+  hex "Size of the MROM"
+  default 0x1000
+
+choice
+  prompt "Physical memory definition"
+  default MROM_GARRAY
+config MROM_MALLOC
+  bool "Using malloc()"
+config MROM_GARRAY
+  bool "Using global array"
+endchoice
+endif # HAS_MROM
+
 config HAS_PORT_IO
   bool
   default y if ISA_x86

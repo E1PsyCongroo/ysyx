@@ -23,5 +23,5 @@ __EXPORT void difftest_init(int port) {
   void init_mem();
   init_mem();
   /* Perform ISA dependent initialization. */
-  init_isa(NULL);
+  init_isa(NULL, 0, NULL);
 }

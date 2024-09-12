@@ -43,7 +43,7 @@ class CLINT(awidth:Int = 32, xlen:Int = 32, size: Int = 4) extends Module {
   val isWaitWdata = state === sWaitWdata
   val isWrite     = state === sWrite
   val isRead      = state === sRead
-  SkipDifftest(clock, isWrite || isRead)
+  // SkipDifftest(clock, isWrite || isRead)
 
   /* Write address channel */
   val awready     = WireDefault(true.B)
@@ -59,7 +59,7 @@ class CLINT(awidth:Int = 32, xlen:Int = 32, size: Int = 4) extends Module {
   wready          := isIdle || isWaitWdata
 
   val writeData   = RegEnable(io.wdata, wfire)
-  val writeMask   = RegEnable(io.wstarb, wfire)
+  val writeMask   = RegEnable(io.wstrb, wfire)
 
   /* Write response channel */
   val bvalid      = WireDefault(false.B)
