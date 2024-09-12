@@ -4,12 +4,13 @@
  * NPC Configuration Menu
  *
  */
-#define CONFIG_DIFFTEST_REF_NAME "none"
+#define CONFIG_DIFFTEST_REF_NAME "nemu-interpreter"
 #define CONFIG_IRINGBUF_SIZE 20
 #define CONFIG_ENGINE "interpreter"
 #define CONFIG_WATCHPOINT 1
 #define CONFIG_PC_RESET_OFFSET 0x0
 #define CONFIG_TARGET_NATIVE_ELF 1
+#define CONFIG_DIFFTEST_REF_NEMU 1
 #define CONFIG_IRINGBUF 1
 #define CONFIG_MSIZE 0x1000
 #define CONFIG_CC_O2 1
@@ -18,6 +19,7 @@
 #define CONFIG_ETRACE 1
 #define CONFIG_MEM_RANDOM 1
 #define CONFIG_ITRACE 1
+#define CONFIG_DIFFTEST 1
 #define CONFIG_ISA_riscv 1
 #define CONFIG_CC_LTO 1
 #define CONFIG_TRACE_END 10000000

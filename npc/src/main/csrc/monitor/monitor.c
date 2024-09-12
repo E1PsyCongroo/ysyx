@@ -9,7 +9,7 @@ void init_device(char *img_file);
 void init_sdb();
 void init_disasm();
 void init_ftrace(const char* elf_file);
-void rvcpu_reset(int n);
+void rvcpu_init(const char* wave_file, int argc, char** argv);
 
 static void welcome() {
   Log("Trace: %s", MUXDEF(CONFIG_TRACE, ANSI_FMT("ON", ANSI_FG_GREEN), ANSI_FMT("OFF", ANSI_FG_RED)));
@@ -116,7 +116,7 @@ void init_monitor(int argc, char *argv[]) {
   long img_size = load_img();
 
   /* Initial rvcpu. */
-  rvcpu_reset(1);
+  rvcpu_init(wave_file, argc, argv);
 
   /* Initialize differential testing. */
   init_difftest(diff_so_file, img_size, difftest_port);

@@ -9,7 +9,11 @@
 #define ysyxsoc_trap(code) asm volatile("mv a0, %0; ebreak" : :"r"(code))
 
 #define SERIAL_BASE 0x10000000L
-#define SERIAL_PORT (SERIAL_BASE + 0x0)
+#define SERIAL_PORT         (SERIAL_BASE + 0x0)
+#define SERIAL_LING_CONTROL (SERIAL_BASE + 0x3)
+#define SERIAL_LING_STATUS  (SERIAL_BASE + 0x5)
+#define SERIAL_DIV_LSB      (SERIAL_BASE + 0x0)
+#define SERIAL_DIV_MSB      (SERIAL_BASE + 0x1)
 
 #define MROM_BASE 0x20000000L
 #define MROM_SIZE (4 * 1024)

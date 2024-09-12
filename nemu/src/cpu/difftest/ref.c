@@ -20,10 +20,14 @@
 
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
   if (direction == DIFFTEST_TO_REF) {
-    memcpy(guest_to_host(addr), buf, n);
+    if (in_mrom(addr)) { memcpy(mrom_to_host(addr), buf, n); return; }
+    if (in_sram(addr)) { memcpy(sram_to_host(addr), buf, n); return; }
+    if (in_pmem(addr)) { memcpy(guest_to_host(addr), buf, n); return; }
   }
   else {
-    memcpy(buf, guest_to_host(addr), n);
+    if (in_mrom(addr)) { memcpy(buf, mrom_to_host(addr), n); return; }
+    if (in_sram(addr)) { memcpy(buf, sram_to_host(addr), n); return; }
+    if (in_pmem(addr)) { memcpy(buf, guest_to_host(addr), n); return; }
   }
 }
 

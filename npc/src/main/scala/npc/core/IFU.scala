@@ -60,7 +60,7 @@ class IFU(xlen: Int = 32, PCReset: BigInt = BigInt("80000000", 16)) extends Modu
 
   io.master.arvalid       := isSetAddr
   io.master.araddr        := pc
-  io.master.arid          := DontCare
+  io.master.arid          := 0.U
   io.master.arlen         := 0.U
   io.master.arsize        := "b010".U
   io.master.arburst       := "b01".U

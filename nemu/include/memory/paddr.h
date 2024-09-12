@@ -34,4 +34,22 @@ static inline bool in_pmem(paddr_t addr) {
 word_t paddr_read(paddr_t addr, int len);
 void paddr_write(paddr_t addr, int len, word_t data);
 
+#ifdef CONFIG_HAS_MROM
+#define MROM_LEFT  ((paddr_t)CONFIG_MROM_BASE)
+#define MROM_RIGHT ((paddr_t)CONFIG_MROM_BASE + CONFIG_MROM_SIZE - 1)
+uint8_t* mrom_to_host(paddr_t addr);
+static inline bool in_mrom(paddr_t addr) {
+  return addr - CONFIG_MROM_BASE < CONFIG_MROM_SIZE;
+}
+#endif
+
+#ifdef CONFIG_HAS_SRAM
+#define SRAM_LEFT  ((paddr_t)CONFIG_SRAM_BASE)
+#define SRAM_RIGHT ((paddr_t)CONFIG_SRAM_BASE + CONFIG_SRAM_SIZE - 1)
+uint8_t* sram_to_host(paddr_t addr);
+static inline bool in_sram(paddr_t addr) {
+  return addr - CONFIG_SRAM_BASE < CONFIG_SRAM_SIZE;
+}
+#endif
+
 #endif

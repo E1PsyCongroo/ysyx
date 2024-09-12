@@ -31,4 +31,38 @@ config MEM_RANDOM
   help
     This may help to find undefined behaviors.
 
+menuconfig HAS_MROM
+  depends on TARGET_SHARE
+  bool "Enable MROM"
+  default y
+  help
+    Provide mrom support for difftest.
+
+if HAS_MROM
+config MROM_BASE
+  hex "Physical address of the MROM"
+  default 0x20000000
+
+config MROM_SIZE
+  hex "Size of the MROM"
+  default 0x1000
+endif # HAS_MROM
+
+menuconfig HAS_SRAM
+  depends on TARGET_SHARE
+  bool "Enable SRAM"
+  default y
+  help
+    Provide sram support for difftest.
+
+if HAS_SRAM
+config SRAM_BASE
+  hex "Physical address of the SRAM"
+  default 0x0F000000
+
+config SRAM_SIZE
+  hex "Size of the SRAM"
+  default 0x2000
+endif # HAS_SRAM
+
 endmenu #MEMORY

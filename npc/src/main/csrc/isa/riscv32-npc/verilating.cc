@@ -73,7 +73,7 @@ void flash_read(int32_t addr, int32_t *data) {
 }
 
 void mrom_read(int32_t addr, int32_t *data) {
-  *data = vaddr_read(addr, 4);
+  *data = vaddr_read(addr & ~3, 4);
 }
 
 static void rvcpu_sync(void) {
@@ -105,7 +105,7 @@ static void rvcpu_sync(void) {
   cur_inst    = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__instruction;
 }
 
-void rvcpu_init(const char* wave_file, int argc, char** argv){
+void rvcpu_init(const char* wave_file, int argc, char** argv) {
   Verilated::commandArgs(argc, argv);
   Verilated::traceEverOn(true);
   contextp = new VerilatedContext;
@@ -118,6 +118,7 @@ void rvcpu_init(const char* wave_file, int argc, char** argv){
     Log("Wave is written to %s", wave_file);
   }
   rvcpu->clock = 1;
+  rvcpu_reset();
   rvcpu_sync();
   /* Exit */
   atexit(rvcpu_exit);
@@ -158,11 +159,16 @@ void rvcpu_single_exec(void) {
   }
 }
 
-void rvcpu_reset(int n) {
-  rvcpu->reset = 1; rvcpu->eval();
-  while (n -- > 0) rvcpu_single_cycle();
-  rvcpu->reset = 0; rvcpu->eval();
+void rvcpu_reset(void) {
   g_nr_guest_cycle = 0;
+  rvcpu->reset = 1; rvcpu_single_cycle();
+  rvcpu->reset = 0;
+  while (!rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu_reset_chain__DOT__output_chain__DOT__sync_0) {
+    rvcpu_single_cycle();
+  }
+  while (rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu_reset_chain__DOT__output_chain__DOT__sync_0) {
+    rvcpu_single_cycle();
+  }
 
   // for (int i = 0; i < 600; i++) {
   //   rvcpu_single_cycle();

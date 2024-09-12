@@ -28,6 +28,18 @@ object WmaskFeild extends DecodeField[MemControlPattern, UInt] {
   }
 }
 
+object SizeFeild extends DecodeField[MemControlPattern, UInt] {
+  def name = "Size Feild"
+  def chiselType: UInt = UInt(3.W)
+  def genTable(op: MemControlPattern): BitPat = {
+    op.bitPat(1, 0).rawString match {
+      case "10" => BitPat("b010")
+      case "01" => BitPat("b001")
+      case "00" => BitPat("b000")
+    }
+  }
+}
+
 class LSUOut(xlen: Int = 32) extends Bundle {
   val bresp     = Output(UInt(2.W))
   val rdata     = Output(UInt(xlen.W))
@@ -52,9 +64,10 @@ class LSU(xlen:Int = 32) extends Module {
     MemControlPattern(memHu),
     MemControlPattern(memBu),
   )
-  val decodeTable = new DecodeTable(possiblePatterns, Seq(WmaskFeild))
-  val mask = decodeTable.decode(in.memOp)(WmaskFeild)
+  val decodeTable = new DecodeTable(possiblePatterns, Seq(WmaskFeild, SizeFeild))
+  val mask  = decodeTable.decode(in.memOp)(WmaskFeild)
   wmask := mask << in.waddr(1, 0)
+  val size  = decodeTable.decode(in.memOp)(SizeFeild)
 
   val raddr   = in.raddr
   val loffset = WireDefault(raddr(1, 0) << 3.U)
@@ -108,6 +121,13 @@ class LSU(xlen:Int = 32) extends Module {
   val isWaitRead  = state === sWaitRead
   val isSendOut   = state === sSendOut
 
+  import rvcpu.dev.Dev
+  SkipDifftest(clock,
+    io.out.fire &&
+    ((in.waddr >= Dev.UART16550Addr.start.U && in.waddr <= Dev.UART16550Addr.end.U) ||
+    (in.raddr >= Dev.UART16550Addr.start.U && in.raddr <= Dev.UART16550Addr.end.U))
+  );
+
   assert(!bfire || io.master.bresp === "b00".U(2.W))
   assert(!rfire || io.master.rresp === "b00".U(2.W))
   /* IO bind */
@@ -118,10 +138,10 @@ class LSU(xlen:Int = 32) extends Module {
   io.out.bits.rdata   := RegEnable(rdata, rfire)
 
   io.master.awvalid   := isSetWrite || isSetWaddr
-  io.master.awaddr    := in.waddr(31, 2) ## "b00".U(2.W)
-  io.master.awid      := DontCare
+  io.master.awaddr    := in.waddr
+  io.master.awid      := 0.U
   io.master.awlen     := 0.U
-  io.master.awsize    := "b010".U
+  io.master.awsize    := size
   io.master.awburst   := "b01".U
 
   io.master.wvalid    := isSetWrite || isSetWdata
@@ -132,10 +152,10 @@ class LSU(xlen:Int = 32) extends Module {
   io.master.bready    := isWaitBresp
 
   io.master.arvalid   := isSetRaddr
-  io.master.araddr    := in.raddr(31, 2) ## "b00".U(2.W)
-  io.master.arid      := DontCare
+  io.master.araddr    := in.raddr
+  io.master.arid      := 0.U
   io.master.arlen     := 0.U
-  io.master.arsize    := "b010".U
+  io.master.arsize    := size
   io.master.arburst   := "b01".U
 
   io.master.rready    := isWaitRead
