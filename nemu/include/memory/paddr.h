@@ -52,4 +52,13 @@ static inline bool in_sram(paddr_t addr) {
 }
 #endif
 
+#ifdef CONFIG_HAS_FLASH
+#define FLASH_LEFT  ((paddr_t)CONFIG_FLASH_BASE)
+#define FLASH_RIGHT ((paddr_t)CONFIG_FLASH_BASE + CONFIG_FLASH_SIZE - 1)
+uint8_t* flash_to_host(paddr_t addr);
+static inline bool in_flash(paddr_t addr) {
+  return addr - CONFIG_FLASH_BASE < CONFIG_FLASH_SIZE;
+}
+#endif
+
 #endif

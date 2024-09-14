@@ -1,6 +1,7 @@
 #include <isa.h>
 #include <memory/paddr.h>
 #include <memory/vaddr.h>
+#include "common.h"
 #include "local-include/verilating.h"
 // this is not consistent with uint8_t
 // but it is ok since we do not access the array directly
@@ -22,5 +23,6 @@ static const uint32_t img [] = {
 
 void init_isa(const char *wave_file, int argc, char** argv) {
   /* Load built-in image. */
-  memcpy(guest_to_host(RESET_VECTOR), img, sizeof(img));
+  memcpy(dev_flash_to_host(RESET_VECTOR), img, sizeof(img));
+  memcpy(dev_mrom_to_host(MROM_LEFT + CONFIG_PC_RESET_OFFSET), img, sizeof(img));
 }

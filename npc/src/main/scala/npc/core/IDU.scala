@@ -43,6 +43,7 @@ class EndControlIO extends Bundle {
   val clock = Input(Clock())
   val reset = Input(Reset())
   val isEnd = Input(Bool())
+  val code  = Input(UInt(32.W))
 }
 class EndControl extends BlackBox with HasBlackBoxResource {
   val io = IO(new EndControlIO)
@@ -69,7 +70,7 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
   val rs2         = instruction(24, 20)
   val rd          = instruction(11, 7)
 
-  io.RegFileAccess.ra1 := rs1
+  io.RegFileAccess.ra1 := Mux(Control.io.isEnd, 10.U(5.W), rs1)
   io.RegFileAccess.ra2 := rs2
 
   ImmGen.io.instruction := instruction
@@ -80,6 +81,7 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
   EndControl.io.clock := clock
   EndControl.io.reset := reset
   EndControl.io.isEnd := Control.io.isEnd
+  EndControl.io.code  := io.RegFileReturn.rd1
 
   io.in.ready                   := io.out.ready
   io.out.valid                  := io.in.valid

@@ -30,8 +30,8 @@ enum {
   RVCPU_EXEC    = 3,
 };
 
-void sim_end() {
-  set_npc_state(NPC_END, cpu.pc, 0);
+void sim_end(int code) {
+  set_npc_state(NPC_END, cpu.pc, code);
 }
 
 word_t rvcpu_pmem_ifetch(paddr_t raddr) {
@@ -69,11 +69,11 @@ void rvcpu_pmem_write(paddr_t waddr, word_t wdata, char wmask) {
 }
 
 void flash_read(int32_t addr, int32_t *data) {
-  assert(0);
+  *data = dev_flash_read((addr + CONFIG_FLASH_BASE) & ~0x3u, 4);
 }
 
 void mrom_read(int32_t addr, int32_t *data) {
-  *data = vaddr_read(addr & ~3, 4);
+  *data = dev_mrom_read(addr & ~0x3u, 4);
 }
 
 static void rvcpu_sync(void) {
@@ -170,10 +170,10 @@ void rvcpu_reset(void) {
     rvcpu_single_cycle();
   }
 
-  // for (int i = 0; i < 600; i++) {
-  //   rvcpu_single_cycle();
-  // }
-  // exit(0);
+  for (int i = 0; i < 2000; i++) {
+    rvcpu_single_cycle();
+  }
+  exit(0);
 }
 
 uint32_t rvcpu_ifetch(vaddr_t *pc, int len) {

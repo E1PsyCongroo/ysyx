@@ -1,39 +1,44 @@
 [*]
 [*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
-[*] Thu Sep 12 04:56:24 2024
+[*] Sat Sep 14 02:25:27 2024
 [*]
 [dumpfile] "/home/focused_xy/cs/ysyx/npc/build/npc-wave.vcd"
-[dumpfile_mtime] "Thu Sep 12 04:42:25 2024"
-[dumpfile_size] 285462
+[dumpfile_mtime] "Sat Sep 14 02:24:03 2024"
+[dumpfile_size] 344147
 [savefile] "/home/focused_xy/cs/ysyx/npc/wave/gtkwave.gtkw"
-[timestart] 100
+[timestart] 1
 [size] 1920 1032
 [pos] -1 -1
-*-4.344010 120 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-4.344010 19 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.ysyxSoCFull.
 [treeopen] TOP.ysyxSoCFull.asic.
 [treeopen] TOP.ysyxSoCFull.asic.cpu.
 [treeopen] TOP.ysyxSoCFull.asic.cpu.cpu.
-[treeopen] TOP.ysyxSoCFull.asic.cpu_reset_chain.
-[treeopen] TOP.ysyxSoCFull.asic.luart.
-[treeopen] TOP.ysyxSoCFull.asic.luart.muart.
+[treeopen] TOP.ysyxSoCFull.asic.lspi.mspi.u0_spi_top.
 [treeopen] TOP.ysyxSoCFull.asic.luart.muart.Uregs.
 [sst_width] 246
-[signals_width] 318
+[signals_width] 504
 [sst_expanded] 1
-[sst_vpaned_height] 397
+[sst_vpaned_height] 400
 @28
 TOP.clock
-TOP.reset
 @200
 -CPU Core
 @28
 TOP.ysyxSoCFull.asic.cpu.reset
+TOP.ysyxSoCFull.asic.axi4xbar.auto_out_arvalid
+TOP.ysyxSoCFull.asic.axi4xbar.auto_out_arvalid
 @200
 -IFU
+@22
+TOP.ysyxSoCFull.asic.cpu.cpu.IFU.io_master_araddr[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.IFU.io_master_rdata[31:0]
 @28
-TOP.ysyxSoCFull.asic.cpu.cpu.IFU.state[1:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.IFU.io_master_arvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.IFU.io_master_rvalid
+TOP.ysyxSoCFull.asic.axi4xbar.auto_in_arvalid
+TOP.ysyxSoCFull.asic.axi4xbar.auto_in_arready
 @22
 TOP.ysyxSoCFull.asic.cpu.cpu.IFU.io_in_bits_nextPc[31:0]
 TOP.ysyxSoCFull.asic.cpu.cpu.IFU.pc[31:0]
@@ -54,13 +59,16 @@ TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_wdata[31:0]
 @28
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_wstrb[3:0]
 @22
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.in_waddr[31:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.in_wdata[31:0]
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_araddr[31:0]
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_arsize[2:0]
+@22
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rdata[31:0]
 @28
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_awvalid
+@29
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_wvalid
+@28
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_bvalid
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_arvalid
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rvalid
@@ -70,14 +78,24 @@ TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rvalid
 @28
 TOP.ysyxSoCFull.asic.cpu.cpu.io_master_Arbiter.state[1:0]
 TOP.ysyxSoCFull.asic.cpu.cpu.io_master_Arbiter.selectedReg
+TOP.ysyxSoCFull.asic.cpu.cpu.io_master_Arbiter.io_slave_awvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.io_master_Arbiter.io_slave_wvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.io_master_Arbiter.io_slave_arvalid
 @200
--UART
-@22
-TOP.ysyxSoCFull.asic.luart.auto_in_paddr[28:0]
-TOP.ysyxSoCFull.asic.luart.auto_in_pwdata[31:0]
+-SPI
 @28
-TOP.ysyxSoCFull.asic.luart.auto_in_pwrite
-TOP.ysyxSoCFull.asic.luart.auto_in_pstrb[3:0]
-TOP.ysyxSoCFull.asic.luart.muart.Uregs.lcr[7:0]
+TOP.ysyxSoCFull.asic.lspi.state[2:0]
+@22
+TOP.ysyxSoCFull.asic.lspi.auto_in_paddr[29:0]
+@28
+TOP.ysyxSoCFull.asic.lspi.auto_in_psel
+TOP.ysyxSoCFull.asic.lspi.auto_in_penable
+@22
+TOP.ysyxSoCFull.asic.lspi.auto_in_prdata[31:0]
+@28
+TOP.ysyxSoCFull.asic.lspi.auto_in_pready
+@22
+TOP.ysyxSoCFull.asic.lspi.mspi.u0_spi_top.ss[7:0]
+TOP.ysyxSoCFull.asic.lspi.mspi.u0_spi_top.ctrl[13:0]
 [pattern_trace] 1
 [pattern_trace] 0

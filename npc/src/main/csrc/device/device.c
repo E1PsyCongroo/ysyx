@@ -63,7 +63,6 @@ void init_device(char* img_file) {
   IFDEF(CONFIG_TARGET_AM, ioe_init());
   init_map();
 
-  IFDEF(CONFIG_HAS_MROM, init_mrom(img_file));
   IFDEF(CONFIG_HAS_SERIAL, init_serial());
   IFDEF(CONFIG_HAS_TIMER, init_timer());
   IFDEF(CONFIG_HAS_VGA, init_vga());

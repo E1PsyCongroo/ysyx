@@ -48,6 +48,23 @@ config MROM_SIZE
   default 0x1000
 endif # HAS_MROM
 
+menuconfig HAS_FLASH
+  depends on TARGET_SHARE
+  bool "Enable FLASH"
+  default y
+  help
+    Provide flash support for difftest.
+
+if HAS_FLASH
+config FLASH_BASE
+  hex "Physical address of the FLASH"
+  default 0x30000000
+
+config FLASH_SIZE
+  hex "Size of the FLASH"
+  default 0x10000000
+endif # HAS_FLASH
+
 menuconfig HAS_SRAM
   depends on TARGET_SHARE
   bool "Enable SRAM"

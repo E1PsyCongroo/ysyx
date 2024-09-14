@@ -31,4 +31,36 @@ config MEM_RANDOM
   help
     This may help to find undefined behaviors.
 
+menuconfig HAS_MROM
+  bool "Enable MROM"
+  default y
+  help
+    Provide mrom support.
+
+if HAS_MROM
+config MROM_BASE
+  hex "Physical address of the MROM"
+  default 0x20000000
+
+config MROM_SIZE
+  hex "Size of the MROM"
+  default 0x1000
+endif # HAS_MROM
+
+menuconfig HAS_FLASH
+  bool "Enable FLASH"
+  default y
+  help
+    Provide sram support.
+
+if HAS_FLASH
+config FLASH_BASE
+  hex "Physical address of the FLASH"
+  default 0x30000000
+
+config FLASH_SIZE
+  hex "Size of the FLASH"
+  default 0x1000000
+endif # HAS_FLASH
+
 endmenu #MEMORY

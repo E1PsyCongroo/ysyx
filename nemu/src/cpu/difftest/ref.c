@@ -20,13 +20,15 @@
 
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
   if (direction == DIFFTEST_TO_REF) {
-    if (in_mrom(addr)) { memcpy(mrom_to_host(addr), buf, n); return; }
-    if (in_sram(addr)) { memcpy(sram_to_host(addr), buf, n); return; }
+    IFDEF(CONFIG_HAS_MROM, if (in_mrom(addr)) { memcpy(mrom_to_host(addr), buf, n); return; })
+    IFDEF(CONFIG_HAS_FLASH, if (in_flash(addr)) { memcpy(flash_to_host(addr), buf, n); return; })
+    IFDEF(CONFIG_HAS_SRAM, if (in_sram(addr)) { memcpy(sram_to_host(addr), buf, n); return; })
     if (in_pmem(addr)) { memcpy(guest_to_host(addr), buf, n); return; }
   }
   else {
-    if (in_mrom(addr)) { memcpy(buf, mrom_to_host(addr), n); return; }
-    if (in_sram(addr)) { memcpy(buf, sram_to_host(addr), n); return; }
+    IFDEF(CONFIG_HAS_MROM, if (in_mrom(addr)) { memcpy(buf, mrom_to_host(addr), n); return; })
+    IFDEF(CONFIG_HAS_FLASH, if (in_flash(addr)) { memcpy(buf, flash_to_host(addr), n); return; })
+    IFDEF(CONFIG_HAS_SRAM, if (in_sram(addr)) { memcpy(buf, sram_to_host(addr), n); return; })
     if (in_pmem(addr)) { memcpy(buf, guest_to_host(addr), n); return; }
   }
 }
