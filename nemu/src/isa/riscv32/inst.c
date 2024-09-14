@@ -20,7 +20,7 @@
 #include <cpu/decode.h>
 
 #define R(i) gpr(i)
-#define CSR(csr_num) csr(csr_num)
+#define CSR(csr_num) csr(csr_num & 0xfff)
 #define Mr vaddr_read
 #define Mw vaddr_write
 #define DIV(src1, src2) ( \

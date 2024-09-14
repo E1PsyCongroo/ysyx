@@ -1,8 +1,6 @@
 #include <VysyxSoCFull.h>
 #include <VysyxSoCFull___024root.h>
 #include <VysyxSoCFull__Dpi.h>
-#include <cstdint>
-#include <cstdlib>
 #include <verilated_vcd_c.h>
 
 extern "C" {
@@ -11,6 +9,7 @@ extern "C" {
 #include <memory/vaddr.h>
 #include <memory/paddr.h>
 #include <cpu/cpu.h>
+#include <cpu/difftest.h>
 #include "local-include/verilating.h"
 }
 
@@ -29,6 +28,10 @@ enum {
   RVCPU_FETCH   = 2,
   RVCPU_EXEC    = 3,
 };
+
+void npc_difftest_skipi_ref() {
+  difftest_skip_ref();
+}
 
 void sim_end(int code) {
   set_npc_state(NPC_END, cpu.pc, code);
@@ -95,10 +98,10 @@ static void rvcpu_sync(void) {
   cpu.gpr[13] = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_13;
   cpu.gpr[14] = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_14;
   cpu.gpr[15] = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_15;
-  cpu.mstatus = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_0_2;
-  cpu.mtvec   = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_1_2;
-  cpu.mepc    = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_2_2;
-  cpu.mcause  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_3_2;
+  cpu.mstatus = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_4_2;
+  cpu.mtvec   = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_2_2;
+  cpu.mepc    = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_3_2;
+  cpu.mcause  = rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_0_2;
   cpu.priv    = static_cast<decltype(cpu.priv)>
                 (rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__priv);
   /* synchronizing instruction with rvcpu */
@@ -170,10 +173,10 @@ void rvcpu_reset(void) {
     rvcpu_single_cycle();
   }
 
-  for (int i = 0; i < 2000; i++) {
-    rvcpu_single_cycle();
-  }
-  exit(0);
+  // for (int i = 0; i < 2000; i++) {
+  //   rvcpu_single_cycle();
+  // }
+  // exit(0);
 }
 
 uint32_t rvcpu_ifetch(vaddr_t *pc, int len) {

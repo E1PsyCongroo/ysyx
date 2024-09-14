@@ -51,7 +51,7 @@ object AXI4Master {
     nonTrans.wstrb   := DontCare
     nonTrans.wlast    := DontCare
     /* Write response channel */
-    nonTrans.bready   := false.B
+    nonTrans.bready   := true.B
     /* Read address channel */
     nonTrans.arvalid  := false.B
     nonTrans.araddr   := DontCare
@@ -60,7 +60,7 @@ object AXI4Master {
     nonTrans.arsize   := DontCare
     nonTrans.arburst  := DontCare
     /* Read data channel */
-    nonTrans.rready   := false.B
+    nonTrans.rready   := true.B
     nonTrans
   }
 }
@@ -118,12 +118,14 @@ class AXI4Arbiter(masterNum: Int) extends Module {
     val slave    = new AXI4MasterIO
   })
 
-  val sIdle :: sWaitWrite :: sWaitRead :: Nil = Enum(3)
-  val state = RegInit(sIdle)
+  val sIdle :: sWaitWrite :: sWaitRead :: sReset :: Nil = Enum(4)
+  val state = RegInit(sReset)
 
   val isIdle      = state === sIdle
   val isWaitWrite = state === sWaitWrite
   val isWaitRead  = state === sWaitRead
+  val isReset     = state === sReset
+  val isWait      = isWaitWrite || isWaitRead
 
   val writeRequests       = VecInit(io.masters.map(
     master => (master.awvalid || master.wvalid)
@@ -138,8 +140,14 @@ class AXI4Arbiter(masterNum: Int) extends Module {
   assert(!(isWriteTransaction && isReadTransaction))
   val selectedReg         = RegEnable(selected, 0.U, isIdle)
   val selectedMaster      = io.masters(selectedReg)
-  val bfire               = selectedMaster.bvalid && selectedMaster.bready
-  val rfire               = selectedMaster.rvalid && selectedMaster.rready
+  val bfire               = io.slave.bvalid && io.slave.bready
+  val rfire               = io.slave.rvalid && io.slave.rready
+
+  val waitPrevTrans = withReset(false.B)(Reg(Bool()))
+  waitPrevTrans     := MuxCase(waitPrevTrans, Seq(
+    reset.asBool                  -> isWait,
+    (isReset && (bfire || rfire)) -> false.B,
+  ))
 
   state := MuxLookup(state, sIdle)(Seq(
     sIdle       -> MuxCase(sIdle, Seq(
@@ -148,6 +156,7 @@ class AXI4Arbiter(masterNum: Int) extends Module {
     )),
     sWaitWrite  -> Mux(bfire, sIdle, sWaitWrite),
     sWaitRead   -> Mux(rfire, sIdle, sWaitRead),
+    sReset      -> Mux(waitPrevTrans, sReset, sIdle)
   ))
 
   val nonResp     = AXI4Slave.nonResp
@@ -156,7 +165,7 @@ class AXI4Arbiter(masterNum: Int) extends Module {
   nonTrans <> io.slave
   for (i <- 0 until masterNum) {
     io.masters(i) <> nonResp
-    when (i.U === selectedReg) {
+    when (isWait && i.U === selectedReg) {
       io.masters(i) <> io.slave
     }
   }

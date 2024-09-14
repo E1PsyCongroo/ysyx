@@ -3,6 +3,7 @@ package rvcpu.core
 import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
+import rvcpu.core.CSR.CSRAddress.{mvendorid => mvendorid}
 
 object CSR {
   object PrivMode {
@@ -14,17 +15,21 @@ object CSR {
 
   object CSRAddress {
     def getWidth = 12
-    val mstatus = BitPat(0x300.U)
-    val mtvec   = BitPat(0x305.U)
-    val mepc    = BitPat(0x341.U)
-    val mcause  = BitPat(0x342.U)
+    val mstatus   = BitPat(0x300.U)
+    val mtvec     = BitPat(0x305.U)
+    val mepc      = BitPat(0x341.U)
+    val mcause    = BitPat(0x342.U)
+    val mvendorid = BitPat(0xF11.U)
+    val marchid   = BitPat(0xF12.U)
   }
   import CSRAddress._
   val CSRRegs = Seq(
     mstatus,
     mtvec,
     mepc,
-    mcause
+    mcause,
+    mvendorid,
+    marchid
   )
 }
 import CSR._
@@ -68,7 +73,15 @@ class CSRControl(xlen: Int) extends Module {
   val priv            = RegInit(PrivMode.M_Mode.value.U(PrivMode.getWidth.W))
 
   val csrs            = CSRRegs.map(csr =>
-    (csr, if (csr == CSRAddress.mstatus) RegInit(0x1800.U(xlen.W)) else RegInit(0.U(xlen.W)))
+    (
+      csr,
+      csr match {
+        case CSRAddress.mstatus   => RegInit(0x1800.U(xlen.W))
+        case CSRAddress.mvendorid => WireDefault(0x79737978.U(xlen.W))
+        case CSRAddress.marchid   => WireDefault(0x0.U(xlen.W))
+        case _                    => RegInit(0.U(xlen.W))
+      }
+    )
   ).toMap
   val csrRead         = WireDefault(MuxCase(0.U, csrs.toSeq.map{ case(key, data) => (key === io.csrAddr, data) }))
   val csrSet          = WireDefault(csrRead | io.csrIn)
@@ -131,7 +144,7 @@ class CSRControl(xlen: Int) extends Module {
   )
 
   val commonCsrs      = Seq(
-    CSRAddress.mtvec
+    CSRAddress.mtvec,
   )
   for (commCsr <- commonCsrs) {
     csrs(commCsr)     := Mux(io.csrAddr === commCsr, csrCommonWrite, csrs(commCsr))

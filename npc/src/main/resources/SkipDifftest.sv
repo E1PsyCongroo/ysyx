@@ -1,9 +1,9 @@
-import "DPI-C" function void difftest_skip_ref();
+import "DPI-C" function void npc_difftest_skipi_ref();
 module SkipDifftest(
   input clock,
   input skip
 );
   always @(posedge clock) begin
-    if (skip) difftest_skip_ref();
+    if (skip) npc_difftest_skipi_ref();
   end
 endmodule
