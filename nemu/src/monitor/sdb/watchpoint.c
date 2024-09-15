@@ -68,15 +68,15 @@ void free_wp(WP *wp) {
 }
 
 bool add_wp(char *e) {
-  WP *new_watchpoint = new_wp();
+  bool success;
+  word_t pre_val = expr(e, &success);
+  if (!success) return success;
 
+  WP *new_watchpoint = new_wp();
   int length = strlen(e);
   new_watchpoint->expr = malloc(length + 1);
   strncpy(new_watchpoint->expr, e, length + 1);
-
-  bool success;
-  new_watchpoint->pre_val = expr(e, &success);
-
+  new_watchpoint->pre_val = pre_val;
   new_watchpoint->next = head;
   head = new_watchpoint;
   return success;
