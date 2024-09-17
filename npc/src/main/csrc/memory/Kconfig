@@ -12,24 +12,7 @@ config MSIZE
 config PC_RESET_OFFSET
   hex "Offset of reset vector from the base of memory"
   default 0x100000 if ISA_x86
-  default 0
-
-choice
-  prompt "Physical memory definition"
-  default PMEM_GARRAY
-config PMEM_MALLOC
-  bool "Using malloc()"
-config PMEM_GARRAY
-  depends on !TARGET_AM
-  bool "Using global array"
-endchoice
-
-config MEM_RANDOM
-  depends on MODE_SYSTEM && !DIFFTEST && !TARGET_AM
-  bool "Initialize the memory with random values"
-  default y
-  help
-    This may help to find undefined behaviors.
+  default 0x0
 
 menuconfig HAS_MROM
   bool "Enable MROM"
@@ -62,5 +45,38 @@ config FLASH_SIZE
   hex "Size of the FLASH"
   default 0x1000000
 endif # HAS_FLASH
+
+menuconfig HAS_PSRAM
+  bool "Enable PSRAM"
+  default y
+  help
+    Provide sram support.
+
+if HAS_PSRAM
+config PSRAM_BASE
+  hex "Physical address of the PSRAM"
+  default 0x80000000
+
+config PSRAM_SIZE
+  hex "Size of the PSRAM"
+  default 0x20000000
+endif # HAS_PSRAM
+
+choice
+  prompt "Physical memory definition"
+  default MEM_GARRAY
+config MEM_MALLOC
+  bool "Using malloc()"
+config MEM_GARRAY
+  depends on !TARGET_AM
+  bool "Using global array"
+endchoice
+
+config MEM_RANDOM
+  depends on MODE_SYSTEM && !DIFFTEST && !TARGET_AM
+  bool "Initialize the memory with random values"
+  default y
+  help
+    This may help to find undefined behaviors.
 
 endmenu #MEMORY

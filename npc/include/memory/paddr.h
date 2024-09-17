@@ -43,4 +43,15 @@ word_t dev_flash_read(paddr_t addr, int len);
 void dev_flash_write(paddr_t addr, int len, word_t data);
 #endif
 
+#ifdef CONFIG_HAS_PSRAM
+#define PSRAM_LEFT  ((paddr_t)CONFIG_PSRAM_BASE)
+#define PSRAM_RIGHT ((paddr_t)CONFIG_PSRAM_BASE + CONFIG_PSRAM_SIZE - 1)
+uint8_t* dev_psram_to_host(paddr_t addr);
+static inline bool in_dev_psram(paddr_t addr) {
+  return addr - CONFIG_PSRAM_BASE < CONFIG_PSRAM_SIZE;
+}
+word_t dev_psram_read(paddr_t addr, int len);
+void dev_psram_write(paddr_t addr, int len, word_t data);
+#endif
+
 #endif

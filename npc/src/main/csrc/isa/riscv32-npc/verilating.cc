@@ -1,6 +1,7 @@
 #include <VysyxSoCFull.h>
 #include <VysyxSoCFull___024root.h>
 #include <VysyxSoCFull__Dpi.h>
+#include <stdint.h>
 #include <verilated_vcd_c.h>
 
 extern "C" {
@@ -42,19 +43,10 @@ word_t rvcpu_pmem_ifetch(paddr_t raddr) {
 }
 
 word_t rvcpu_pmem_read(paddr_t raddr) {
-  // 总是读取地址为`raddr & ~0x3u`的4字节返回
-  // if (!in_pmem(raddr)) return 0;
-  // printf("NPC read: " FMT_PADDR "\n", raddr);
   return vaddr_read(raddr & ~0x3u, 4);
 }
 
 void rvcpu_pmem_write(paddr_t waddr, word_t wdata, char wmask) {
-  // 总是往地址为`waddr & ~0x3u`的4字节按写掩码`wmask`写入`wdata`
-  // `wmask`中每比特表示`wdata`中1个字节的掩码,
-  // 如`wmask = 0x3`代表只写入最低2个字节, 内存中的其它字节保持不变
-  // if (!in_pmem(waddr)) return;
-  // printf("NPC write: " FMT_PADDR "\n", waddr);
-
   word_t bit_mask = 0;
   int len = 0;
   paddr_t addr = waddr;
@@ -78,6 +70,15 @@ void flash_read(int32_t addr, int32_t *data) {
 void mrom_read(int32_t addr, int32_t *data) {
   *data = dev_mrom_read(addr & ~0x3u, 4);
 }
+
+void psram_read(int32_t addr, int32_t *data) {
+  *data = dev_psram_read((addr + CONFIG_PSRAM_BASE) & ~0x3u, 4);
+}
+
+void psram_write(int32_t waddr, int32_t wdata, int len) {
+  dev_psram_write(waddr + CONFIG_PSRAM_BASE, len, wdata);
+}
+
 
 static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
