@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
-[*] Tue Sep 17 10:15:20 2024
+[*] Wed Sep 18 03:28:26 2024
 [*]
 [dumpfile] "/home/focused_xy/cs/ysyx/npc/build/npc-wave.vcd"
-[dumpfile_mtime] "Tue Sep 17 09:51:51 2024"
-[dumpfile_size] 196738122
+[dumpfile_mtime] "Wed Sep 18 03:22:47 2024"
+[dumpfile_size] 478226
 [savefile] "/home/focused_xy/cs/ysyx/npc/wave/gtkwave.gtkw"
-[timestart] 677855
+[timestart] 678545
 [size] 1920 1032
 [pos] -1 -1
-*-4.644010 677984 569530 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-4.644010 678604 569530 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.ysyxSoCFull.
 [treeopen] TOP.ysyxSoCFull.asic.
@@ -86,9 +86,7 @@ TOP.ysyxSoCFull.asic.lpsram.mpsram.u0.MR.state
 -PSRAM
 @28
 TOP.ysyxSoCFull.psram.isReadData
-@29
 TOP.ysyxSoCFull.psram.isWrite
-@28
 TOP.ysyxSoCFull.psram.io_ce_n
 TOP.ysyxSoCFull.psram.io_sck
 TOP.ysyxSoCFull.psram.count[2:0]

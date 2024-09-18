@@ -18,12 +18,12 @@ static const char mainargs[] = MAINARGS;
 #define SERIAL_DIV_LSB      (SERIAL_BASE + 0x0)
 #define SERIAL_DIV_MSB      (SERIAL_BASE + 0x1)
 
-static void init_uart1650(void) {
-  outb(SERIAL_LING_CONTROL, 0b10000011);
-  outb(SERIAL_DIV_MSB, 0b00000000);
-  outb(SERIAL_DIV_LSB, 0b00000001);
-  outb(SERIAL_LING_CONTROL, 0b00000011);
-}
+#define init_uart1650() do { \
+  *(volatile uint8_t*)SERIAL_LING_CONTROL = 0b10000011; \
+  *(volatile uint8_t*)SERIAL_DIV_MSB      = 0b00000000; \
+  *(volatile uint8_t*)SERIAL_DIV_LSB      = 0b00000001; \
+  *(volatile uint8_t*)SERIAL_LING_CONTROL = 0b00000011; \
+} while(0)
 
 void putch(char ch) {
   while (!(inb(SERIAL_LING_STATUS) & 0x20));
@@ -33,13 +33,6 @@ void putch(char ch) {
 void halt(int code) {
   ysyxsoc_trap(code);
   while (1);
-}
-
-static void init_mem(void) {
-  extern char _data_vma_start [], _data_lma_start [], _data_lma_end [];
-  extern char _bss_start [], _end [];
-  memcpy(_data_vma_start, _data_lma_start, _data_lma_end - _data_lma_start);
-  memset(_bss_start, 0, _end - _bss_start);
 }
 
 static void init_hello() {
@@ -56,9 +49,56 @@ static void init_hello() {
 }
 
 void _trm_init() {
-  init_uart1650();
-  init_mem();
   init_hello();
   int ret = main(mainargs);
   halt(ret);
+}
+
+#define macro_putch(ch) do { \
+  while (!(*(volatile uint8_t*)SERIAL_LING_STATUS & 0x20)); \
+  *(volatile uint8_t*)SERIAL_PORT = ch; \
+} while(0)
+
+#define macro_memcpy(out, in, n) do { \
+  unsigned char *out_p = (void*)(out); \
+  const unsigned char *in_p = (void*)(in); \
+  size_t size = (n); \
+  while (size--) { \
+    *(out_p++) = *(in_p++); \
+  } \
+} while(0)
+
+#define macro_memset(s, c, n) do { \
+  unsigned char *p = (void*)(s); \
+  size_t size = (n); \
+  while (size--) { \
+    *(p++) = (unsigned char)(c); \
+  } \
+} while(0)
+
+__attribute__((section(".bootloader.ssbl")))
+void _bootloader_ssbl(void) {
+  extern char _text_vma_start [], _text_lma_start [], _text_lma_end [];
+  extern char _rodata_vma_start [], _rodata_lma_start [], _rodata_lma_end [];
+  extern char _data_extra_vma_start [], _data_extra_lma_start [], _data_extra_lma_end [];
+  extern char _data_vma_start [], _data_lma_start [], _data_lma_end [];
+  extern char _bss_start [], _end [];
+  macro_memcpy(_text_vma_start, _text_lma_start, _text_lma_end - _text_lma_start);
+  macro_memcpy(_rodata_vma_start, _rodata_lma_start, _rodata_lma_end - _rodata_lma_start);
+  macro_memcpy(_data_extra_vma_start, _data_extra_lma_start, _data_extra_lma_end - _data_extra_lma_start);
+  macro_memcpy(_data_vma_start, _data_lma_start, _data_lma_end - _data_lma_start);
+  macro_memset(_bss_start, 0, _end - _bss_start);
+  macro_putch('b'); macro_putch('o'); macro_putch('o'); macro_putch('t');
+  macro_putch('e'); macro_putch('n'); macro_putch('d'); macro_putch('\n');
+  _trm_init();
+}
+
+__attribute__((section(".bootloader.fsbl")))
+void _bootloader_fsbl(void) {
+  init_uart1650();
+  macro_putch('b'); macro_putch('o'); macro_putch('o'); macro_putch('t');
+  macro_putch('\n');
+  extern char _bootloader_vma_start [], _bootloader_lma_start [], _bootloader_lma_end [];
+  macro_memcpy(_bootloader_vma_start, _bootloader_lma_start, _bootloader_lma_end - _bootloader_lma_start);
+  _bootloader_ssbl();
 }
