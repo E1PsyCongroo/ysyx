@@ -121,6 +121,7 @@ class LSU(xlen:Int = 32) extends Module {
   val isWaitRead  = state === sWaitRead
   val isSendOut   = state === sSendOut
 
+  /* For tracer */
   import rvcpu.dev.Dev
   val devs = Seq(Dev.UART16550Addr, Dev.SPIMasterAddr)
   SkipDifftest(clock,
@@ -130,6 +131,20 @@ class LSU(xlen:Int = 32) extends Module {
       (in.raddr >= dev.start.U && in.raddr <= dev.end.U)
     ).foldLeft(false.B)(_ || _))
   );
+  val SramTracer = Module(new SramTracer)
+  SramTracer.io.raddr := in.raddr
+  SramTracer.io.rdata := io.out.bits.rdata
+  SramTracer.io.ren   := io.out.fire && in.ren && (in.raddr >= Dev.SRAMAddr.start.U && in.raddr <= Dev.SRAMAddr.end.U)
+  SramTracer.io.waddr := in.waddr
+  SramTracer.io.wdata := in.wdata
+  SramTracer.io.wlen  := MuxCase(4.U(32.W), Seq(
+    memB  -> 1.U(32.W),
+    memH  -> 2.U(32.W),
+    memW  -> 4.U(32.W),
+    memBu -> 1.U(32.W),
+    memHu -> 2.U(32.W),
+  ).map{ case(key, data) => (key === in.memOp, data) })
+  SramTracer.io.wen   := io.out.fire && in.wen && (in.waddr >= Dev.SRAMAddr.start.U && in.waddr <= Dev.SRAMAddr.end.U)
 
   assert(!bfire || io.master.bresp === "b00".U(2.W))
   assert(!rfire || io.master.rresp === "b00".U(2.W))
