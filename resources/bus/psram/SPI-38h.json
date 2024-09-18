@@ -1,0 +1,26 @@
+{signal: [
+  {name: 'CLK',  	wave: '0P.....................'},
+  ['38H',
+    {name: 'CE#',  	wave: '10.....................1', phase: 0.5},
+    {name: 'state',	wave: '3.......4.....5.......3.', data: ['ReadInst', 'ReadAddr', 'WriteData', 'ReadInst']},
+    {name: 'COUNT',	wave: '=======================x', data: [..."01234567".split(''), ..."012345".split(''), ..."01234567".split(''), ...'012345670'.split('')]},
+    {name: 'SIO0', 	wave: 'x======================x', data: [..."00111000".split(''), '20', '16', '12', '8', '4', '0', ...Array(4).fill(["D4", "D0"]).flat()], phase: 0.5},
+    {name: 'SIO1', 	wave: 'xzzzzzzzz==============x', data: ["21", "17", "13", "9", "5", "1", ...Array(4).fill(["D5", "D1"]).flat()], phase: 0.5},
+    {name: 'SIO2', 	wave: 'xzzzzzzzz==============x', data: ["22", "18", "14", "10", "6", "2", ...Array(4).fill(["D6", "D2"]).flat()], phase: 0.5},
+  	{name: 'SIO3', 	wave: 'xzzzzzzzz==============x', data: ["23", "19", "15", "11", "7", "3", ...Array(4).fill(["D7", "D3"]).flat()], phase: 0.5},
+   	{name: "inst", 	wave: "x========...............", data: ["00h", "00h", "01h", "03h", "07h", "0Eh", "1Ch", "38h"]},	
+   	{name: 'addr', 	wave: '0........======.........', data: ["A4", "A8", "A12", "A16", "A20", "Addr"]},
+   	{name: 'data', 	wave: '0..............=.=.=.=..', data: ["DI1", "DI2", "DI3", "DI4"]},
+   	{name: 'wen', 	wave: 'x0.....................1', phase: 0.5},
+   ],
+],
+  head:{
+   text:'IS66/67WVS4M8ALL/BLL',
+   tick:0,
+   every:1
+ },
+ foot:{
+   text:'SPI Quad IO Write command 38h (1-4-4)'
+ },
+}
+				

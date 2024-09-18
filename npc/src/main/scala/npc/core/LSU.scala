@@ -122,7 +122,7 @@ class LSU(xlen:Int = 32) extends Module {
   val isSendOut   = state === sSendOut
 
   import rvcpu.dev.Dev
-  val devs = Seq(Dev.UART16550Addr, Dev.SPIMasterAddr, Dev.FlashAddr)
+  val devs = Seq(Dev.UART16550Addr, Dev.SPIMasterAddr, Dev.FlashAddr, Dev.PSRAMAddr)
   SkipDifftest(clock,
     io.out.fire &&
     (devs.map(dev =>

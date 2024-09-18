@@ -1,9 +1,10 @@
 ENTRY(_start)
 PHDRS { text PT_LOAD; data PT_LOAD; }
 MEMORY {
-  mrom(rx) : ORIGIN = 0x20000000, LENGTH = 4K
+  mrom(rx)  : ORIGIN = 0x20000000, LENGTH = 4K
   flash(rx) : ORIGIN = 0x30000000, LENGTH = 16M
-  sram(!x) : ORIGIN = 0x0f000000, LENGTH = 8K
+  sram(!x)  : ORIGIN = 0x0f000000, LENGTH = 8K
+  psram(!x) : ORIGIN = 0x80000000, LENGTH = 4M
 }
 SECTIONS {
   . = ORIGIN(flash);
@@ -27,7 +28,7 @@ SECTIONS {
     *(.sdata*)
     _data_vma_end = .;
     edata = .;
-  } > sram AT> flash : data
+  } > psram AT> flash : data
   _data_lma_start = LOADADDR(.data);
   _data_lma_end = LOADADDR(.data) + SIZEOF(.data);
 
@@ -38,8 +39,8 @@ SECTIONS {
     *(.scommon)
     end = .;
     _end = .;
-  } > sram
+  } > psram
 
   _heap_start = .;
-  _stack_pointer = ORIGIN(sram) + LENGTH(sram);
+  _stack_pointer = ORIGIN(psram) + LENGTH(psram);
 }

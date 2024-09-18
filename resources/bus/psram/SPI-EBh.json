@@ -1,0 +1,29 @@
+{signal: [
+  {name: 'CLK',  	wave: '0P...........................'},
+  ['EBh',
+    {name: 'CE#',  	wave: '10...........................1', phase: 0.5},
+    {name: 'state',	wave: '3.......4.....5......6.......3.', data: ['ReadInst', 'ReadAddr', 'ReadData', 'SendData', 'ReadInst']},
+    {name: 'COUNT',	wave: '==============================x', data: [..."01234567".split(''), ..."012345".split(''), ..."0123456".split(''), ...'012345670'.split('')]},
+   	{name: 'SIO0', 	wave: 'x==============zzzzzzx........', data: [..."11101011".split(''), '20', '16', '12', '8', '4', '0'], phase: 0.5},
+    {name: 'SIO1', 	wave: 'xzzzzzzzz======zzzzzzx........', data: ["21", "17", "13", "9", "5", "1"], phase: 0.5},
+    {name: 'SIO2', 	wave: 'xzzzzzzzz======zzzzzzx........', data: ["22", "18", "14", "10", "6", "2"], phase: 0.5},
+  	{name: 'SIO3', 	wave: 'xzzzzzzzz======zzzzzzx........', data: ["23", "19", "15", "11", "7", "3"], phase: 0.5},
+   	{name: 'SIO0`', wave: 'x....................========x', data: [...Array(4).fill(["Q4", "Q0"]).flat()]},
+    {name: 'SIO1`', wave: 'x....................========x', data: [...Array(4).fill(["Q5", "Q1"]).flat()]},
+    {name: 'SIO2`', wave: 'x....................========x', data: [...Array(4).fill(["Q6", "Q2"]).flat()]},
+  	{name: 'SIO3`', wave: 'x....................========x', data: [...Array(4).fill(["Q7", "Q3"]).flat()]},
+   	{name: "inst", 	wave: "0========.....................", data: ["01h", "03h", "07h", "0Eh", "1Dh", "3Ah", "75h", "EBh"]},	
+   	{name: 'addr', 	wave: '0........=======..............', data: ["A4", "A8", "A12", "A16", "A20", "A24", "addr"]},
+   	{name: 'data', 	wave: '0....................=........', data: ["data"]},
+   ],
+],
+  head:{
+   text:'IS66/67WVS4M8ALL/BLL',
+   tick:0,
+   every:1
+ },
+ foot:{
+   text:'SPI Fast Quad IO Read, EBh (1-4-4)'
+ },
+}
+				
