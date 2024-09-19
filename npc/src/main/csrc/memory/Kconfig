@@ -62,6 +62,22 @@ config PSRAM_SIZE
   default 0x20000000
 endif # HAS_PSRAM
 
+menuconfig HAS_SDRAM
+  bool "Enable SDRAM"
+  default y
+  help
+    Provide sdram support.
+
+if HAS_SDRAM
+config SDRAM_BASE
+  hex "Physical address of the SDRAM"
+  default 0xA0000000
+
+config SDRAM_SIZE
+  hex "Size of the SDRAM"
+  default 0x20000000
+endif # HAS_SDRAM
+
 choice
   prompt "Physical memory definition"
   default MEM_GARRAY

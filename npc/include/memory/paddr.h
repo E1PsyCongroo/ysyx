@@ -54,4 +54,15 @@ word_t dev_psram_read(paddr_t addr, int len);
 void dev_psram_write(paddr_t addr, int len, word_t data);
 #endif
 
+#ifdef CONFIG_HAS_SDRAM
+#define SDRAM_LEFT  ((paddr_t)CONFIG_SDRAM_BASE)
+#define SDRAM_RIGHT ((paddr_t)CONFIG_SDRAM_BASE + CONFIG_SDRAM_SIZE - 1)
+uint8_t* dev_sdram_to_host(paddr_t addr);
+static inline bool in_dev_sdram(paddr_t addr) {
+  return addr - CONFIG_SDRAM_BASE < CONFIG_SDRAM_SIZE;
+}
+word_t dev_sdram_read(paddr_t addr, int len);
+void dev_sdram_write(paddr_t addr, int len, word_t data);
+#endif
+
 #endif

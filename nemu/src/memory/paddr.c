@@ -24,12 +24,14 @@ IFDEF(CONFIG_HAS_MROM, static uint8_t *mrom = NULL);
 IFDEF(CONFIG_HAS_FLASH, static uint8_t *flash = NULL);
 IFDEF(CONFIG_HAS_SRAM, static uint8_t *sram = NULL);
 IFDEF(CONFIG_HAS_PSRAM, static uint8_t *psram = NULL);
+IFDEF(CONFIG_HAS_SDRAM, static uint8_t *sdram = NULL);
 #else // CONFIG_PMEM_GARRAY
 static uint8_t pmem[CONFIG_MSIZE] PG_ALIGN = {};
 IFDEF(CONFIG_HAS_MROM, static uint8_t mrom[CONFIG_MROM_SIZE] PG_ALIGN = {});
 IFDEF(CONFIG_HAS_FLASH, static uint8_t flash[CONFIG_FLASH_SIZE] PG_ALIGN = {});
 IFDEF(CONFIG_HAS_SRAM, static uint8_t sram[CONFIG_SRAM_SIZE] PG_ALIGN = {});
 IFDEF(CONFIG_HAS_PSRAM, static uint8_t psram[CONFIG_PSRAM_SIZE] PG_ALIGN = {});
+IFDEF(CONFIG_HAS_SDRAM, static uint8_t sdram[CONFIG_SDRAM_SIZE] PG_ALIGN = {});
 #endif
 
 #ifdef CONFIG_HAS_MROM
@@ -80,6 +82,18 @@ static void psram_write(paddr_t addr, int len, word_t data) {
 }
 #endif
 
+#ifdef CONFIG_HAS_SDRAM
+uint8_t* sdram_to_host(paddr_t addr) { return sdram + addr - CONFIG_SDRAM_BASE; }
+
+static word_t sdram_read(paddr_t addr, int len) {
+  return host_read(sdram_to_host(addr), len);
+}
+
+static void sdram_write(paddr_t addr, int len, word_t data) {
+  host_write(sdram_to_host(addr), len, data);
+}
+#endif
+
 uint8_t* guest_to_host(paddr_t paddr) { return pmem + paddr - CONFIG_MBASE; }
 paddr_t host_to_guest(uint8_t *haddr) { return haddr - pmem + CONFIG_MBASE; }
 
@@ -100,7 +114,7 @@ static void out_of_bound(paddr_t addr) {
       addr, MROM_LEFT, MROM_RIGHT, cpu.pc);
   #endif
   #ifdef CONFIG_HAS_FLASH
-  panic("address = " FMT_PADDR " is out of bound of sram [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,
+  panic("address = " FMT_PADDR " is out of bound of flash [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,
       addr, FLASH_LEFT, FLASH_RIGHT, cpu.pc);
   #endif
   #ifdef CONFIG_HAS_SRAM
@@ -108,8 +122,12 @@ static void out_of_bound(paddr_t addr) {
       addr, SRAM_LEFT, SRAM_RIGHT, cpu.pc);
   #endif
   #ifdef CONFIG_HAS_PSRAM
-  panic("address = " FMT_PADDR " is out of bound of sram [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,
+  panic("address = " FMT_PADDR " is out of bound of psram [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,
       addr, PSRAM_LEFT, PSRAM_RIGHT, cpu.pc);
+  #endif
+  #ifdef CONFIG_HAS_SDRAM
+  panic("address = " FMT_PADDR " is out of bound of sdram [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,
+      addr, SDRAM_LEFT, SDRAM_RIGHT, cpu.pc);
   #endif
 }
 
@@ -119,7 +137,8 @@ void init_mem() {
   IFDEF(CONFIG_HAS_MROM, mrom = malloc(CONFIG_MROM_SIZE); assert(mrom));
   IFDEF(CONFIG_HAS_FLASH, flash = malloc(CONFIG_flash_SIZE); assert(flash));
   IFDEF(CONFIG_HAS_SRAM, sram = malloc(CONFIG_SRAM_SIZE); assert(sram));
-  IFDEF(CONFIG_HAS_PSRAM, psram = malloc(CONFIG_PSRAM_SIZE); assert(sram));
+  IFDEF(CONFIG_HAS_PSRAM, psram = malloc(CONFIG_PSRAM_SIZE); assert(psram));
+  IFDEF(CONFIG_HAS_SDRAM, sdram = malloc(CONFIG_SDRAM_SIZE); assert(sdram));
 #endif
 #if   defined (CONFIG_MEM_RANDOM)
   int randnum = rand();
@@ -128,12 +147,14 @@ void init_mem() {
   IFDEF(CONFIG_HAS_FLASH, memset(flash, randnum, CONFIG_FLASH_SIZE));
   IFDEF(CONFIG_HAS_SRAM, memset(sram, randnum, CONFIG_SRAM_SIZE));
   IFDEF(CONFIG_HAS_PSRAM, memset(psram, randnum, CONFIG_PSRAM_SIZE));
+  IFDEF(CONFIG_HAS_SDRAM, memset(sdram, randnum, CONFIG_SDRAM_SIZE));
 #endif
   Log("physical memory area [" FMT_PADDR ", " FMT_PADDR "]", PMEM_LEFT, PMEM_RIGHT);
   IFDEF(CONFIG_HAS_MROM, Log("mrom area [" FMT_PADDR ", " FMT_PADDR "]", MROM_LEFT, MROM_RIGHT));
   IFDEF(CONFIG_HAS_FLASH, Log("flash area [" FMT_PADDR ", " FMT_PADDR "]", FLASH_LEFT, FLASH_RIGHT));
   IFDEF(CONFIG_HAS_SRAM, Log("sram area [" FMT_PADDR ", " FMT_PADDR "]", SRAM_LEFT, SRAM_RIGHT));
   IFDEF(CONFIG_HAS_PSRAM, Log("psram area [" FMT_PADDR ", " FMT_PADDR "]", PSRAM_LEFT, PSRAM_RIGHT));
+  IFDEF(CONFIG_HAS_SDRAM, Log("sdram area [" FMT_PADDR ", " FMT_PADDR "]", SDRAM_LEFT, SDRAM_RIGHT));
 }
 
 word_t paddr_read(paddr_t addr, int len) {
@@ -142,6 +163,7 @@ word_t paddr_read(paddr_t addr, int len) {
   IFDEF(CONFIG_HAS_FLASH, if (likely(in_flash(addr))) return flash_read(addr, len);)
   IFDEF(CONFIG_HAS_SRAM, if (likely(in_sram(addr))) return sram_read(addr, len);)
   IFDEF(CONFIG_HAS_PSRAM, if (likely(in_psram(addr))) return psram_read(addr, len);)
+  IFDEF(CONFIG_HAS_SDRAM, if (likely(in_sdram(addr))) return sdram_read(addr, len);)
   IFDEF(CONFIG_DEVICE, return mmio_read(addr, len));
   out_of_bound(addr);
   return 0;
@@ -153,6 +175,7 @@ void paddr_write(paddr_t addr, int len, word_t data) {
   IFDEF(CONFIG_HAS_FLASH, if (likely(in_flash(addr))) { flash_write(addr, len, data); return; })
   IFDEF(CONFIG_HAS_SRAM, if (likely(in_sram(addr))) { sram_write(addr, len, data); return; })
   IFDEF(CONFIG_HAS_PSRAM, if (likely(in_psram(addr))) { psram_write(addr, len, data); return; })
+  IFDEF(CONFIG_HAS_SDRAM, if (likely(in_sdram(addr))) { sdram_write(addr, len, data); return; })
   IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
   out_of_bound(addr);
 }

@@ -70,4 +70,13 @@ static inline bool in_psram(paddr_t addr) {
 }
 #endif
 
+#ifdef CONFIG_HAS_SDRAM
+#define SDRAM_LEFT  ((paddr_t)CONFIG_SDRAM_BASE)
+#define SDRAM_RIGHT ((paddr_t)CONFIG_SDRAM_BASE + CONFIG_SDRAM_SIZE - 1)
+uint8_t* sdram_to_host(paddr_t addr);
+static inline bool in_sdram(paddr_t addr) {
+  return addr - CONFIG_SDRAM_BASE < CONFIG_SDRAM_SIZE;
+}
+#endif
+
 #endif

@@ -91,6 +91,20 @@ void psram_write(int32_t waddr, int32_t wdata, int len) {
   dev_psram_write(waddr + CONFIG_PSRAM_BASE, len, wdata);
 }
 
+void sdram_read(int32_t addr, int16_t *data) {
+  *data = dev_sdram_read((addr << 1) + CONFIG_SDRAM_BASE, 2);
+}
+
+void sdram_write(int32_t waddr, int16_t wdata, char dqm) {
+  switch (dqm) {
+    case 0b00: dev_sdram_write((waddr << 1) + CONFIG_SDRAM_BASE, 2, (uint16_t)wdata)         ;break;
+    case 0b01: dev_sdram_write((waddr << 1) + CONFIG_SDRAM_BASE + 1, 1, (uint16_t)wdata >> 8);break;
+    case 0b10: dev_sdram_write((waddr << 1) + CONFIG_SDRAM_BASE, 1, (uint16_t)wdata & 0xff)  ;break;
+    case 0b11: return;
+    default: panic("sdram write: unknown dqm %d", dqm);
+  }
+}
+
 
 static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
