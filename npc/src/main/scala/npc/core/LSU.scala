@@ -146,6 +146,8 @@ class LSU(xlen:Int = 32) extends Module {
   ).map{ case(key, data) => (key === in.memOp, data) })
   SramTracer.io.wen   := io.out.fire && in.wen && (in.waddr >= Dev.SRAMAddr.start.U && in.waddr <= Dev.SRAMAddr.end.U)
 
+  assert((io.master.araddr & ~((1.U(32.W) << size) >> 1.U)) === io.master.araddr, "%x %x", io.master.araddr, size)
+  assert((io.master.awaddr & ~((1.U(32.W) << size) >> 1.U)) === io.master.awaddr, "%x %x", io.master.awaddr, size)
   assert(!bfire || io.master.bresp === "b00".U(2.W))
   assert(!rfire || io.master.rresp === "b00".U(2.W))
   /* IO bind */
