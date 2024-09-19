@@ -10,6 +10,7 @@
 !Makefile
 !README.md
 !.gitignore
+!.gitmodules
 !init.sh
 /nvboard
 /fceux-am

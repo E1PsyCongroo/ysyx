@@ -1,0 +1,10 @@
+[submodule "am-kernels"]
+  path = am-kernels
+  url = git@github.com:E1PsyCongroo/am-kernels.git
+
+[submodule "ysyxSoC"]
+  path = ysyxSoC
+  url = git@github.com:E1PsyCongroo/ysyxSoC.git
+[submodule "riscv-elf-psabi-doc"]
+  path = resources/riscv-elf-psabi-doc
+  url = git@github.com:riscv-non-isa/riscv-elf-psabi-doc.git
