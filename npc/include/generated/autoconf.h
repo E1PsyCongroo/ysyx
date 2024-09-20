@@ -46,11 +46,9 @@
 #define CONFIG_DIFFTEST_REF_PATH "/home/focused_xy/cs/ysyx/nemu"
 #define CONFIG_RVE 1
 #define CONFIG_DTRACE_COND "true"
-#define CONFIG_CC_DEBUG 1
 #define CONFIG_TRACE_START 0
 #define CONFIG_CC_GCC 1
 #define CONFIG_FLASH_BASE 0x30000000
 #define CONFIG_TRACE 1
 #define CONFIG_ISA "riscv32"
-#define CONFIG_SDRAM_SIZE 0x02000000
-#define CONFIG_CC_UBASAN 1
+#define CONFIG_SDRAM_SIZE 0x04000000
