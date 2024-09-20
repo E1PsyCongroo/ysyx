@@ -8,6 +8,7 @@
 !*.v
 !*.cpp
 !*.cc
+!*.nxdc
 !.gitignore
 !.scalafmt.conf
 !build.sc
@@ -18,7 +19,7 @@
 src/main/vsrc
 include/config
 include/generated
-build/
+build
 
 # mill
 out/
