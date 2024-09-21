@@ -9,6 +9,7 @@ object Dev {
   val memoryAddr        = Area(BigInt("80000000", 16), BigInt("87ffffff", 16))
   val uartAddr          = Area(BigInt("a00003f8", 16), BigInt("a00003f8", 16))
   val mtimeAddr         = Area(BigInt("a0000048", 16), BigInt("a000004d", 16))
+
   val CLINTAddr	        = Area(BigInt("02000000", 16), BigInt("0200ffff", 16))
   val SRAMAddr          = Area(BigInt("0f000000", 16), BigInt("0fffffff", 16))
   val UART16550Addr     = Area(BigInt("10000000", 16), BigInt("10000fff", 16))

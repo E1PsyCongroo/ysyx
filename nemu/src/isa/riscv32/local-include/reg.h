@@ -16,6 +16,7 @@
 #ifndef __RISCV_REG_H__
 #define __RISCV_REG_H__
 
+#include "debug.h"
 #include <common.h>
 #include <isa.h>
 #include <stdint.h>
@@ -45,6 +46,8 @@ static inline word_t* get_csr(uint32_t csr_num) {
   Assert(csr_num < 4096, "csr number should less than 4096");
   static word_t mvendorid = 0x79737978;
   static word_t marchid = 0;
+  Assert(mvendorid == 0x79737978, "mvendorid changed!");
+  Assert(marchid == 0, "marchid changed!");
   switch (csr_num) {
     case MSTATUS: return &cpu.mstatus;
     case MTVEC: return &cpu.mtvec;
