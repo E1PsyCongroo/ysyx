@@ -63,7 +63,7 @@ VERILATOR_CFLAGS    := --MMD --build --cc -O3 --x-assign fast --x-initial fast -
 	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR) --split-verilog
 	@touch $@
 
-$(VERILATOR_DIR)/lib$(PRJ).%: .stamp.verilog
+$(VERILATOR_DIR)/lib$(PRJ).%: .stamp.verilog $(VSRCS)
 	@echo + VERILATOR $(VSRCS)
 	@mkdir -p $(VERILATOR_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \

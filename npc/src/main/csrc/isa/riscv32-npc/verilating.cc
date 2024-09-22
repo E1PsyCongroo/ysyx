@@ -1,8 +1,10 @@
+#include "nvboard.h"
 #include <VysyxSoCFull.h>
 #include <VysyxSoCFull___024root.h>
 #include <VysyxSoCFull__Dpi.h>
 #include <stdint.h>
 #include <verilated_vcd_c.h>
+#include <nvboard.h>
 
 extern "C" {
 #include <common.h>
@@ -14,6 +16,8 @@ extern "C" {
 #include "local-include/verilating.h"
 }
 
+void nvboard_bind_all_pins(VysyxSoCFull* top);
+
 extern "C"{
 
 static VysyxSoCFull* rvcpu = nullptr;
@@ -21,7 +25,6 @@ static VerilatedContext* contextp = nullptr;
 static VerilatedVcdC* tfp = nullptr;
 static uint32_t cur_inst;
 uint64_t g_nr_guest_cycle = 0;
-// void nvboard_bind_all_pins(TOP_NAME* top);
 
 enum {
   RVCPU_IDLE    = 0,
@@ -148,6 +151,8 @@ void rvcpu_init(const char* wave_file, int argc, char** argv) {
     Log("Wave is written to %s", wave_file);
   }
   rvcpu->clock = 1;
+  nvboard_bind_all_pins(rvcpu);
+  nvboard_init();
   rvcpu_reset();
   rvcpu_sync();
   /* Exit */
@@ -159,6 +164,7 @@ void rvcpu_exit(void){
   delete rvcpu;
   delete contextp;
   delete tfp;
+  nvboard_quit();
 }
 
 void rvcpu_single_cycle(void) {
@@ -175,6 +181,7 @@ void rvcpu_single_cycle(void) {
   rvcpu->clock = 1; rvcpu->eval();
   contextp->timeInc(1); tfp->dump(contextp->time());
   rvcpu_sync();
+  nvboard_update();
   g_nr_guest_cycle++;
 }
 
