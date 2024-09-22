@@ -15,7 +15,6 @@ config PC_RESET_OFFSET
   default 0
 
 menuconfig HAS_MROM
-  depends on TARGET_SHARE
   bool "Enable MROM"
   default y
   help
@@ -32,7 +31,6 @@ config MROM_SIZE
 endif # HAS_MROM
 
 menuconfig HAS_FLASH
-  depends on TARGET_SHARE
   bool "Enable FLASH"
   default y
   help
@@ -49,7 +47,6 @@ config FLASH_SIZE
 endif # HAS_FLASH
 
 menuconfig HAS_SRAM
-  depends on TARGET_SHARE
   bool "Enable SRAM"
   default y
   help
@@ -66,7 +63,6 @@ config SRAM_SIZE
 endif # HAS_SRAM
 
 menuconfig HAS_PSRAM
-  depends on TARGET_SHARE
   bool "Enable PSRAM"
   default y
   help
@@ -83,7 +79,6 @@ config PSRAM_SIZE
 endif # HAS_PSRAM
 
 menuconfig HAS_SDRAM
-  depends on TARGET_SHARE
   bool "Enable SDRAM"
   default y
   help

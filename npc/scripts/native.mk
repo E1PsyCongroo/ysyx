@@ -51,8 +51,6 @@ clean-tools = $(dir $(shell find ./tools -maxdepth 2 -mindepth 2 -name "Makefile
 $(clean-tools):
 	-@$(MAKE) -s -C $@ clean
 clean-tools: $(clean-tools)
-clean-verilog:
-	-rm -rf $(VSRC_DIR) .stamp.verilog
-clean-all: clean distclean clean-tools clean-verilog
+clean-all: clean distclean clean-tools
 
-.PHONY: run gdb run-env clean-tools clean-verilog clean-all $(clean-tools) test mill-help reformat checkformat
+.PHONY: run gdb run-env clean-tools clean-all $(clean-tools) test mill-help reformat checkformat

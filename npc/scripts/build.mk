@@ -2,57 +2,58 @@
 
 # Add necessary options if the target is a shared library
 ifeq ($(SHARE),1)
-SO = -so
-CFLAGS  += -fPIC -fvisibility=hidden
-LDFLAGS += -shared -fPIC
+SO                   = -so
+CFLAGS              += -fPIC -fvisibility=hidden
+LDFLAGS             += -shared -fPIC
 endif
 
-PRJ 														:= NPC
-TOP_MODULE 											:= ysyxSoCFull
-WORK_DIR  											:= $(shell pwd)
-BUILD_DIR 											:= $(WORK_DIR)/build
-OBJ_DIR  												:= $(BUILD_DIR)/obj-$(NAME)$(SO)
-VERILATOR_DIR										:= $(OBJ_DIR)/verilator
-SRC_DIR													:= $(WORK_DIR)/src/main
-VSRC_DIR 												:= $(SRC_DIR)/vsrc
-CSRC_DIR 												:= $(SRC_DIR)/csrc
-RESOURCES_DIR										:= $(SRC_DIR)/resources
-CONSTR_DIR											:= $(SRC_DIR)/constr
-CHISEL_SRC_DIR									:= $(SRC_DIR)/scala
+PRJ                 := NPC
+TOP_MODULE          := ysyxSoCFull
+WORK_DIR            := $(shell pwd)
+BUILD_DIR           := $(WORK_DIR)/build
+OBJ_DIR             := $(BUILD_DIR)/obj-$(NAME)$(SO)
+VERILATOR_DIR       := $(OBJ_DIR)/verilator
+VSRC_DIR            := $(OBJ_DIR)/verilog
+SRC_DIR             := $(WORK_DIR)/src/main
+CSRC_DIR            := $(SRC_DIR)/csrc
+RESOURCES_DIR       := $(SRC_DIR)/resources
+CONSTR_DIR          := $(SRC_DIR)/constr
+CHISEL_SRC_DIR      := $(SRC_DIR)/scala
 
-VERILATOR_ROOT									:= /home/focused_xy/.conda/envs/ysyx/share/verilator
-INC_PATH 												:= $(WORK_DIR)/include $(VERILATOR_ROOT)/include $(VERILATOR_ROOT)/include/vltstd	\
-																	 $(VERILATOR_DIR) $(INC_PATH)
-BINARY   												:= $(BUILD_DIR)/$(NAME)$(SO)
+VERILATOR_ROOT      := /home/focused_xy/.conda/envs/ysyx/share/verilator
+INC_PATH            := $(WORK_DIR)/include $(VERILATOR_ROOT)/include $(VERILATOR_ROOT)/include/vltstd \
+                       $(VERILATOR_DIR) $(INC_PATH)
+BINARY              := $(BUILD_DIR)/$(NAME)$(SO)
 
 
 # Project sources
-VSRCS 													?= $(shell find $(VSRC_DIR) -type f -name "*.v" -or -name "*.sv")
-VSRCS 													+= $(shell find $(YSYXSOC_HOME)/perip -type f -name "*.v" -or -name "*.sv")
-VSRCS														+= $(YSYXSOC_HOME)/build/ysyxSoCFull.v
-CHISELSRCS											?= $(shell find $(CHISEL_SRC_DIR) -type f -name "*.scala" -or -name "*.sc")
-CHISELSRCS											+= $(SRC_DIR)/Elaborate.scala
-RESOURCES												?= $(shell find $(RESOURCES_DIR) -type f -name "*.v" -or -name "*.sv")
+RESOURCES           ?= $(shell find $(RESOURCES_DIR) -type f -name "*.v" -or -name "*.sv")
+VSRCS               ?= $(shell find $(VSRC_DIR) -type f -name "*.v" -or -name "*.sv")
+VSRCS               += $(shell find $(YSYXSOC_HOME)/perip -type f -name "*.v" -or -name "*.sv")
+VSRCS               += $(YSYXSOC_HOME)/build/ysyxSoCFull.v
+CHISELSRCS          ?= $(shell find $(CHISEL_SRC_DIR) -type f -name "*.scala" -or -name "*.sc")
+CHISELSRCS          += $(SRC_DIR)/Elaborate.scala
 
 # Rules for NVBoard
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 # Compilation flags
 ifeq ($(CC),clang)
-CXX 														:= clang++
+CXX                 := clang++
 else
-CXX 														:= g++
+CXX                 := g++
 endif
-LD 															:= $(CXX)
-INCLUDES 												= $(addprefix -I, $(INC_PATH))
-CFLAGS  												:= -O2 -MMD -Wall -Werror $(INCLUDES) $(CFLAGS)
-LDFLAGS 												:= -O2 $(LDFLAGS)
+LD                  := $(CXX)
+INCLUDES             = $(addprefix -I, $(INC_PATH))
+CFLAGS              := -O2 -MMD -Wall -Werror $(INCLUDES) $(CFLAGS)
+LDFLAGS             := -O2 $(LDFLAGS)
 
 # Verilator flags
-VERILATOR 											:= verilator
-VERILATOR_INC_PATH 							:= $(YSYXSOC_HOME)/perip/uart16550/rtl $(YSYXSOC_HOME)/perip/spi/rtl
-VERILATOR_INCLUDES							= $(addprefix -I, $(VERILATOR_INC_PATH))
-VERILATOR_CFLAGS 								:= --MMD --build --cc -O3 --x-assign fast --x-initial fast --autoflush --noassert --trace --timescale "1ns/1ns" --no-timing $(VERILATOR_INCLUDES)
+VERILATOR           := verilator
+VERILATOR_INC_PATH  := $(YSYXSOC_HOME)/perip/uart16550/rtl $(YSYXSOC_HOME)/perip/spi/rtl
+VERILATOR_INCLUDES   = $(addprefix -I, $(VERILATOR_INC_PATH))
+VERILATOR_CFLAGS    := --MMD --build --cc -O3 --x-assign fast --x-initial fast --autoflush --noassert \
+                       --trace --timescale "1ns/1ns" --no-timing $(VERILATOR_INCLUDES)
 
 # Verilating
 .stamp.verilog: $(CHISELSRCS) $(RESOURCES)
@@ -62,7 +63,7 @@ VERILATOR_CFLAGS 								:= --MMD --build --cc -O3 --x-assign fast --x-initial f
 	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR) --split-verilog
 	@touch $@
 
-$(VERILATOR_DIR)/lib$(PRJ).%: $(VSRCS) .stamp.verilog
+$(VERILATOR_DIR)/lib$(PRJ).%: .stamp.verilog
 	@echo + VERILATOR $(VSRCS)
 	@mkdir -p $(VERILATOR_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
@@ -75,9 +76,9 @@ $(OBJ_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
 	@mkdir -p $(dir $@)
 	@python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
-CXXSRC += $(OBJ_DIR)/$(PRJ)_auto_bind.cc
-ARCHIVES += $(VERILATOR_DIR)/lib$(PRJ).so $(NVBOARD_ARCHIVE)
-OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
+CXXSRC             += $(OBJ_DIR)/$(PRJ)_auto_bind.cc
+ARCHIVES           += $(VERILATOR_DIR)/lib$(PRJ).so $(NVBOARD_ARCHIVE)
+OBJS                = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
 
 # Compilation patterns
 $(OBJ_DIR)/%.o: %.c
@@ -108,7 +109,7 @@ $(BINARY):: $(ARCHIVES) $(OBJS)
 
 verilog: .stamp.verilog
 
-verilator: $(VERILATOR_DIR)/lib$(PRJ).a
+verilator: $(VERILATOR_DIR)/lib$(PRJ).so
 
 clean:
-	-rm -rf $(BUILD_DIR)
+	-rm -rf $(BUILD_DIR) .stamp.verilog
