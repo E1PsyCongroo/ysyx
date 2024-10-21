@@ -123,7 +123,7 @@ class LSU(xlen:Int = 32) extends Module {
 
   /* For tracer */
   import rvcpu.dev.Dev
-  val devs = Seq(Dev.UART16550Addr, Dev.SPIMasterAddr, Dev.GPIOAddr)
+  val devs = Seq(Dev.UART16550Addr, Dev.SPIMasterAddr, Dev.GPIOAddr, Dev.PS2Addr, Dev.VGAAddr)
   SkipDifftest(clock,
     io.out.fire &&
     (devs.map(dev =>

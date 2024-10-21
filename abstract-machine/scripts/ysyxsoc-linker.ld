@@ -13,12 +13,12 @@ SECTIONS {
   . = ORIGIN(flash);
   .entry : ALIGN(0x4) {
     *(entry)
-    *(.bootloader.fsbl)
+    *(.bootloader.fsbl*)
   } > flash AT> flash : entry
 
   .bootloader : ALIGN(0x4) {
     _bootloader_vma_start = .;
-    *(.bootloader.ssbl)
+    *(.bootloader.ssbl*)
     _bootloader_vma_end = .;
   } > sram AT> flash : bootloader
   _bootloader_lma_start = LOADADDR(.bootloader);

@@ -366,7 +366,6 @@ static int vprintf(CWriter writer, const char *fmt, va_list *args) {
       count++;
     }
   }
-  writer('\0');
   return count;
 }
 
@@ -383,6 +382,7 @@ int vsprintf(char *out, const char *fmt, va_list ap) {
   va_copy(args, ap);
   set_dest(&out);
   int count = vprintf(write_ch, fmt, &args);
+  write_ch('\0');
   va_end(args);
   return count;
 }
