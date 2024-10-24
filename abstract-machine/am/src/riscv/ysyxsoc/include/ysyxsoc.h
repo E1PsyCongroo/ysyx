@@ -8,6 +8,11 @@
 
 #define ysyxsoc_trap(code) asm volatile("mv a0, %0; ebreak" : :"r"(code))
 
+#define CLINT_BASE 0x02000000L
+#define CLINT_MTIME CLINT_BASE
+#define CLINT_SIZE 0x10000L
+#define CLINT_END (CLINT_BASE + CLINT_SIZE)
+
 #define SERIAL_BASE 0x10000000L
 #define SERIAL_PORT         (SERIAL_BASE + 0x0)
 #define SERIAL_LING_CONTROL (SERIAL_BASE + 0x3)
@@ -27,6 +32,11 @@
 #define PS2_KEY (PS2_BASE + 0x0)
 #define PS2_SIZE 8
 #define PS2_END (PS2_BASE + PS2_SIZE)
+
+#define VGACTL_BASE 0x21000000L
+#define VGAFB_ADDR VGACTL_BASE
+#define VGACTL_SIZE (640 * 480 * 3)
+#define VGACTL_END (VGACTL_BASE + VGACTL_SIZE)
 
 #define PGSIZE    4096
 

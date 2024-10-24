@@ -3,24 +3,28 @@ package rvcpu.dev
 import chisel3._
 import chisel3.util._
 
-case class Area(start: BigInt, end: BigInt)
+case class Area(start: UInt, end: UInt) {
+  def in(addr: UInt): Bool = {
+    addr >= start && addr <= end
+  }
+}
 
 object Dev {
-  val memoryAddr        = Area(BigInt("80000000", 16), BigInt("87ffffff", 16))
-  val uartAddr          = Area(BigInt("a00003f8", 16), BigInt("a00003f8", 16))
-  val mtimeAddr         = Area(BigInt("a0000048", 16), BigInt("a000004d", 16))
+  val memoryAddr = Area("h80000000".U, "h87ffffff".U)
+  val uartAddr   = Area("ha00003f8".U, "ha00003f8".U)
+  val mtimeAddr  = Area("ha0000048".U, "ha000004d".U)
 
-  val CLINTAddr	        = Area(BigInt("02000000", 16), BigInt("0200ffff", 16))
-  val SRAMAddr          = Area(BigInt("0f000000", 16), BigInt("0fffffff", 16))
-  val UART16550Addr     = Area(BigInt("10000000", 16), BigInt("10000fff", 16))
-  val SPIMasterAddr     = Area(BigInt("10001000", 16), BigInt("10001fff", 16))
-  val GPIOAddr          = Area(BigInt("10002000", 16), BigInt("1000200f", 16))
-  val PS2Addr           = Area(BigInt("10011000", 16), BigInt("10011007", 16))
-  val MROMAddr          = Area(BigInt("20000000", 16), BigInt("20000fff", 16))
-  val VGAAddr           = Area(BigInt("21000000", 16), BigInt("211fffff", 16))
-  val FlashAddr         = Area(BigInt("30000000", 16), BigInt("3fffffff", 16))
-  val ChipLinkMMIOAddr  = Area(BigInt("40000000", 16), BigInt("7fffffff", 16))
-  val PSRAMAddr         = Area(BigInt("80000000", 16), BigInt("9fffffff", 16))
-  val SDRAMAddr         = Area(BigInt("a0000000", 16), BigInt("bfffffff", 16))
-  val ChipLinkMEMAddr   = Area(BigInt("c0000000", 16), BigInt("ffffffff", 16))
+  val CLINTAddr        = Area("h02000000".U, "h0200ffff".U)
+  val SRAMAddr         = Area("h0f000000".U, "h0fffffff".U)
+  val UART16550Addr    = Area("h10000000".U, "h10000fff".U)
+  val SPIMasterAddr    = Area("h10001000".U, "h10001fff".U)
+  val GPIOAddr         = Area("h10002000".U, "h1000200f".U)
+  val PS2Addr          = Area("h10011000".U, "h10011007".U)
+  val MROMAddr         = Area("h20000000".U, "h20000fff".U)
+  val VGAAddr          = Area("h21000000".U, "h211fffff".U)
+  val FlashAddr        = Area("h30000000".U, "h3fffffff".U)
+  val ChipLinkMMIOAddr = Area("h40000000".U, "h7fffffff".U)
+  val PSRAMAddr        = Area("h80000000".U, "h9fffffff".U)
+  val SDRAMAddr        = Area("ha0000000".U, "hbfffffff".U)
+  val ChipLinkMEMAddr  = Area("hc0000000".U, "hffffffff".U)
 }

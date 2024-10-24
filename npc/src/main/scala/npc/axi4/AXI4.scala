@@ -4,122 +4,145 @@ import rvcpu.dev._
 import chisel3._
 import chisel3.util._
 
-object TransactionResponse extends ChiselEnum{
-  val okey    = Value("b00".U)
-  val exokay  = Value("b01".U)
-  val slverr  = Value("b10".U)
-  val decerr  = Value("b11".U)
+object TransactionResponse extends ChiselEnum {
+  val okey   = Value("b00".U)
+  val exokay = Value("b01".U)
+  val slverr = Value("b10".U)
+  val decerr = Value("b11".U)
 }
 
 class AXI4MasterIO extends AXI4LiteMasterIO {
   /* Write address channel */
-  val awid     = Output(UInt(4.W))
-  val awlen    = Output(UInt(8.W))
-  val awsize   = Output(UInt(3.W))
-  val awburst  = Output(UInt(2.W))
+  val awid    = Output(UInt(4.W))
+  val awlen   = Output(UInt(8.W))
+  val awsize  = Output(UInt(3.W))
+  val awburst = Output(UInt(2.W))
 
   /* Write data channel */
-  val wlast    = Output(Bool())
+  val wlast = Output(Bool())
 
   /* Write response channel */
-  val bid      = Input(UInt(4.W))
+  val bid = Input(UInt(4.W))
 
   /* Read address channel */
-  val arid     = Output(UInt(4.W))
-  val arlen    = Output(UInt(8.W))
-  val arsize   = Output(UInt(3.W))
-  val arburst  = Output(UInt(2.W))
+  val arid    = Output(UInt(4.W))
+  val arlen   = Output(UInt(8.W))
+  val arsize  = Output(UInt(3.W))
+  val arburst = Output(UInt(2.W))
 
   /* Read data channel */
-  val rlast    = Input(Bool())
-  val rid      = Input(UInt(4.W))
+  val rlast = Input(Bool())
+  val rid   = Input(UInt(4.W))
+
+  def AXI4ConnectSlave(slave: AXI4SlaveIO) = {
+    AXI4LiteConnectSlave(slave)
+    slave.awid    := this.awid
+    slave.awlen   := this.awlen
+    slave.awsize  := this.awsize
+    slave.awburst := this.awburst
+
+    slave.wlast := this.wlast
+
+    this.bid := slave.bid
+
+    slave.arid    := this.arid
+    slave.arlen   := this.arlen
+    slave.arsize  := this.arsize
+    slave.arburst := this.arburst
+
+    this.rlast := slave.rlast
+    this.rid   := slave.rid
+  }
 }
 
 object AXI4Master {
   def nonTrans: AXI4MasterIO = {
-    val nonTrans      = Wire(new AXI4MasterIO)
+    val nonTrans = Wire(new AXI4MasterIO)
     /* Write address channel */
-    nonTrans.awvalid  := false.B
-    nonTrans.awaddr   := DontCare
-    nonTrans.awid     := DontCare
-    nonTrans.awlen    := DontCare
-    nonTrans.awsize   := DontCare
-    nonTrans.awburst  := DontCare
+    nonTrans.awvalid := false.B
+    nonTrans.awaddr  := DontCare
+    nonTrans.awid    := DontCare
+    nonTrans.awlen   := DontCare
+    nonTrans.awsize  := DontCare
+    nonTrans.awburst := DontCare
     /* Write data channel */
-    nonTrans.wvalid   := false.B
-    nonTrans.wdata    := DontCare
-    nonTrans.wstrb   := DontCare
-    nonTrans.wlast    := DontCare
+    nonTrans.wvalid := false.B
+    nonTrans.wdata  := DontCare
+    nonTrans.wstrb  := DontCare
+    nonTrans.wlast  := DontCare
     /* Write response channel */
-    nonTrans.bready   := true.B
+    nonTrans.bready := true.B
     /* Read address channel */
-    nonTrans.arvalid  := false.B
-    nonTrans.araddr   := DontCare
-    nonTrans.arid     := DontCare
-    nonTrans.arlen    := DontCare
-    nonTrans.arsize   := DontCare
-    nonTrans.arburst  := DontCare
+    nonTrans.arvalid := false.B
+    nonTrans.araddr  := DontCare
+    nonTrans.arid    := DontCare
+    nonTrans.arlen   := DontCare
+    nonTrans.arsize  := DontCare
+    nonTrans.arburst := DontCare
     /* Read data channel */
-    nonTrans.rready   := true.B
+    nonTrans.rready := true.B
     nonTrans
   }
 }
 
 class AXI4SlaveIO extends AXI4LiteSlaveIO {
   /* Write address channel */
-  val awid     = Input(UInt(4.W))
-  val awlen    = Input(UInt(8.W))
-  val awsize   = Input(UInt(3.W))
-  val awburst  = Input(UInt(2.W))
+  val awid    = Input(UInt(4.W))
+  val awlen   = Input(UInt(8.W))
+  val awsize  = Input(UInt(3.W))
+  val awburst = Input(UInt(2.W))
 
   /* Write data channel */
-  val wlast    = Input(Bool())
+  val wlast = Input(Bool())
 
   /* Write response channel */
-  val bid      = Output(UInt(4.W))
+  val bid = Output(UInt(4.W))
 
   /* Read address channel */
-  val arid     = Input(UInt(4.W))
-  val arlen    = Input(UInt(8.W))
-  val arsize   = Input(UInt(3.W))
-  val arburst  = Input(UInt(2.W))
+  val arid    = Input(UInt(4.W))
+  val arlen   = Input(UInt(8.W))
+  val arsize  = Input(UInt(3.W))
+  val arburst = Input(UInt(2.W))
 
   /* Read data channel */
-  val rlast    = Output(Bool())
-  val rid      = Output(UInt(4.W))
+  val rlast = Output(Bool())
+  val rid   = Output(UInt(4.W))
+  def AXI4ConnectMaster(master: AXI4MasterIO) = {
+    master.AXI4ConnectSlave(this)
+  }
 }
 
 object AXI4Slave {
   def nonResp: AXI4SlaveIO = {
-    val nonResp     = Wire(new AXI4SlaveIO)
+    val nonResp = Wire(new AXI4SlaveIO)
     /* Write address channel */
     nonResp.awready := false.B
     /* Write data channel */
-    nonResp.wready  := false.B
+    nonResp.wready := false.B
     /* Write response channel */
-    nonResp.bvalid  := false.B
-    nonResp.bresp   := DontCare
-    nonResp.bid     := DontCare
+    nonResp.bvalid := false.B
+    nonResp.bresp  := DontCare
+    nonResp.bid    := DontCare
     /* Read address channel */
     nonResp.arready := false.B
     /* Read data channel */
-    nonResp.rvalid  := false.B
-    nonResp.rresp   := DontCare
-    nonResp.rdata   := DontCare
-    nonResp.rlast   := DontCare
-    nonResp.rid     := DontCare
+    nonResp.rvalid := false.B
+    nonResp.rresp  := DontCare
+    nonResp.rdata  := DontCare
+    nonResp.rlast  := DontCare
+    nonResp.rid    := DontCare
     nonResp
   }
 }
 
 class AXI4Arbiter(masterNum: Int) extends Module {
   val io = IO(new Bundle {
-    val masters  = Vec(masterNum, new AXI4SlaveIO)
-    val slave    = new AXI4MasterIO
+    val masters = Vec(masterNum, new AXI4SlaveIO)
+    val slave   = new AXI4MasterIO
   })
 
   val sIdle :: sWaitWrite :: sWaitRead :: sReset :: Nil = Enum(4)
-  val state = RegInit(sReset)
+  val state                                             = RegInit(sReset)
 
   val isIdle      = state === sIdle
   val isWaitWrite = state === sWaitWrite
@@ -127,45 +150,49 @@ class AXI4Arbiter(masterNum: Int) extends Module {
   val isReset     = state === sReset
   val isWait      = isWaitWrite || isWaitRead
 
-  val writeRequests       = VecInit(io.masters.map(
-    master => (master.awvalid || master.wvalid)
-  )).asUInt
-  val readRequests        = VecInit(io.masters.map(
-    master => master.arvalid
-  )).asUInt
-  val requests            = writeRequests | readRequests
-  val selected            = PriorityEncoder(requests)
-  val isWriteTransaction  = writeRequests(selected)
-  val isReadTransaction   = readRequests(selected)
+  val writeRequests      = VecInit(io.masters.map(master => (master.awvalid || master.wvalid))).asUInt
+  val readRequests       = VecInit(io.masters.map(master => master.arvalid)).asUInt
+  val requests           = writeRequests | readRequests
+  val selected           = PriorityEncoder(requests)
+  val isWriteTransaction = writeRequests(selected)
+  val isReadTransaction  = readRequests(selected)
   assert(!(isWriteTransaction && isReadTransaction))
-  val selectedReg         = RegEnable(selected, 0.U, isIdle)
-  val selectedMaster      = io.masters(selectedReg)
-  val bfire               = io.slave.bvalid && io.slave.bready
-  val rfire               = io.slave.rvalid && io.slave.rready
+  val selectedReg    = RegEnable(selected, 0.U, isIdle)
+  val selectedMaster = io.masters(selectedReg)
+  val bfire          = io.slave.bvalid && io.slave.bready
+  val rfire          = io.slave.rvalid && io.slave.rready
 
   val waitPrevTrans = withReset(false.B)(Reg(Bool()))
-  waitPrevTrans     := MuxCase(waitPrevTrans, Seq(
-    reset.asBool                  -> isWait,
-    (isReset && (bfire || rfire)) -> false.B,
-  ))
+  waitPrevTrans := MuxCase(
+    waitPrevTrans,
+    Seq(
+      reset.asBool -> isWait,
+      (isReset && (bfire || rfire)) -> false.B
+    )
+  )
 
-  state := MuxLookup(state, sIdle)(Seq(
-    sIdle       -> MuxCase(sIdle, Seq(
-      isWriteTransaction  -> sWaitWrite,
-      isReadTransaction   -> sWaitRead,
-    )),
-    sWaitWrite  -> Mux(bfire, sIdle, sWaitWrite),
-    sWaitRead   -> Mux(rfire, sIdle, sWaitRead),
-    sReset      -> Mux(waitPrevTrans, sReset, sIdle)
-  ))
+  state := MuxLookup(state, sIdle)(
+    Seq(
+      sIdle -> MuxCase(
+        sIdle,
+        Seq(
+          isWriteTransaction -> sWaitWrite,
+          isReadTransaction -> sWaitRead
+        )
+      ),
+      sWaitWrite -> Mux(bfire, sIdle, sWaitWrite),
+      sWaitRead -> Mux(rfire, sIdle, sWaitRead),
+      sReset -> Mux(waitPrevTrans, sReset, sIdle)
+    )
+  )
 
-  val nonResp     = AXI4Slave.nonResp
-  val nonTrans    = AXI4Master.nonTrans
+  val nonResp  = AXI4Slave.nonResp
+  val nonTrans = AXI4Master.nonTrans
 
   nonTrans <> io.slave
   for (i <- 0 until masterNum) {
     io.masters(i) <> nonResp
-    when (isWait && i.U === selectedReg) {
+    when(isWait && i.U === selectedReg) {
       io.masters(i) <> io.slave
     }
   }
@@ -184,60 +211,68 @@ object AXI4Arbiter {
 class AXI4Xbar(slaves: Seq[Area]) extends Module {
   val length = slaves.length
   val io = IO(new Bundle {
-    val master   = new AXI4SlaveIO
-    val slaves   = Vec(length, new AXI4MasterIO)
+    val master = new AXI4SlaveIO
+    val slaves = Vec(length, new AXI4MasterIO)
   })
 
   val sIdle :: sWaitWaddr :: sWaitBresp :: sWaitRresp :: Nil = Enum(4)
-  val state = RegInit(sIdle)
+  val state                                                  = RegInit(sIdle)
 
   val isIdle      = state === sIdle
   val isWaitWaddr = state === sWaitWaddr
   val isWaitBresp = state === sWaitBresp
   val isWaitRresp = state === sWaitRresp
 
-  val isWaddrTransaction  = io.master.awvalid
-  val isWdataTransaction  = io.master.wvalid
-  val isReadTransaction   = io.master.arvalid
+  val isWaddrTransaction = io.master.awvalid
+  val isWdataTransaction = io.master.wvalid
+  val isReadTransaction  = io.master.arvalid
   assert(!((isWaddrTransaction || isWdataTransaction) && isReadTransaction))
 
-  val awfire              = io.master.awvalid && io.master.awready
-  val wfire               = io.master.wvalid && io.master.wready
-  val bfire               = io.master.bvalid && io.master.bready
-  val arfire              = io.master.arvalid && io.master.arready
-  val rfire               = io.master.rvalid && io.master.rready
+  val awfire = io.master.awvalid && io.master.awready
+  val wfire  = io.master.wvalid && io.master.wready
+  val bfire  = io.master.bvalid && io.master.bready
+  val arfire = io.master.arvalid && io.master.arready
+  val rfire  = io.master.rvalid && io.master.rready
 
-  state := MuxLookup(state, sIdle)(Seq(
-    sIdle       -> MuxCase(sIdle, Seq(
-      isWaddrTransaction  -> sWaitBresp,
-      isWdataTransaction  -> sWaitWaddr,
-      isReadTransaction   -> sWaitRresp,
-    )),
-    sWaitWaddr  -> Mux(isWaddrTransaction, sWaitBresp, sWaitWaddr),
-    sWaitBresp  -> Mux(bfire, sIdle, sWaitBresp),
-    sWaitRresp  -> Mux(rfire, sIdle, sWaitRresp),
-  ))
+  state := MuxLookup(state, sIdle)(
+    Seq(
+      sIdle -> MuxCase(
+        sIdle,
+        Seq(
+          isWaddrTransaction -> sWaitBresp,
+          isWdataTransaction -> sWaitWaddr,
+          isReadTransaction -> sWaitRresp
+        )
+      ),
+      sWaitWaddr -> Mux(isWaddrTransaction, sWaitBresp, sWaitWaddr),
+      sWaitBresp -> Mux(bfire, sIdle, sWaitBresp),
+      sWaitRresp -> Mux(rfire, sIdle, sWaitRresp)
+    )
+  )
 
-  val transAddr         = RegInit(0.U(32.W))
-  transAddr             := MuxCase(transAddr, Seq(
-    (isIdle && isReadTransaction)       -> io.master.araddr,
-    (isIdle && isWaddrTransaction)      -> io.master.awaddr,
-    (isWaitWaddr && isWaddrTransaction) -> io.master.awaddr,
-  ))
-  val areas       = VecInit(slaves.map(area => VecInit(area.start.U, area.end.U)))
+  val transAddr = RegInit(0.U(32.W))
+  transAddr := MuxCase(
+    transAddr,
+    Seq(
+      (isIdle && isReadTransaction) -> io.master.araddr,
+      (isIdle && isWaddrTransaction) -> io.master.awaddr,
+      (isWaitWaddr && isWaddrTransaction) -> io.master.awaddr
+    )
+  )
+  val areas       = VecInit(slaves.map(area => VecInit(area.start, area.end)))
   val validSlaves = VecInit(areas.map(area => (transAddr >= area(0) && transAddr <= area(1)))).asUInt
   val haveSlave   = validSlaves.orR && (isWaitBresp || isWaitRresp)
   val slaveSelect = WireDefault(Mux(haveSlave, PriorityEncoder(validSlaves), 0.U))
 
-  val nonTrans  = AXI4Master.nonTrans
-  val nonResp   = AXI4Slave.nonResp
+  val nonTrans = AXI4Master.nonTrans
+  val nonResp  = AXI4Slave.nonResp
 
   io.master <> nonResp
   for (i <- 0 until slaves.length) {
     nonTrans <> io.slaves(i)
   }
 
-  when (haveSlave) {
+  when(haveSlave) {
     io.master <> io.slaves(slaveSelect)
   }
 }
@@ -245,7 +280,7 @@ class AXI4Xbar(slaves: Seq[Area]) extends Module {
 object AXI4Xbar {
   def apply(
     master: AXI4MasterIO,
-    slaves: Seq[(Area, AXI4SlaveIO)],
+    slaves: Seq[(Area, AXI4SlaveIO)]
   ) = {
     val Xbar = Module(new AXI4Xbar(slaves.map(data => data._1)))
     master <> Xbar.io.master
@@ -255,3 +290,78 @@ object AXI4Xbar {
   }
 }
 
+class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Module {
+  val io = IO(new Bundle {
+    val fanIn  = Vec(fanInNum, new AXI4SlaveIO)
+    val fanOut = Vec(fanOutSeq.size, new AXI4MasterIO)
+  })
+
+  val sIdle :: sWaitWdata :: sWaitBresp :: sWaitRresp :: Nil = Enum(4)
+
+  val state       = RegInit(sIdle)
+  val isIdle      = state === sIdle
+  val isWaitWdata = state === sWaitWdata
+  val isWaitBresp = state === sWaitBresp
+  val isWaitRresp = state === sWaitRresp
+
+  val waddrRequests = VecInit(io.fanIn.map(in => in.awvalid)).asUInt
+  val wdataRequests = VecInit(io.fanIn.map(in => in.wvalid)).asUInt
+  val readRequests  = VecInit(io.fanIn.map(in => in.arvalid)).asUInt
+  val requests      = waddrRequests | wdataRequests | readRequests
+
+  val selected           = PriorityEncoder(requests)
+  val selectedReg        = RegEnable(selected, 0.U, isIdle)
+  val isWaddrTransaction = waddrRequests(selected)
+  val isWdataTransaction = wdataRequests(selected)
+  val isReadTransaction  = readRequests(selected)
+  assert(!((isWaddrTransaction || isWdataTransaction) && isReadTransaction))
+
+  val awfire = io.fanIn(selectedReg).awvalid && io.fanIn(selectedReg).awready
+  val wfire  = io.fanIn(selectedReg).wvalid && io.fanIn(selectedReg).wready
+  val bfire  = io.fanIn(selectedReg).bvalid && io.fanIn(selectedReg).bready
+  val arfire = io.fanIn(selectedReg).arvalid && io.fanIn(selectedReg).arready
+  val rfire  = io.fanIn(selectedReg).rvalid && io.fanIn(selectedReg).rready
+
+  state := MuxLookup(state, sIdle)(
+    Seq(
+      sIdle -> MuxCase(
+        sIdle,
+        Seq(
+          (isWaddrTransaction && isWdataTransaction) -> sWaitBresp,
+          isWaddrTransaction -> sWaitWdata,
+          isReadTransaction -> sWaitRresp
+        )
+      ),
+      sWaitWdata -> Mux(wfire, sWaitBresp, sWaitWdata),
+      sWaitBresp -> Mux(bfire, sIdle, sWaitBresp),
+      sWaitRresp -> Mux(rfire, sIdle, sWaitRresp)
+    )
+  )
+
+  val transAddr = WireDefault(
+    MuxCase(
+      0.U,
+      Seq(
+        (isIdle && isReadTransaction) -> io.fanIn(selected).araddr,
+        (isIdle && isWaddrTransaction) -> io.fanIn(selected).awaddr
+      )
+    )
+  )
+  val matches     = VecInit(fanOutSeq.map(_(transAddr))).asUInt
+  val fanOutValid = isWaitWdata || isWaitBresp || isWaitRresp
+  val outSelect   = RegEnable(PriorityEncoder(matches), 0.U, isIdle)
+
+  val nonTrans = AXI4Master.nonTrans
+  val nonResp  = AXI4Slave.nonResp
+
+  for (i <- 0 until fanInNum) {
+    io.fanIn(i) <> nonResp
+  }
+  for (i <- 0 until fanOutSeq.size) {
+    nonTrans <> io.fanOut(i)
+  }
+
+  when(fanOutValid) {
+    io.fanIn(selectedReg) <> io.fanOut(outSelect)
+  }
+}

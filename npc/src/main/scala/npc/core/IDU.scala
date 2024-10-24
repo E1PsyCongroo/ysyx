@@ -4,25 +4,25 @@ import chisel3._
 import chisel3.util._
 
 class IDUOut(xlen: Int = 32) extends Bundle {
-  val pc      = Output(UInt(xlen.W))
-  val rd1     = Output(UInt(xlen.W))
-  val rd2     = Output(UInt(xlen.W))
-  val wa      = Output(UInt(5.W))
-  val imm     = Output(UInt(xlen.W))
-  val uimm    = Output(UInt(xlen.W))
+  val pc   = Output(UInt(xlen.W))
+  val rd1  = Output(UInt(xlen.W))
+  val rd2  = Output(UInt(xlen.W))
+  val wa   = Output(UInt(5.W))
+  val imm  = Output(UInt(xlen.W))
+  val uimm = Output(UInt(xlen.W))
   val control = new Bundle {
-    val regWe     = Output(Bool())
-    val aluASrc   = Output(UInt(ALUASrcFrom.getWidth.W))
-    val aluBSrc   = Output(UInt(ALUBSrcFrom.getWidth.W))
-    val aluCtr    = Output(UInt(ALUOp.getWidth.W))
-    val csrSrc    = Output(UInt(CSRSrcFrom.getWidth.W))
-    val csrCtr    = Output(UInt(CSRCtr.getWidth.W))
-    val brType    = Output(UInt(BrType.getWidth.W))
-    val pcSrc     = Output(UInt(PCSrcFrom.getWidth.W))
-    val wbSrc     = Output(UInt(WBSrcFrom.getWidth.W))
-    val memRen    = Output(Bool())
-    val memWen    = Output(Bool())
-    val memOp     = Output(UInt(MemOp.getWidth.W))
+    val regWe   = Output(Bool())
+    val aluASrc = Output(UInt(ALUASrcFrom.getWidth.W))
+    val aluBSrc = Output(UInt(ALUBSrcFrom.getWidth.W))
+    val aluCtr  = Output(UInt(ALUOp.getWidth.W))
+    val csrSrc  = Output(UInt(CSRSrcFrom.getWidth.W))
+    val csrCtr  = Output(UInt(CSRCtr.getWidth.W))
+    val brType  = Output(UInt(BrType.getWidth.W))
+    val pcSrc   = Output(UInt(PCSrcFrom.getWidth.W))
+    val wbSrc   = Output(UInt(WBSrcFrom.getWidth.W))
+    val memRen  = Output(Bool())
+    val memWen  = Output(Bool())
+    val memOp   = Output(UInt(MemOp.getWidth.W))
   }
 }
 
@@ -54,16 +54,18 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
   val io = IO(new IDUIO(xlen, extentionE))
 
   val sExec :: Nil = Enum(1)
-  val state = RegInit(sExec)
-  state := MuxLookup(state, sExec)(Seq(
-    sExec -> sExec
-  ))
+  val state        = RegInit(sExec)
+  state := MuxLookup(state, sExec)(
+    Seq(
+      sExec -> sExec
+    )
+  )
 
   val isExec = state === sExec
 
-  val ImmGen      = Module(new ImmGen(xlen))
-  val Control     = Module(new Control)
-  val EndControl  = Module(new EndControl)
+  val ImmGen     = Module(new ImmGen(xlen))
+  val Control    = Module(new Control)
+  val EndControl = Module(new EndControl)
 
   val instruction = io.in.bits.instruction
   val rs1         = instruction(19, 15)
@@ -83,24 +85,24 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
   EndControl.io.isEnd := Control.io.isEnd
   EndControl.io.code  := io.RegFileReturn.rd1
 
-  io.in.ready                   := io.out.ready
-  io.out.valid                  := io.in.valid
-  io.out.bits.pc                := io.in.bits.pc
-  io.out.bits.rd1               := io.RegFileReturn.rd1
-  io.out.bits.rd2               := io.RegFileReturn.rd2
-  io.out.bits.wa                := rd
-  io.out.bits.imm               := ImmGen.io.imm
-  io.out.bits.uimm              := rs1.pad(32)
-  io.out.bits.control.regWe     := Control.io.regWe
-  io.out.bits.control.aluASrc   := Control.io.aluASrc
-  io.out.bits.control.aluBSrc   := Control.io.aluBSrc
-  io.out.bits.control.aluCtr    := Control.io.aluCtr
-  io.out.bits.control.csrSrc    := Control.io.csrSrc
-  io.out.bits.control.csrCtr    := Control.io.csrCtr
-  io.out.bits.control.brType    := Control.io.brType
-  io.out.bits.control.pcSrc     := Control.io.pcSrc
-  io.out.bits.control.wbSrc     := Control.io.wbSrc
-  io.out.bits.control.memRen    := Control.io.memRen
-  io.out.bits.control.memWen    := Control.io.memWen
-  io.out.bits.control.memOp     := Control.io.memOp
+  io.in.ready                 := io.out.ready
+  io.out.valid                := io.in.valid
+  io.out.bits.pc              := io.in.bits.pc
+  io.out.bits.rd1             := io.RegFileReturn.rd1
+  io.out.bits.rd2             := io.RegFileReturn.rd2
+  io.out.bits.wa              := rd
+  io.out.bits.imm             := ImmGen.io.imm
+  io.out.bits.uimm            := rs1.pad(32)
+  io.out.bits.control.regWe   := Control.io.regWe
+  io.out.bits.control.aluASrc := Control.io.aluASrc
+  io.out.bits.control.aluBSrc := Control.io.aluBSrc
+  io.out.bits.control.aluCtr  := Control.io.aluCtr
+  io.out.bits.control.csrSrc  := Control.io.csrSrc
+  io.out.bits.control.csrCtr  := Control.io.csrCtr
+  io.out.bits.control.brType  := Control.io.brType
+  io.out.bits.control.pcSrc   := Control.io.pcSrc
+  io.out.bits.control.wbSrc   := Control.io.wbSrc
+  io.out.bits.control.memRen  := Control.io.memRen
+  io.out.bits.control.memWen  := Control.io.memWen
+  io.out.bits.control.memOp   := Control.io.memOp
 }
