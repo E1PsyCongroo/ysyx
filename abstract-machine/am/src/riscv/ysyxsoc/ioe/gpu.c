@@ -2,18 +2,21 @@
 #include <ysyxsoc.h>
 #include <klib.h>
 
+#define WIDTH 640
+#define HEIGHT 480
+
 void __am_gpu_init() {
-  // int w = 640;
-  // int h = 480;
-  // uint32_t *fb = (uint32_t *)VGAFB_ADDR;
-  // for (int i = 0; i < w * h; i ++) fb[i] = i;
+  int w = WIDTH;
+  int h = HEIGHT;
+  uint32_t *fb = (uint32_t *)VGAFB_ADDR;
+  for (int i = 0; i < w * h; i ++) fb[i] = i;
 }
 
 void __am_gpu_config(AM_GPU_CONFIG_T *cfg) {
   *cfg = (AM_GPU_CONFIG_T) {
     .present = true, .has_accel = false,
-    .width = 640, .height = 480,
-    .vmemsz = 640 * 480 * sizeof(uint32_t)
+    .width = WIDTH, .height = HEIGHT,
+    .vmemsz = WIDTH * HEIGHT * sizeof(uint32_t)
   };
 }
 

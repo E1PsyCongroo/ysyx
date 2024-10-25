@@ -25,4 +25,5 @@ void init_isa(const char *wave_file, int argc, char** argv) {
   /* Load built-in image. */
   memcpy(dev_flash_to_host(FLASH_LEFT + CONFIG_PC_RESET_OFFSET), img, sizeof(img));
   memcpy(dev_mrom_to_host(MROM_LEFT + CONFIG_PC_RESET_OFFSET), img, sizeof(img));
+  rvcpu_init(wave_file, argc, argv);
 }

@@ -1,4 +1,5 @@
 #include "nvboard.h"
+#include "verilated.h"
 #include <VysyxSoCFull.h>
 #include <VysyxSoCFull___024root.h>
 #include <VysyxSoCFull__Dpi.h>
@@ -139,11 +140,10 @@ static void rvcpu_sync(void) {
 }
 
 void rvcpu_init(const char* wave_file, int argc, char** argv) {
-  Verilated::commandArgs(argc, argv);
-  Verilated::traceEverOn(true);
   contextp = new VerilatedContext;
   rvcpu = new VysyxSoCFull {contextp};
   tfp = new VerilatedVcdC;
+  contextp->commandArgs(argc, argv);
   contextp->traceEverOn(true);
   rvcpu->trace(tfp, 5);
   if (wave_file) {

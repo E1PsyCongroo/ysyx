@@ -51,9 +51,10 @@ LDFLAGS             := -O2 $(LDFLAGS)
 # Verilator flags
 VERILATOR           := verilator
 VERILATOR_INC_PATH  := $(YSYXSOC_HOME)/perip/uart16550/rtl $(YSYXSOC_HOME)/perip/spi/rtl
-VERILATOR_INCLUDES   = $(addprefix -I, $(VERILATOR_INC_PATH))
-VERILATOR_CFLAGS    := --MMD --build --cc -O3 --x-assign fast --x-initial fast --autoflush --noassert \
-                       --trace --timescale "1ns/1ns" --no-timing $(VERILATOR_INCLUDES)
+VERILATOR_INCLUDES   = $(addprefix -y , $(VERILATOR_INC_PATH))
+VERILATOR_CFLAGS    := --MMD --build --cc -O3 --trace --x-assign fast --x-initial fast \
+                       --autoflush --noassert --timescale "1ns/1ns" --no-timing --threads 2 -j 0 \
+											 $(VERILATOR_INCLUDES)
 
 # Verilating
 .stamp.verilog: $(CHISELSRCS) $(RESOURCES)
@@ -77,7 +78,7 @@ $(OBJ_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
 	@python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 CXXSRC             += $(OBJ_DIR)/$(PRJ)_auto_bind.cc
-ARCHIVES           += $(VERILATOR_DIR)/lib$(PRJ).so $(NVBOARD_ARCHIVE)
+ARCHIVES           += $(VERILATOR_DIR)/lib$(PRJ).a $(NVBOARD_ARCHIVE)
 OBJS                = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
 
 # Compilation patterns
@@ -109,7 +110,7 @@ $(BINARY):: $(ARCHIVES) $(OBJS)
 
 verilog: .stamp.verilog
 
-verilator: $(VERILATOR_DIR)/lib$(PRJ).so
+verilator: $(VERILATOR_DIR)/lib$(PRJ).a
 
 clean:
 	-rm -rf $(BUILD_DIR) .stamp.verilog
