@@ -197,11 +197,11 @@ void rvcpu_single_exec(void) {
 }
 
 void rvcpu_reset(void) {
-  g_nr_guest_cycle = 0;
   rvcpu->reset = 1;
   for (int i = 0; i < 10; i++) {
     rvcpu_single_cycle();
   }
+  g_nr_guest_cycle = 0;
   rvcpu->reset = 0;
   while (!rvcpu->rootp->ysyxSoCFull__DOT__asic__DOT__cpu_reset_chain__DOT__output_chain__DOT__sync_0) {
     rvcpu_single_cycle();
