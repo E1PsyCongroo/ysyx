@@ -86,17 +86,18 @@ object SkipDifftest {
   }
 }
 
-class SramTracer extends BlackBox with HasBlackBoxResource {
+class Tracer extends BlackBox with HasBlackBoxResource {
   val io = IO(new Bundle {
     val raddr = Input(UInt(32.W))
+    val rlen = Input(UInt(32.W))
     val rdata = Input(UInt(32.W))
     val ren   = Input(Bool())
     val waddr = Input(UInt(32.W))
-    val wdata = Input(UInt(32.W))
     val wlen  = Input(UInt(32.W))
+    val wdata = Input(UInt(32.W))
     val wen   = Input(Bool())
   })
-  addResource("/SramTracer.sv")
+  addResource("/Tracer.sv")
 }
 
 class EndControlIO extends Bundle {

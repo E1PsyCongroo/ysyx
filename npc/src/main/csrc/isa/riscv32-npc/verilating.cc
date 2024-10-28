@@ -68,28 +68,6 @@ void flash_read(int32_t addr, int32_t *data) {
   *data = dev_flash_read((addr + CONFIG_FLASH_BASE) & ~0x3u, 4);
 }
 
-void sram_read(int32_t addr, int32_t data) {
-#ifdef CONFIG_MTRACE
-  if (MTRACE_COND) {
-    log_write(ANSI_FMT("%-16.16s: @" FMT_PADDR ", len = %2d, data = " FMT_WORD
-                       "\n",
-                       ANSI_FG_CYAN),
-              "read sram", addr, 4, data);
-  }
-#endif
-}
-
-void sram_write(int32_t waddr, int32_t wdata, int len) {
-#ifdef CONFIG_MTRACE
-  if (MTRACE_COND) {
-    log_write(ANSI_FMT("%-16.16s: @" FMT_PADDR ", len = %2d, data = " FMT_WORD
-                       "\n",
-                       ANSI_FG_CYAN),
-              "write sram", waddr, len, wdata);
-  }
-#endif
-}
-
 void psram_read(int32_t addr, int32_t *data) {
   *data = dev_psram_read((addr + CONFIG_PSRAM_BASE) & ~0x3u, 4);
 }

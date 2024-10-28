@@ -45,17 +45,6 @@ class IFU(xlen: Int = 32, PCReset: BigInt = BigInt("80000000", 16)) extends Modu
 
   val instruction = RegEnable(io.master.rdata, Instruction.nop.bitPat.value.U, rfire)
 
-  /* For tracer */
-  import rvcpu.dev.Dev.SRAMAddr
-  val SramTracer = Module(new SramTracer)
-  SramTracer.io.raddr := pc
-  SramTracer.io.rdata := io.master.rdata
-  SramTracer.io.ren   := rfire && SRAMAddr.in(pc)
-  SramTracer.io.waddr := DontCare
-  SramTracer.io.wdata := DontCare
-  SramTracer.io.wlen  := DontCare
-  SramTracer.io.wen   := false.B
-
   assert(!rfire || io.master.rresp === "b00".U(2.W))
   /* IO bind */
   io.master.awvalid := false.B

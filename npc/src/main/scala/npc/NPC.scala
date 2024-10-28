@@ -53,13 +53,51 @@ class RVCPU(
   AXI4Interconnect.io.fanOut(1) <> io.master
   io.slave <> AXI4Slave.nonResp
 
-  val devs = Seq(Dev.CLINTAddr, Dev.UART16550Addr, Dev.SPIMasterAddr, Dev.GPIOAddr, Dev.PS2Addr, Dev.VGAAddr, Dev.ChipLinkMEMAddr)
+  val devs = Seq(
+    Dev.CLINTAddr,
+    Dev.UART16550Addr,
+    Dev.SPIMasterAddr,
+    Dev.GPIOAddr,
+    Dev.PS2Addr,
+    Dev.VGAAddr,
+    Dev.ChipLinkMEMAddr
+  )
   SkipDifftest(
     clock,
     LSU.io.in.fire &&
       (devs.map(dev => dev.in(LSU.io.in.bits.waddr) || dev.in(LSU.io.in.bits.raddr)).foldLeft(false.B)(_ || _))
   );
 
+  val IFUTracer = Module(new Tracer)
+  IFUTracer.io.raddr := IFU.io.out.bits.pc
+  IFUTracer.io.rlen  := 4.U
+  IFUTracer.io.rdata := IFU.io.out.bits.instruction
+  IFUTracer.io.ren   := IFU.io.out.fire
+  IFUTracer.io.waddr := DontCare
+  IFUTracer.io.wdata := DontCare
+  IFUTracer.io.wlen  := DontCare
+  IFUTracer.io.wen   := false.B
+
+  val LSUTracer = Module(new Tracer)
+  val LSUIn     = RegEnable(LSU.io.in.bits, LSU.io.in.fire)
+  val LSUSize = MuxCase(
+    4.U(32.W),
+    Seq(
+      MemOp.memB -> 1.U(32.W),
+      MemOp.memH -> 2.U(32.W),
+      MemOp.memW -> 4.U(32.W),
+      MemOp.memBu -> 1.U(32.W),
+      MemOp.memHu -> 2.U(32.W)
+    ).map { case (key, data) => (key === LSUIn.memOp, data) }
+  )
+  LSUTracer.io.raddr := LSUIn.raddr
+  LSUTracer.io.rlen  := LSUSize
+  LSUTracer.io.rdata := LSU.io.out.bits.rdata
+  LSUTracer.io.ren   := LSUIn.ren && LSU.io.out.fire
+  LSUTracer.io.waddr := LSUIn.waddr
+  LSUTracer.io.wdata := LSUIn.wdata
+  LSUTracer.io.wlen  := LSUSize
+  LSUTracer.io.wen   := LSUIn.wen && LSU.io.out.fire
 }
 
 object StageConnect {

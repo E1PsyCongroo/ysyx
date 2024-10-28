@@ -138,32 +138,6 @@ class LSU(xlen: Int = 32) extends Module {
   val isWaitRead  = state === sWaitRead
   val isSendOut   = state === sSendOut
 
-  /* For tracer */
-  // import rvcpu.dev.Dev
-  // val devs = Seq(Dev.CLINTAddr, Dev.UART16550Addr, Dev.SPIMasterAddr, Dev.GPIOAddr, Dev.PS2Addr, Dev.VGAAddr, Dev.ChipLinkMEMAddr)
-  // SkipDifftest(
-  //   clock,
-  //   io.out.fire &&
-  //     (devs.map(dev => dev.in(in.waddr) || dev.in(in.raddr)).foldLeft(false.B)(_ || _))
-  // );
-  val SramTracer = Module(new SramTracer)
-  SramTracer.io.raddr := in.raddr
-  SramTracer.io.rdata := io.out.bits.rdata
-  SramTracer.io.ren   := io.out.fire && in.ren && Dev.SDRAMAddr.in(in.raddr)
-  SramTracer.io.waddr := in.waddr
-  SramTracer.io.wdata := in.wdata
-  SramTracer.io.wlen := MuxCase(
-    4.U(32.W),
-    Seq(
-      memB -> 1.U(32.W),
-      memH -> 2.U(32.W),
-      memW -> 4.U(32.W),
-      memBu -> 1.U(32.W),
-      memHu -> 2.U(32.W)
-    ).map { case (key, data) => (key === in.memOp, data) }
-  )
-  SramTracer.io.wen := io.out.fire && in.wen && Dev.SDRAMAddr.in(in.waddr)
-
   assert((io.master.araddr & ~((1.U(32.W) << size) >> 1.U)) === io.master.araddr, "%x %x", io.master.araddr, size)
   assert((io.master.awaddr & ~((1.U(32.W) << size) >> 1.U)) === io.master.awaddr, "%x %x", io.master.awaddr, size)
   assert(!bfire || io.master.bresp === "b00".U(2.W))
