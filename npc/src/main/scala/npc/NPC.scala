@@ -44,13 +44,22 @@ class RVCPU(
   StageConnect(EXU.io.out, WBU.io.in)
   StageConnect(WBU.io.out, IFU.io.in)
 
+  EndControl(clock, IDU.io.isEnd, IDU.io.exitCode)
+
   val AXI4Interconnect = Module(new AXI4Interconnect(2, Seq(Dev.CLINTAddr.in, !Dev.CLINTAddr.in(_))))
   AXI4Interconnect.io.fanIn(0) <> IFU.io.master
   AXI4Interconnect.io.fanIn(1) <> LSU.io.master
   AXI4Interconnect.io.fanOut(0).AXI4ConnectSlave(CLINT.io)
   AXI4Interconnect.io.fanOut(1) <> io.master
-  // io.master <> AXI4Arbiter(Seq(IFU.io.master, LSU.io.master))
   io.slave <> AXI4Slave.nonResp
+
+  val devs = Seq(Dev.CLINTAddr, Dev.UART16550Addr, Dev.SPIMasterAddr, Dev.GPIOAddr, Dev.PS2Addr, Dev.VGAAddr, Dev.ChipLinkMEMAddr)
+  SkipDifftest(
+    clock,
+    LSU.io.in.fire &&
+      (devs.map(dev => dev.in(LSU.io.in.bits.waddr) || dev.in(LSU.io.in.bits.raddr)).foldLeft(false.B)(_ || _))
+  );
+
 }
 
 object StageConnect {

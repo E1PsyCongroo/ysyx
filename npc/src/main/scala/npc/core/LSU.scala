@@ -139,13 +139,13 @@ class LSU(xlen: Int = 32) extends Module {
   val isSendOut   = state === sSendOut
 
   /* For tracer */
-  import rvcpu.dev.Dev
-  val devs = Seq(Dev.CLINTAddr, Dev.UART16550Addr, Dev.SPIMasterAddr, Dev.GPIOAddr, Dev.PS2Addr, Dev.VGAAddr, Dev.ChipLinkMEMAddr)
-  SkipDifftest(
-    clock,
-    io.out.fire &&
-      (devs.map(dev => dev.in(in.waddr) || dev.in(in.raddr)).foldLeft(false.B)(_ || _))
-  );
+  // import rvcpu.dev.Dev
+  // val devs = Seq(Dev.CLINTAddr, Dev.UART16550Addr, Dev.SPIMasterAddr, Dev.GPIOAddr, Dev.PS2Addr, Dev.VGAAddr, Dev.ChipLinkMEMAddr)
+  // SkipDifftest(
+  //   clock,
+  //   io.out.fire &&
+  //     (devs.map(dev => dev.in(in.waddr) || dev.in(in.raddr)).foldLeft(false.B)(_ || _))
+  // );
   val SramTracer = Module(new SramTracer)
   SramTracer.io.raddr := in.raddr
   SramTracer.io.rdata := io.out.bits.rdata

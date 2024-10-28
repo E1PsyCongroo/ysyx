@@ -7,4 +7,69 @@ config RV64
 config RVE
   bool "Use E extension"
   default n
+
+menuconfig HAS_MROM
+  bool "Enable MROM"
+  default y
+  help
+    Provide mrom support.
+
+if HAS_MROM
+config MROM_BASE
+  hex "Physical address of the MROM"
+  default 0x20000000
+
+config MROM_SIZE
+  hex "Size of the MROM"
+  default 0x1000
+endif # HAS_MROM
+
+menuconfig HAS_FLASH
+  bool "Enable FLASH"
+  default y
+  help
+    Provide sram support.
+
+if HAS_FLASH
+config FLASH_BASE
+  hex "Physical address of the FLASH"
+  default 0x30000000
+
+config FLASH_SIZE
+  hex "Size of the FLASH"
+  default 0x1000000
+endif # HAS_FLASH
+
+menuconfig HAS_PSRAM
+  bool "Enable PSRAM"
+  default y
+  help
+    Provide sram support.
+
+if HAS_PSRAM
+config PSRAM_BASE
+  hex "Physical address of the PSRAM"
+  default 0x80000000
+
+config PSRAM_SIZE
+  hex "Size of the PSRAM"
+  default 0x20000000
+endif # HAS_PSRAM
+
+menuconfig HAS_SDRAM
+  bool "Enable SDRAM"
+  default y
+  help
+    Provide sdram support.
+
+if HAS_SDRAM
+config SDRAM_BASE
+  hex "Physical address of the SDRAM"
+  default 0xA0000000
+
+config SDRAM_SIZE
+  hex "Size of the SDRAM"
+  default 0x20000000
+endif # HAS_SDRAM
+
 endmenu

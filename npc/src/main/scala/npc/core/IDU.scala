@@ -37,17 +37,8 @@ class IDUIO(xlen: Int = 32, extentionE: Boolean = true) extends Bundle {
     val rd1 = Input(UInt(xlen.W))
     val rd2 = Input(UInt(xlen.W))
   }
-}
-
-class EndControlIO extends Bundle {
-  val clock = Input(Clock())
-  val reset = Input(Reset())
-  val isEnd = Input(Bool())
-  val code  = Input(UInt(32.W))
-}
-class EndControl extends BlackBox with HasBlackBoxResource {
-  val io = IO(new EndControlIO)
-  addResource("/EndControl.sv")
+  val isEnd    = Output(Bool())
+  val exitCode = Output(UInt(32.W))
 }
 
 class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
@@ -63,9 +54,8 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
 
   val isExec = state === sExec
 
-  val ImmGen     = Module(new ImmGen(xlen))
-  val Control    = Module(new Control)
-  val EndControl = Module(new EndControl)
+  val ImmGen  = Module(new ImmGen(xlen))
+  val Control = Module(new Control)
 
   val instruction = io.in.bits.instruction
   val rs1         = instruction(19, 15)
@@ -79,11 +69,6 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
   ImmGen.io.immType     := Control.io.immType
 
   Control.io.instruction := instruction
-
-  EndControl.io.clock := clock
-  EndControl.io.reset := reset
-  EndControl.io.isEnd := Control.io.isEnd
-  EndControl.io.code  := io.RegFileReturn.rd1
 
   io.in.ready                 := io.out.ready
   io.out.valid                := io.in.valid
@@ -105,4 +90,6 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
   io.out.bits.control.memRen  := Control.io.memRen
   io.out.bits.control.memWen  := Control.io.memWen
   io.out.bits.control.memOp   := Control.io.memOp
+  io.isEnd                    := Control.io.isEnd
+  io.exitCode                 := io.RegFileReturn.rd1
 }

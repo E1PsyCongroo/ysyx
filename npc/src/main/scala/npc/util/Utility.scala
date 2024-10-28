@@ -2,6 +2,7 @@ package rvcpu.utility
 
 import chisel3._
 import chisel3.util._
+import coursier.core.shaded.geny.Generator.End
 
 class Adder(width: Int) extends Module {
   val io = IO(new Bundle {
@@ -96,4 +97,24 @@ class SramTracer extends BlackBox with HasBlackBoxResource {
     val wen   = Input(Bool())
   })
   addResource("/SramTracer.sv")
+}
+
+class EndControlIO extends Bundle {
+  val clock = Input(Clock())
+  val isEnd = Input(Bool())
+  val code  = Input(UInt(32.W))
+}
+
+class EndControl extends BlackBox with HasBlackBoxResource {
+  val io = IO(new EndControlIO)
+  addResource("/EndControl.sv")
+}
+
+object EndControl {
+  def apply(clock: Clock, isEnd: Bool, exitCode: UInt): Unit = {
+    val module = Module(new EndControl)
+    module.io.clock := clock;
+    module.io.isEnd := isEnd;
+    module.io.code  := exitCode;
+  }
 }

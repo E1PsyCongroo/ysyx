@@ -48,6 +48,7 @@ static long load_img() {
   Log("The image is %s, size = %ld", img_file, size);
 
   fseek(fp, 0, SEEK_SET);
+  uint8_t *dev_flash_to_host(paddr_t addr);
   int ret = fread(dev_flash_to_host(RESET_VECTOR), size, 1, fp);
   assert(ret == 1);
 

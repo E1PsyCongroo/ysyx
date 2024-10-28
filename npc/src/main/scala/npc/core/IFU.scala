@@ -27,7 +27,13 @@ class IFU(xlen: Int = 32, PCReset: BigInt = BigInt("80000000", 16)) extends Modu
   val rfire  = io.master.rvalid && io.master.rready
 
   val sIdle :: sSetAddr :: sFetch :: sExec :: Nil = Enum(4)
-  val state                                       = RegInit(sSetAddr)
+
+  val state     = RegInit(sSetAddr)
+  val isIdle    = state === sIdle
+  val isSetAddr = state === sSetAddr
+  val isFetch   = state === sFetch
+  val isExec    = state === sExec
+
   state := MuxLookup(state, sSetAddr)(
     Seq(
       sIdle -> Mux(io.in.fire, sSetAddr, sIdle),
@@ -36,11 +42,6 @@ class IFU(xlen: Int = 32, PCReset: BigInt = BigInt("80000000", 16)) extends Modu
       sExec -> Mux(io.out.fire, sIdle, sExec)
     )
   )
-
-  val isIdle    = state === sIdle
-  val isSetAddr = state === sSetAddr
-  val isFetch   = state === sFetch
-  val isExec    = state === sExec
 
   val instruction = RegEnable(io.master.rdata, Instruction.nop.bitPat.value.U, rfire)
 
