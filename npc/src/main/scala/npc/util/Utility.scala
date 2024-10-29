@@ -100,6 +100,15 @@ class Tracer extends BlackBox with HasBlackBoxResource {
   addResource("/Tracer.sv")
 }
 
+class TracerDataFetch extends BlackBox with HasBlackBoxResource {
+  val io = IO(new Bundle {
+    val clock = Input(Clock())
+    val start = Input(Bool())
+    val finish = Input(Bool())
+  })
+  addResource("/TracerDataFetch.sv")
+}
+
 class EndControlIO extends Bundle {
   val clock = Input(Clock())
   val isEnd = Input(Bool())

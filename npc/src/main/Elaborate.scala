@@ -14,7 +14,8 @@ object Elaborate extends App {
       awidth     = 32,
       xlen       = 32,
       extentionE = true,
-      PCReset    = BigInt("30000000", 16)
+      PCReset    = BigInt("30000000", 16),
+      sim        = true
     ),
     args,
     firtoolOptions

@@ -63,10 +63,10 @@ void dev_mrom_write(paddr_t addr, int len, word_t data);
 #endif
 
 #ifdef CONFIG_ISA_HAS_VGA
-#define VGA_LEFT  ((paddr_t)CONFIG_GPIO_BASE)
-#define VGA_RIGHT ((paddr_t)CONFIG_GPIO_BASE + CONFIG_GPIO_SIZE - 1)
+#define VGA_LEFT  ((paddr_t)CONFIG_VGA_BASE)
+#define VGA_RIGHT ((paddr_t)CONFIG_VGA_BASE + CONFIG_VGA_SIZE - 1)
 static inline bool in_dev_vga(paddr_t addr) {
-  return addr - CONFIG_VGA_BASE < CONFIG_GPIO_SIZE;
+  return addr - CONFIG_VGA_BASE < CONFIG_VGA_SIZE;
 }
 #endif
 

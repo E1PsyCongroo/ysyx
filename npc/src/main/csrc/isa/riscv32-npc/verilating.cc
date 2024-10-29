@@ -3,19 +3,17 @@
 #include <VysyxSoCFull.h>
 #include <VysyxSoCFull__Dpi.h>
 #include <VysyxSoCFull___024root.h>
+#include <cstdint>
 #include <nvboard.h>
 #include <stdint.h>
 #include <verilated_vcd_c.h>
 
 extern "C" {
-#include "local-include/dev.h"
 #include "local-include/verilating.h"
 #include <common.h>
 #include <cpu/cpu.h>
-#include <cpu/difftest.h>
+#include <cpu/decode.h>
 #include <isa.h>
-#include <memory/paddr.h>
-#include <memory/vaddr.h>
 }
 
 void nvboard_bind_all_pins(VysyxSoCFull *top);
@@ -27,6 +25,14 @@ static VerilatedContext *contextp = nullptr;
 static VerilatedVcdC *tfp = nullptr;
 static uint32_t cur_inst;
 uint64_t g_nr_guest_cycle = 0;
+uint64_t g_nr_fetch_inst = 0;
+InstStatistic g_insts[RISCV_TOTAL_TYPE] = {
+    {"JMP", 0, 0}, {"BRANCH", 0, 0}, {"LOAD", 0, 0}, {"STORE", 0, 0},
+    {"AL", 0, 0},  {"ECALL", 0, 0},  {"CSR", 0, 0},
+};
+uint64_t g_nr_exec_inst = 0;
+uint64_t g_nr_fetch_data_cycle = 0;
+uint64_t g_nr_fetch_data_count = 0;
 
 enum {
   RVCPU_IDLE = 0,
@@ -34,69 +40,6 @@ enum {
   RVCPU_FETCH = 2,
   RVCPU_EXEC = 3,
 };
-
-void npc_difftest_skipi_ref() { difftest_skip_ref(); }
-
-void sim_end(int code) { set_npc_state(NPC_END, cpu.pc, code); }
-
-word_t rvcpu_pmem_ifetch(paddr_t raddr) { return vaddr_ifetch(raddr, 4); }
-
-word_t rvcpu_pmem_read(paddr_t raddr) { return vaddr_read(raddr & ~0x3u, 4); }
-
-void rvcpu_pmem_write(paddr_t waddr, word_t wdata, char wmask) {
-  word_t bit_mask = 0;
-  int len = 0;
-  paddr_t addr = waddr;
-  uint32_t offset = 0;
-  for (uint32_t i = 0; i < sizeof(word_t); i++) {
-    if (wmask & (1 << i)) {
-      bit_mask |= (0xFF << (len * 8));
-      len++;
-      addr = waddr + offset;
-    } else {
-      offset += 1;
-    }
-  }
-  vaddr_write(addr, len, wdata & bit_mask);
-}
-
-void mrom_read(int32_t addr, int32_t *data) {
-  *data = dev_mrom_read(addr & ~0x3u, 4);
-}
-
-void flash_read(int32_t addr, int32_t *data) {
-  *data = dev_flash_read((addr + CONFIG_FLASH_BASE) & ~0x3u, 4);
-}
-
-void psram_read(int32_t addr, int32_t *data) {
-  *data = dev_psram_read((addr + CONFIG_PSRAM_BASE) & ~0x3u, 4);
-}
-
-void psram_write(int32_t waddr, int32_t wdata, int len) {
-  dev_psram_write(waddr + CONFIG_PSRAM_BASE, len, wdata);
-}
-
-void sdram_read(int32_t addr, int16_t *data) {
-  *data = dev_sdram_read(addr + CONFIG_SDRAM_BASE, 2);
-}
-
-void sdram_write(int32_t waddr, int16_t wdata, char dqm) {
-  switch (dqm) {
-  case 0b11:
-    return;
-  case 0b10:
-    dev_sdram_write(waddr + CONFIG_SDRAM_BASE, 1, (uint16_t)wdata & 0xff);
-    break;
-  case 0b01:
-    dev_sdram_write(waddr + CONFIG_SDRAM_BASE + 1, 1, (uint16_t)wdata >> 8);
-    break;
-  case 0b00:
-    dev_sdram_write(waddr + CONFIG_SDRAM_BASE, 2, (uint16_t)wdata);
-    break;
-  default:
-    panic("sdram write: unknown dqm %d", dqm);
-  }
-}
 
 static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
@@ -197,6 +140,18 @@ void rvcpu_exit(void) {
   delete contextp;
   delete tfp;
   nvboard_quit();
+  setlocale(LC_NUMERIC, "");
+#define NUMBERIC_FMT MUXDEF(CONFIG_TARGET_AM, "%", "%'") PRIu64
+  Log("Number of fetch instructions: " NUMBERIC_FMT, g_nr_fetch_inst);
+  Log("Number of fetch data: " NUMBERIC_FMT, g_nr_fetch_data_count);
+  Log("Average cycle of fetch data: %f",
+      (double)g_nr_fetch_data_cycle / g_nr_fetch_data_count);
+  Log("Number of exec instructions: " NUMBERIC_FMT, g_nr_exec_inst);
+  for (int i = 0; i < RISCV_TOTAL_TYPE; i++) {
+    Log("Instruction for %s type (count: " NUMBERIC_FMT ", average cycle: %f)",
+        g_insts[i].inst_type, g_insts[i].total_inst_count,
+        ((double)g_insts[i].total_exec_cycle / g_insts[i].total_inst_count));
+  }
 }
 
 void rvcpu_single_cycle(void) {
@@ -205,33 +160,38 @@ void rvcpu_single_cycle(void) {
   rvcpu->eval();
   contextp->timeInc(1);
   tfp->dump(contextp->time());
-  rvcpu_sync();
 
   /* time up */
   rvcpu->clock = 1;
   rvcpu->eval();
   contextp->timeInc(1);
   tfp->dump(contextp->time());
+
   rvcpu_sync();
   nvboard_update();
   g_nr_guest_cycle++;
 }
 
 void rvcpu_single_exec(void) {
-  /* Exec Instruction */
-  while (
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__state !=
-      RVCPU_IDLE) {
-    rvcpu_single_cycle();
-  }
+  uint64_t cur_cycle = g_nr_guest_cycle;
   /* Fetch Instruction */
   while (
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__state ==
-      RVCPU_IDLE) {
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__state !=
+      RVCPU_EXEC) {
     rvcpu_single_cycle();
   }
+  g_nr_fetch_inst++;
+  /* Exec Instruction */
+  void decode_inst(uint32_t inst, uint64_t exec_cycle);
+  while (
+      rvcpu->rootp
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__state !=
+      RVCPU_SETADDR) {
+    rvcpu_single_cycle();
+  }
+  decode_inst(cur_inst, g_nr_guest_cycle - cur_cycle);
+  g_nr_exec_inst++;
 }
 
 void rvcpu_reset(void) {
@@ -239,7 +199,6 @@ void rvcpu_reset(void) {
   for (int i = 0; i < 10; i++) {
     rvcpu_single_cycle();
   }
-  g_nr_guest_cycle = 0;
   rvcpu->reset = 0;
   while (
       !rvcpu->rootp
@@ -251,6 +210,7 @@ void rvcpu_reset(void) {
           ->ysyxSoCFull__DOT__asic__DOT__cpu_reset_chain__DOT__output_chain__DOT__sync_0) {
     rvcpu_single_cycle();
   }
+  g_nr_guest_cycle = 0;
 }
 
 uint32_t rvcpu_ifetch(vaddr_t *pc, int len) {

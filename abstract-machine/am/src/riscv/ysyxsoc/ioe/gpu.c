@@ -6,10 +6,10 @@
 #define HEIGHT 480
 
 void __am_gpu_init() {
-  int w = WIDTH;
-  int h = HEIGHT;
-  uint32_t *fb = (uint32_t *)VGAFB_ADDR;
-  for (int i = 0; i < w * h; i ++) fb[i] = i;
+  // int w = WIDTH;
+  // int h = HEIGHT;
+  // uint32_t *fb = (uint32_t *)VGAFB_ADDR;
+  // for (int i = 0; i < w * h; i ++) fb[i] = i;
 }
 
 void __am_gpu_config(AM_GPU_CONFIG_T *cfg) {

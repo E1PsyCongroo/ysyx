@@ -100,12 +100,14 @@ void dev_sdram_write(paddr_t addr, int len, word_t data) {
 static void out_of_bound(paddr_t addr) {
 #define ISA_DEV_OUT_OF_BOUND(dev)                                              \
   IFDEF(CONFIG_ISA_HAS_##dev,                                                  \
-        panic("address = " FMT_PADDR " is out of bound of " #dev               \
-              " [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,             \
-              addr, dev##_LEFT, dev##_RIGHT, cpu.pc));
+        printf(ANSI_FMT("address = " FMT_PADDR " is out of bound of " #dev     \
+                        " [" FMT_PADDR ", " FMT_PADDR "] at pc = " FMT_WORD,   \
+                        ANSI_FG_RED) "\n",                                     \
+               addr, dev##_LEFT, dev##_RIGHT, cpu.pc));
 
   ISA_DEVS_MAP(ISA_DEV_OUT_OF_BOUND);
 #undef ISA_DEV_OUT_OF_BOUND
+  panic("out of bound");
 }
 
 void init_isa_dev() {
