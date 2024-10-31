@@ -118,7 +118,5 @@ static inline bool in_dev_chiplink_mem(paddr_t addr) {
 #endif
 
 void init_isa_dev();
-word_t isa_dev_read(paddr_t addr, int len);
-void isa_dev_write(paddr_t addr, int len, word_t data);
 
 #endif

@@ -1,5 +1,5 @@
 #include "local-include/dev.h"
-#include "src/main/csrc/isa/riscv32-npc/local-include/verilating.h"
+#include "local-include/verilating.h"
 #include <common.h>
 #include <cpu/cpu.h>
 #include <cpu/decode.h>

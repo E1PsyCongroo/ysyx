@@ -47,6 +47,9 @@ gdb: run-env
 	$(call git_commit, "gdb NPC")
 	gdb -s $(BINARY) --args $(NPC_EXEC)
 
+perf:
+	@make -C $(NPC_HOME)/../am-kernels/benchmarks/microbench ARCH=riscv32e-ysyxsoc NPCFLAGS="-b" mainargs=train run
+
 sta: $(V_FILE_GEN)
 	@make -C $(YOSYS_DIR) sta
 
@@ -56,4 +59,4 @@ $(clean-tools):
 clean-tools: $(clean-tools)
 clean-all: clean distclean clean-tools
 
-.PHONY: run gdb run-env clean-tools clean-all $(clean-tools) test mill-help reformat checkformat sta
+.PHONY: run gdb run-env clean-tools clean-all $(clean-tools) test mill-help reformat checkformat sta perf

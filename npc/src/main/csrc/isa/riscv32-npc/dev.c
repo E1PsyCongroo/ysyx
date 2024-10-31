@@ -107,7 +107,7 @@ static void out_of_bound(paddr_t addr) {
 
   ISA_DEVS_MAP(ISA_DEV_OUT_OF_BOUND);
 #undef ISA_DEV_OUT_OF_BOUND
-  panic("out of bound");
+  panic("Out Of Bound");
 }
 
 void init_isa_dev() {
@@ -133,56 +133,18 @@ void init_isa_dev() {
 #undef ISA_DEV_INIT_RANGE
 }
 
-word_t isa_dev_read(paddr_t addr, int len) {
-  IFDEF(CONFIG_ISA_HAS_MROM,
-        if (in_dev_mrom(addr)) return dev_mrom_read(addr, len);)
-  IFDEF(CONFIG_ISA_HAS_FLASH,
-        if (in_dev_flash(addr)) return dev_flash_read(addr, len);)
-  IFDEF(CONFIG_ISA_HAS_PSRAM,
-        if (in_dev_psram(addr)) return dev_psram_read(addr, len);)
-  IFDEF(CONFIG_ISA_HAS_SDRAM,
-        if (in_dev_sdram(addr)) return dev_sdram_read(addr, len);)
-  out_of_bound(addr);
-  return 0;
-}
-
-void isa_dev_write(paddr_t addr, int len, word_t data) {
-  IFDEF(
-      CONFIG_ISA_HAS_MROM, if (in_dev_mrom(addr)) {
-        dev_mrom_write(addr, len, data);
-        return;
-      })
-  IFDEF(
-      CONFIG_ISA_HAS_FLASH, if (in_dev_flash(addr)) {
-        dev_flash_write(addr, len, data);
-        return;
-      })
-  IFDEF(
-      CONFIG_ISA_HAS_PSRAM, if (in_dev_psram(addr)) {
-        dev_psram_write(addr, len, data);
-        return;
-      })
-  IFDEF(
-      CONFIG_ISA_HAS_SDRAM, if (in_dev_sdram(addr)) {
-        dev_sdram_write(addr, len, data);
-        return;
-      })
-  out_of_bound(addr);
-}
-
 void isa_trace_read(paddr_t addr, int len, word_t data) {
 #define ISA_DEV_TRACE_READ(DEV)                                                \
-  IFDEF(CONFIG_ISA_HAS_##DEV,                                                  \
-        IFDEF(                                                                 \
-            CONFIG_MTRACE, if (in_dev_##DEV(addr)) {                           \
-              if (MTRACE_COND) {                                               \
-                log_write(ANSI_FMT("%-16.16s: @" FMT_PADDR                     \
-                                   ", len = %2d, data = " FMT_WORD "\n",       \
-                                   ANSI_FG_CYAN),                              \
-                          "read " #DEV, addr, len, data);                      \
-              }                                                                \
-              return;                                                          \
-            }))
+  IFDEF(                                                                       \
+      CONFIG_ISA_HAS_##DEV, if (in_dev_##DEV(addr)) {                          \
+        IFDEF(CONFIG_MTRACE, if (MTRACE_COND) {                                \
+          log_write(ANSI_FMT("%-16.16s: @" FMT_PADDR                           \
+                             ", len = %2d, data = " FMT_WORD "\n",             \
+                             ANSI_FG_CYAN),                                    \
+                    "read " #DEV, addr, len, data);                            \
+      })                                                                       \
+  return;                                                                      \
+  })
 
   ISA_DEVS_MAP(ISA_DEV_TRACE_READ)
 #undef ISA_DEV_TRACE_READ
@@ -191,17 +153,16 @@ void isa_trace_read(paddr_t addr, int len, word_t data) {
 
 void isa_trace_write(paddr_t addr, int len, word_t data) {
 #define ISA_DEV_TRACE_WRITE(DEV)                                               \
-  IFDEF(CONFIG_ISA_HAS_##DEV,                                                  \
-        IFDEF(                                                                 \
-            CONFIG_MTRACE, if (in_dev_##DEV(addr)) {                           \
-              if (MTRACE_COND) {                                               \
-                log_write(ANSI_FMT("%-16.16s: @" FMT_PADDR                     \
-                                   ", len = %2d, data = " FMT_WORD "\n",       \
-                                   ANSI_FG_CYAN),                              \
-                          "write " #DEV, addr, len, data);                     \
-              }                                                                \
-              return;                                                          \
-            }))
+  IFDEF(                                                                       \
+      CONFIG_ISA_HAS_##DEV, if (in_dev_##DEV(addr)) {                          \
+        IFDEF(CONFIG_MTRACE, if (MTRACE_COND) {                                \
+          log_write(ANSI_FMT("%-16.16s: @" FMT_PADDR                           \
+                             ", len = %2d, data = " FMT_WORD "\n",             \
+                             ANSI_FG_CYAN),                                    \
+                    "write " #DEV, addr, len, data);                           \
+      })                                                                       \
+  return;                                                                      \
+  })
 
   ISA_DEVS_MAP(ISA_DEV_TRACE_WRITE)
 #undef ISA_DEV_TRACE_WRITE
