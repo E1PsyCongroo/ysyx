@@ -14,6 +14,7 @@ BUILD_DIR           := $(WORK_DIR)/build
 OBJ_DIR             := $(BUILD_DIR)/obj-$(NAME)$(SO)
 VERILATOR_DIR       := $(OBJ_DIR)/verilator
 VSRC_DIR            := $(OBJ_DIR)/verilog
+YOSYS_DIR           := $(WORK_DIR)/yosys
 SRC_DIR             := $(WORK_DIR)/src/main
 CSRC_DIR            := $(SRC_DIR)/csrc
 RESOURCES_DIR       := $(SRC_DIR)/resources
@@ -33,6 +34,7 @@ VSRCS               += $(shell find $(YSYXSOC_HOME)/perip -type f -name "*.v" -o
 VSRCS               += $(YSYXSOC_HOME)/build/ysyxSoCFull.v
 CHISELSRCS          ?= $(shell find $(CHISEL_SRC_DIR) -type f -name "*.scala" -or -name "*.sc")
 CHISELSRCS          += $(SRC_DIR)/Elaborate.scala
+V_FILE_GEN          := $(YOSYS_DIR)/RVCPU.sv
 
 # Rules for NVBoard
 include $(NVBOARD_HOME)/scripts/nvboard.mk
@@ -56,7 +58,13 @@ VERILATOR_CFLAGS    := --MMD --build --cc -O3 --trace --x-assign fast --x-initia
                        --autoflush --noassert --timescale "1ns/1ns" --no-timing --threads 2 -j 0 \
 											 $(VERILATOR_INCLUDES)
 
-# Verilating
+# Generating Verilog
+$(V_FILE_GEN): $(CHISELSRCS) $(RESOURCES)
+	@echo + VERILOG $^
+	@mill -i $(PRJ).runMain Yosys --target-dir $(YOSYS_DIR)
+	@sed -i -e 's/_\(aw\|ar\|w\|r\|b\)_\(\|bits_\)/_\1/g' $@
+	@sed -i '/firrtl_black_box_resource_files.f/, $$d' $@
+
 .stamp.verilog: $(CHISELSRCS) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	@echo + VERILOG $^
@@ -64,6 +72,7 @@ VERILATOR_CFLAGS    := --MMD --build --cc -O3 --trace --x-assign fast --x-initia
 	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR) --split-verilog
 	@touch $@
 
+# Verilating
 $(VERILATOR_DIR)/lib$(PRJ).%: .stamp.verilog $(VSRCS)
 	@echo + VERILATOR $(VSRCS)
 	@mkdir -p $(VERILATOR_DIR)

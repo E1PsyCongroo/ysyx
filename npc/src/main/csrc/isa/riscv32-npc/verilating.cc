@@ -148,7 +148,7 @@ void rvcpu_exit(void) {
       (double)g_nr_fetch_data_cycle / g_nr_fetch_data_count);
   Log("Number of exec instructions: " NUMBERIC_FMT, g_nr_exec_inst);
   for (int i = 0; i < RISCV_TOTAL_TYPE; i++) {
-    Log("Instruction for %s type (count: " NUMBERIC_FMT ", average cycle: %f)",
+    Log("Instruction for %s type (count: " NUMBERIC_FMT ", average exec cycle: %f)",
         g_insts[i].inst_type, g_insts[i].total_inst_count,
         ((double)g_insts[i].total_exec_cycle / g_insts[i].total_inst_count));
   }
@@ -173,7 +173,6 @@ void rvcpu_single_cycle(void) {
 }
 
 void rvcpu_single_exec(void) {
-  uint64_t cur_cycle = g_nr_guest_cycle;
   /* Fetch Instruction */
   while (
       rvcpu->rootp
@@ -183,6 +182,7 @@ void rvcpu_single_exec(void) {
   }
   g_nr_fetch_inst++;
   /* Exec Instruction */
+  uint64_t cur_cycle = g_nr_guest_cycle;
   void decode_inst(uint32_t inst, uint64_t exec_cycle);
   while (
       rvcpu->rootp

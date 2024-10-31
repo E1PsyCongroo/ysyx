@@ -103,6 +103,7 @@ class Tracer extends BlackBox with HasBlackBoxResource {
 class TracerDataFetch extends BlackBox with HasBlackBoxResource {
   val io = IO(new Bundle {
     val clock = Input(Clock())
+    val reset = Input(Bool())
     val start = Input(Bool())
     val finish = Input(Bool())
   })

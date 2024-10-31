@@ -103,7 +103,8 @@ class RVCPU(
 
     val TracerDataFetch = Module(new TracerDataFetch)
     TracerDataFetch.io.clock  := clock
-    TracerDataFetch.io.start  := LSU.io.in.fire
+    TracerDataFetch.io.reset  := reset
+    TracerDataFetch.io.start  := LSU.io.in.fire && LSU.io.in.bits.ren
     TracerDataFetch.io.finish := LSU.io.out.fire
   }
 }
