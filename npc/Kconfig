@@ -13,11 +13,26 @@ config ISA_loongarch32r
   bool "loongarch32r"
 endchoice
 
+if ISA_riscv
+choice
+  prompt "riscv isa"
+  default ISA_riscv_nemu
+config ISA_riscv_nemu
+  bool "nemu"
+config ISA_riscv_npc
+  bool "npc"
+config ISA_riscv_ysyxsoc
+  bool "ysyxsoc"
+endchoice
+endif
+
 config ISA
   string
   default "x86" if ISA_x86
   default "mips32" if ISA_mips32
-  default "riscv32" if ISA_riscv && !RV64
+  default "riscv32" if ISA_riscv && !RV64 && ISA_riscv_nemu
+  default "riscv32_npc" if ISA_riscv && !RV64 && ISA_riscv_npc
+  default "riscv32_ysyxsoc" if ISA_riscv && !RV64 && ISA_riscv_ysyxsoc
   default "riscv64" if ISA_riscv &&  RV64
   default "loongarch32r" if ISA_loongarch32r
   default "none"
@@ -28,8 +43,14 @@ config ISA64
   default y
 
 
-if ISA_riscv
-source "src/main/csrc/isa/riscv32-npc/Kconfig"
+if ISA_riscv_nemu
+source "src/main/csrc/isa/riscv32/Kconfig"
+endif
+if ISA_riscv_npc
+source "src/main/csrc/isa/riscv32_npc/Kconfig"
+endif
+if ISA_riscv_ysyxsoc
+source "src/main/csrc/isa/riscv32_ysyxsoc/Kconfig"
 endif
 
 choice

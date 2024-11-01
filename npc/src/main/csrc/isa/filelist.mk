@@ -13,5 +13,5 @@
 # See the Mulan PSL v2 for more details.
 #**************************************************************************************/
 
-INC_PATH += $(NPC_HOME)/src/main/csrc/isa/$(GUEST_ISA)-npc/include
-DIRS-y += src/main/csrc/isa/$(GUEST_ISA)-npc
+INC_PATH += $(NPC_HOME)/src/main/csrc/isa/$(GUEST_ISA)/include
+DIRS-y += src/main/csrc/isa/$(GUEST_ISA)

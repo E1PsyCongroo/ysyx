@@ -9,6 +9,7 @@
 !*.cpp
 !*.cc
 !*.nxdc
+!*.xlsx
 !.gitignore
 !.scalafmt.conf
 !build.sc
@@ -16,10 +17,9 @@
 !Kconfig
 !*.sv
 !wave/*
-src/main/vsrc
 include/config
 include/generated
-build
+build/
 
 # mill
 out/
