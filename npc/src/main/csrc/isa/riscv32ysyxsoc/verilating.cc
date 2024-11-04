@@ -145,7 +145,7 @@ void rvcpu_exit(void) {
   Log("Number of fetch instructions: " NUMBERIC_FMT, g_nr_fetch_inst);
   Log("Number of fetch data: " NUMBERIC_FMT, g_nr_fetch_data_count);
   Log("Average cycle of fetch data: %f",
-      (double)g_nr_fetch_data_cycle / g_nr_fetch_data_count);
+      (double)g_nr_fetch_data_count/ g_nr_fetch_data_cycle);
   Log("Number of exec instructions: " NUMBERIC_FMT, g_nr_exec_inst);
   for (int i = 0; i < RISCV_TOTAL_TYPE; i++) {
     Log("Instruction for %s type (count: " NUMBERIC_FMT ", average exec cycle: %f)",
@@ -183,13 +183,13 @@ void rvcpu_single_exec(void) {
   g_nr_fetch_inst++;
   /* Exec Instruction */
   uint64_t cur_cycle = g_nr_guest_cycle;
-  void decode_inst(uint32_t inst, uint64_t exec_cycle);
   while (
       rvcpu->rootp
           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__state !=
       RVCPU_SETADDR) {
     rvcpu_single_cycle();
   }
+  void decode_inst(uint32_t inst, uint64_t exec_cycle);
   decode_inst(cur_inst, g_nr_guest_cycle - cur_cycle);
   g_nr_exec_inst++;
 }

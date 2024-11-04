@@ -27,14 +27,14 @@ typedef struct {
     UMODE = 0b00, SMODE = 0b01,
     MMODE = 0b11,
   } priv;
-} MUXDEF(CONFIG_RV64, riscv64_npc_CPU_state, riscv32_npc_CPU_state);
+} MUXDEF(CONFIG_RV64, riscv64_CPU_state, riscv32_CPU_state);
 
 // decode
 typedef struct {
   union {
     uint32_t val;
   } inst;
-} MUXDEF(CONFIG_RV64, riscv64_npc_ISADecodeInfo, riscv32_npc_ISADecodeInfo);
+} MUXDEF(CONFIG_RV64, riscv64_ISADecodeInfo, riscv32_ISADecodeInfo);
 
 #define isa_mmu_check(vaddr, len, type) (MMU_DIRECT)
 

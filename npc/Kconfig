@@ -26,13 +26,17 @@ config ISA_riscv_ysyxsoc
 endchoice
 endif
 
+config PLATFORM
+  string
+  default "npc" if ISA_riscv_npc
+  default "ysyxsoc" if ISA_riscv_ysyxsoc
+  default ""
+
 config ISA
   string
   default "x86" if ISA_x86
   default "mips32" if ISA_mips32
-  default "riscv32" if ISA_riscv && !RV64 && ISA_riscv_nemu
-  default "riscv32_npc" if ISA_riscv && !RV64 && ISA_riscv_npc
-  default "riscv32_ysyxsoc" if ISA_riscv && !RV64 && ISA_riscv_ysyxsoc
+  default "riscv32" if ISA_riscv && !RV64
   default "riscv64" if ISA_riscv &&  RV64
   default "loongarch32r" if ISA_loongarch32r
   default "none"
@@ -42,15 +46,14 @@ config ISA64
   bool
   default y
 
-
 if ISA_riscv_nemu
 source "src/main/csrc/isa/riscv32/Kconfig"
 endif
 if ISA_riscv_npc
-source "src/main/csrc/isa/riscv32_npc/Kconfig"
+source "src/main/csrc/isa/riscv32npc/Kconfig"
 endif
 if ISA_riscv_ysyxsoc
-source "src/main/csrc/isa/riscv32_ysyxsoc/Kconfig"
+source "src/main/csrc/isa/riscv32ysyxsoc/Kconfig"
 endif
 
 choice

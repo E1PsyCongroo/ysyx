@@ -11,7 +11,7 @@ class Uart(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module {
   require(log2Ceil(size) < awidth)
   require(log2Ceil(size) < dwidth)
 
-  val io = IO(new AXI4SlaveIO)
+  val io = IO(Flipped(new AXI4MasterIO))
 
   val awfire = io.awvalid && io.awready
   val wfire  = io.wvalid && io.wready
@@ -21,7 +21,14 @@ class Uart(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module {
   assert(!(arfire && (awfire || wfire)))
 
   val sIdle :: sWaitWaddr :: sWaitWdata :: sWrite :: sRead :: Nil = Enum(5)
-  val state                                                       = RegInit(sIdle)
+
+  val state       = RegInit(sIdle)
+  val isIdle      = state === sIdle
+  val isWaitWaddr = state === sWaitWaddr
+  val isWaitWdata = state === sWaitWdata
+  val isWrite     = state === sWrite
+  val isRead      = state === sRead
+
   state := MuxLookup(state, sIdle)(
     Seq(
       sIdle -> MuxCase(
@@ -40,32 +47,20 @@ class Uart(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module {
     )
   )
 
-  val isIdle      = state === sIdle
-  val isWaitWaddr = state === sWaitWaddr
-  val isWaitWdata = state === sWaitWdata
-  val isWrite     = state === sWrite
-  val isRead      = state === sRead
-
   /* Write address channel */
-  val awready = WireDefault(true.B)
-  awready := isIdle || isWaitWaddr
-
+  val awready          = WireDefault(isIdle || isWaitWaddr)
   val writeAddr        = RegEnable(io.awaddr, awfire)
   val alignedWriteAddr = writeAddr(awidth - 1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
   val writeAddrAligned = writeAddr === alignedWriteAddr
   assert(writeAddrAligned)
 
   /* Write data channel */
-  val wready = WireDefault(true.B)
-  wready := isIdle || isWaitWdata
-
+  val wready    = WireDefault(isIdle || isWaitWdata)
   val writeData = RegEnable(io.wdata, wfire)
   val writeMask = RegEnable(io.wstrb, wfire)
 
   /* Write response channel */
-  val bvalid = WireDefault(false.B)
-  bvalid := Mux(isWrite, true.B, false.B)
-
+  val bvalid     = WireDefault(isWrite)
   val writeValid = (writeMask === 1.U) && uartAddr.in(writeAddr)
   val bresp      = WireDefault(TransactionResponse.okey.asUInt)
   bresp := MuxCase(
@@ -81,20 +76,16 @@ class Uart(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module {
   }
 
   /* Read address channel */
-  val arready = WireDefault(true.B)
-  arready := isIdle
-
+  val arready         = WireDefault(isIdle)
   val readAddr        = RegEnable(io.araddr, arfire)
   val alignedReadAddr = readAddr(awidth - 1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
   val readAddrAligned = readAddr === alignedReadAddr
   assert(readAddrAligned)
 
   /* Read data channel */
-  val rvalid = WireDefault(false.B)
-  rvalid := Mux(isRead, true.B, false.B)
-
-  val rdata = WireDefault(0.U(dwidth.W))
-  val rresp = WireDefault(TransactionResponse.okey.asUInt)
+  val rvalid = WireDefault(isRead)
+  val rdata  = WireDefault(0.U(dwidth.W))
+  val rresp  = WireDefault(TransactionResponse.okey.asUInt)
 
   rresp := TransactionResponse.slverr.asUInt
 

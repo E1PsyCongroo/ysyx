@@ -33,56 +33,6 @@ class AXI4MasterIO extends AXI4LiteMasterIO {
   /* Read data channel */
   val rlast = Input(Bool())
   val rid   = Input(UInt(4.W))
-
-  def AXI4ConnectSlave(slave: AXI4SlaveIO) = {
-    AXI4LiteConnectSlave(slave)
-    slave.awid    := this.awid
-    slave.awlen   := this.awlen
-    slave.awsize  := this.awsize
-    slave.awburst := this.awburst
-
-    slave.wlast := this.wlast
-
-    this.bid := slave.bid
-
-    slave.arid    := this.arid
-    slave.arlen   := this.arlen
-    slave.arsize  := this.arsize
-    slave.arburst := this.arburst
-
-    this.rlast := slave.rlast
-    this.rid   := slave.rid
-  }
-}
-
-object AXI4Master {
-  def nonTrans: AXI4MasterIO = {
-    val nonTrans = Wire(new AXI4MasterIO)
-    /* Write address channel */
-    nonTrans.awvalid := false.B
-    nonTrans.awaddr  := DontCare
-    nonTrans.awid    := DontCare
-    nonTrans.awlen   := DontCare
-    nonTrans.awsize  := DontCare
-    nonTrans.awburst := DontCare
-    /* Write data channel */
-    nonTrans.wvalid := false.B
-    nonTrans.wdata  := DontCare
-    nonTrans.wstrb  := DontCare
-    nonTrans.wlast  := DontCare
-    /* Write response channel */
-    nonTrans.bready := true.B
-    /* Read address channel */
-    nonTrans.arvalid := false.B
-    nonTrans.araddr  := DontCare
-    nonTrans.arid    := DontCare
-    nonTrans.arlen   := DontCare
-    nonTrans.arsize  := DontCare
-    nonTrans.arburst := DontCare
-    /* Read data channel */
-    nonTrans.rready := true.B
-    nonTrans
-  }
 }
 
 class AXI4SlaveIO extends AXI4LiteSlaveIO {
@@ -107,48 +57,64 @@ class AXI4SlaveIO extends AXI4LiteSlaveIO {
   /* Read data channel */
   val rlast = Output(Bool())
   val rid   = Output(UInt(4.W))
-  def AXI4ConnectMaster(master: AXI4MasterIO) = {
-    master.AXI4ConnectSlave(this)
-  }
 }
 
-object AXI4Slave {
-  def nonResp: AXI4SlaveIO = {
-    val nonResp = Wire(new AXI4SlaveIO)
+object AXI4 {
+  def none: AXI4MasterIO = {
+    val none = Wire(new AXI4MasterIO)
     /* Write address channel */
-    nonResp.awready := false.B
+    none.awready := false.B
+    none.awvalid := false.B
+    none.awaddr  := DontCare
+    none.awid    := DontCare
+    none.awlen   := DontCare
+    none.awsize  := DontCare
+    none.awburst := DontCare
     /* Write data channel */
-    nonResp.wready := false.B
+    none.wready := false.B
+    none.wvalid := false.B
+    none.wdata  := DontCare
+    none.wstrb  := DontCare
+    none.wlast  := DontCare
     /* Write response channel */
-    nonResp.bvalid := false.B
-    nonResp.bresp  := DontCare
-    nonResp.bid    := DontCare
+    none.bready := false.B
+    none.bvalid := false.B
+    none.bresp  := DontCare
+    none.bid    := DontCare
     /* Read address channel */
-    nonResp.arready := false.B
+    none.arready := false.B
+    none.arvalid := false.B
+    none.araddr  := DontCare
+    none.arid    := DontCare
+    none.arlen   := DontCare
+    none.arsize  := DontCare
+    none.arburst := DontCare
     /* Read data channel */
-    nonResp.rvalid := false.B
-    nonResp.rresp  := DontCare
-    nonResp.rdata  := DontCare
-    nonResp.rlast  := DontCare
-    nonResp.rid    := DontCare
-    nonResp
+    none.rready := false.B
+    none.rvalid := false.B
+    none.rresp  := DontCare
+    none.rdata  := DontCare
+    none.rlast  := DontCare
+    none.rid    := DontCare
+    none
   }
 }
 
 class AXI4Arbiter(masterNum: Int) extends Module {
   val io = IO(new Bundle {
-    val masters = Vec(masterNum, new AXI4SlaveIO)
+    val masters = Vec(masterNum, Flipped(new AXI4MasterIO))
     val slave   = new AXI4MasterIO
   })
 
   val sIdle :: sWaitWrite :: sWaitRead :: sReset :: Nil = Enum(4)
-  val state                                             = RegInit(sReset)
 
   val isIdle      = state === sIdle
   val isWaitWrite = state === sWaitWrite
   val isWaitRead  = state === sWaitRead
   val isReset     = state === sReset
   val isWait      = isWaitWrite || isWaitRead
+
+  val state = RegInit(sReset)
 
   val writeRequests      = VecInit(io.masters.map(master => (master.awvalid || master.wvalid))).asUInt
   val readRequests       = VecInit(io.masters.map(master => master.arvalid)).asUInt
@@ -186,12 +152,9 @@ class AXI4Arbiter(masterNum: Int) extends Module {
     )
   )
 
-  val nonResp  = AXI4Slave.nonResp
-  val nonTrans = AXI4Master.nonTrans
-
-  nonTrans <> io.slave
+  AXI4.none <> io.slave
   for (i <- 0 until masterNum) {
-    io.masters(i) <> nonResp
+    io.masters(i) <> AXI4.none
     when(isWait && i.U === selectedReg) {
       io.masters(i) <> io.slave
     }
@@ -211,17 +174,18 @@ object AXI4Arbiter {
 class AXI4Xbar(slaves: Seq[Area]) extends Module {
   val length = slaves.length
   val io = IO(new Bundle {
-    val master = new AXI4SlaveIO
+    val master = Flipped(new AXI4MasterIO)
     val slaves = Vec(length, new AXI4MasterIO)
   })
 
   val sIdle :: sWaitWaddr :: sWaitBresp :: sWaitRresp :: Nil = Enum(4)
-  val state                                                  = RegInit(sIdle)
 
   val isIdle      = state === sIdle
   val isWaitWaddr = state === sWaitWaddr
   val isWaitBresp = state === sWaitBresp
   val isWaitRresp = state === sWaitRresp
+
+  val state = RegInit(sIdle)
 
   val isWaddrTransaction = io.master.awvalid
   val isWdataTransaction = io.master.wvalid
@@ -264,12 +228,9 @@ class AXI4Xbar(slaves: Seq[Area]) extends Module {
   val haveSlave   = validSlaves.orR && (isWaitBresp || isWaitRresp)
   val slaveSelect = WireDefault(Mux(haveSlave, PriorityEncoder(validSlaves), 0.U))
 
-  val nonTrans = AXI4Master.nonTrans
-  val nonResp  = AXI4Slave.nonResp
-
-  io.master <> nonResp
+  io.master <> AXI4.none
   for (i <- 0 until slaves.length) {
-    nonTrans <> io.slaves(i)
+    AXI4.none <> io.slaves(i)
   }
 
   when(haveSlave) {
@@ -292,7 +253,7 @@ object AXI4Xbar {
 
 class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Module {
   val io = IO(new Bundle {
-    val fanIn  = Vec(fanInNum, new AXI4SlaveIO)
+    val fanIn  = Vec(fanInNum, Flipped(new AXI4MasterIO))
     val fanOut = Vec(fanOutSeq.size, new AXI4MasterIO)
   })
 
@@ -351,14 +312,11 @@ class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Modu
   val fanOutValid = isWaitWdata || isWaitBresp || isWaitRresp
   val outSelect   = RegEnable(PriorityEncoder(matches), 0.U, isIdle)
 
-  val nonTrans = AXI4Master.nonTrans
-  val nonResp  = AXI4Slave.nonResp
-
   for (i <- 0 until fanInNum) {
-    io.fanIn(i) <> nonResp
+    io.fanIn(i) <> AXI4.none
   }
   for (i <- 0 until fanOutSeq.size) {
-    nonTrans <> io.fanOut(i)
+    AXI4.none <> io.fanOut(i)
   }
 
   when(fanOutValid) {

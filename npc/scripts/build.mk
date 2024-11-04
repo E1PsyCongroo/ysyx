@@ -8,7 +8,11 @@ LDFLAGS             += -shared -fPIC
 endif
 
 PRJ                 := NPC
+ifdef CONFIG_ISA_riscv_ysyxsoc
 TOP_MODULE          := ysyxSoCFull
+else ifdef CONFIG_ISA_riscv_npc
+TOP_MODULE          := NPC
+endif
 WORK_DIR            := $(shell pwd)
 BUILD_DIR           := $(WORK_DIR)/build
 OBJ_DIR             := $(BUILD_DIR)/obj-$(NAME)$(SO)
@@ -30,8 +34,10 @@ BINARY              := $(BUILD_DIR)/$(NAME)$(SO)
 # Project sources
 RESOURCES           ?= $(shell find $(RESOURCES_DIR) -type f -name "*.v" -or -name "*.sv")
 VSRCS               ?= $(shell find $(VSRC_DIR) -type f -name "*.v" -or -name "*.sv")
+ifdef CONFIG_ISA_riscv_ysyxsoc
 VSRCS               += $(shell find $(YSYXSOC_HOME)/perip -type f -name "*.v" -or -name "*.sv")
 VSRCS               += $(YSYXSOC_HOME)/build/ysyxSoCFull.v
+endif
 CHISELSRCS          ?= $(shell find $(CHISEL_SRC_DIR) -type f -name "*.scala" -or -name "*.sc")
 CHISELSRCS          += $(SRC_DIR)/Elaborate.scala
 V_FILE_GEN          := $(YOSYS_DIR)/RVCPU.sv
@@ -65,15 +71,15 @@ $(V_FILE_GEN): $(CHISELSRCS) $(RESOURCES)
 	@sed -i -e 's/_\(aw\|ar\|w\|r\|b\)_\(\|bits_\)/_\1/g' $@
 	@sed -i '/firrtl_black_box_resource_files.f/, $$d' $@
 
-.stamp.verilog: $(CHISELSRCS) $(RESOURCES)
+$(BUILD_DIR)/.stamp.verilog$(PLATFORM): $(CHISELSRCS) $(RESOURCES)
 	$(call git_commit, "generate verilog")
 	@echo + VERILOG $^
 	@mkdir -p $(VSRC_DIR)
-	@mill -i $(PRJ).runMain Elaborate --target-dir $(VSRC_DIR) --split-verilog
+	@mill -i $(PRJ).runMain $(PLATFORM) --target-dir $(VSRC_DIR) --split-verilog
 	@touch $@
 
 # Verilating
-$(VERILATOR_DIR)/lib$(PRJ).%: .stamp.verilog $(VSRCS)
+$(VERILATOR_DIR)/lib$(PRJ).%: $(BUILD_DIR)/.stamp.verilog$(PLATFORM) $(VSRCS)
 	@echo + VERILATOR $(VSRCS)
 	@mkdir -p $(VERILATOR_DIR)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
@@ -86,7 +92,9 @@ $(OBJ_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
 	@mkdir -p $(dir $@)
 	@python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
+ifdef CONFIG_ISA_riscv_ysyxsoc
 CXXSRC             += $(OBJ_DIR)/$(PRJ)_auto_bind.cc
+endif
 ARCHIVES           += $(VERILATOR_DIR)/lib$(PRJ).a $(NVBOARD_ARCHIVE)
 OBJS                = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
 
@@ -117,9 +125,9 @@ $(BINARY):: $(ARCHIVES) $(OBJS)
 	@echo + LD $@
 	@$(LD) -o $@ $(OBJS) $(LDFLAGS) $(ARCHIVES) $(LIBS)
 
-verilog: .stamp.verilog
+verilog: $(BUILD_DIR)/.stamp.verilog$(PLATFORM)
 
 verilator: $(VERILATOR_DIR)/lib$(PRJ).a
 
 clean:
-	-rm -rf $(BUILD_DIR) .stamp.verilog
+	-rm -rf $(BUILD_DIR)

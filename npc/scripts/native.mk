@@ -23,7 +23,7 @@ test:
 	mill -i $(PRJ).test
 
 mill-help:
-	mill -i $(PRJ).runMain Elaborate --help
+	mill -i $(PRJ).runMain $(PLANTFORM) --help
 
 reformat:
 	mill -i __.reformat

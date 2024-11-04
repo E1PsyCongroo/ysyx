@@ -13,25 +13,22 @@ void npc_difftest_skipi_ref() { difftest_skip_ref(); }
 
 void sim_end(int code) { set_npc_state(NPC_END, cpu.pc, code); }
 
-word_t rvcpu_pmem_ifetch(paddr_t raddr) { return vaddr_ifetch(raddr, 4); }
+word_t rvcpu_pmem_read(paddr_t raddr) { return vaddr_read(raddr & ~0x3, 4); }
 
-word_t rvcpu_pmem_read(paddr_t raddr) { return vaddr_read(raddr & ~0x3u, 4); }
-
-void rvcpu_pmem_write(paddr_t waddr, word_t wdata, char wmask) {
-  word_t bit_mask = 0;
+void rvcpu_pmem_write(paddr_t waddr, word_t wdata, uint8_t wmask) {
+  paddr_t aligned_addr = waddr & ~0x3;
   int len = 0;
-  paddr_t addr = waddr;
   uint32_t offset = 0;
-  for (uint32_t i = 0; i < sizeof(word_t); i++) {
-    if (wmask & (1 << i)) {
-      bit_mask |= (0xFF << (len * 8));
-      len++;
-      addr = waddr + offset;
-    } else {
-      offset += 1;
-    }
+  while ((wmask & 1) == 0) {
+    wmask >>= 1;
+    wdata >>= 8;
+    offset++;
   }
-  vaddr_write(addr, len, wdata & bit_mask);
+  while ((wmask & 1) == 1) {
+    wmask >>= 1;
+    len++;
+  }
+  vaddr_write(aligned_addr + offset, len, wdata);
 }
 
 void mrom_read(int32_t addr, int32_t *data) {

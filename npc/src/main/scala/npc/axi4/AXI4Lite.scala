@@ -31,30 +31,6 @@ class AXI4LiteMasterIO extends Bundle {
   val rvalid = Input(Bool())
   val rresp  = Input(UInt(2.W))
   val rdata  = Input(UInt(32.W))
-
-  def AXI4LiteConnectSlave(slave: AXI4LiteSlaveIO) = {
-    this.awready  := slave.awready
-    slave.awvalid := this.awvalid
-    slave.awaddr  := this.awaddr
-
-    this.wready  := slave.wready
-    slave.wvalid := this.wvalid
-    slave.wdata  := this.wdata
-    slave.wstrb  := this.wstrb
-
-    slave.bready := this.bready
-    this.bvalid  := slave.bvalid
-    this.bresp   := slave.bresp
-
-    this.arready  := slave.arready
-    slave.arvalid := this.arvalid
-    slave.araddr  := this.araddr
-
-    slave.rready := this.rready
-    this.rvalid  := slave.rvalid
-    this.rresp   := slave.rresp
-    this.rdata   := slave.rdata
-  }
 }
 
 class AXI4LiteSlaveIO extends Bundle {
@@ -84,10 +60,6 @@ class AXI4LiteSlaveIO extends Bundle {
   val rvalid = Output(Bool())
   val rresp  = Output(UInt(2.W))
   val rdata  = Output(UInt(32.W))
-
-  def AXI4LiteConnectMaster(master: AXI4LiteMasterIO) = {
-    master.AXI4LiteConnectSlave(this)
-  }
 }
 
 class AXI4LiteArbiter(masterNum: Int) extends Module {

@@ -1,4 +1,4 @@
-object Elaborate extends App {
+object ysyxsoc extends App {
   val firtoolOptions = Array(
     "--lowering-options=" + List(
       // make yosys happy
@@ -22,11 +22,31 @@ object Elaborate extends App {
   )
 }
 
+object npc extends App {
+  val firtoolOptions = Array(
+    "--lowering-options=" + List(
+      "disallowLocalVariables",
+      "disallowPackedArrays",
+      "locationInfoStyle=wrapInAtSquareBracket"
+    ).mkString(",")
+  )
+
+  circt.stage.ChiselStage.emitSystemVerilogFile(
+    new rvcpu.NPC(
+      awidth     = 32,
+      xlen       = 32,
+      extentionE = true,
+      PCReset    = BigInt("80000000", 16),
+      sim        = true
+    ),
+    args,
+    firtoolOptions
+  )
+}
+
 object Yosys extends App {
   val firtoolOptions = Array(
     "--lowering-options=" + List(
-      // make yosys happy
-      // see https://github.com/llvm/circt/blob/main/docs/VerilogGeneration.md
       "disallowLocalVariables",
       "disallowPackedArrays",
       "locationInfoStyle=wrapInAtSquareBracket"

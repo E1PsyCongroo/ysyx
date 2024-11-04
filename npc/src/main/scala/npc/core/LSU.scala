@@ -54,8 +54,7 @@ class LSUIO(xlen: Int = 32) extends Bundle {
 class LSU(xlen: Int = 32) extends Module {
   val io = IO(new LSUIO(xlen))
 
-  val in    = RegEnable(io.in.bits, io.in.fire)
-  val wmask = WireDefault(0.U(4.W))
+  val in = RegEnable(io.in.bits, io.in.fire)
 
   val possiblePatterns = Seq(
     MemControlPattern(memW),
@@ -66,8 +65,8 @@ class LSU(xlen: Int = 32) extends Module {
   )
   val decodeTable = new DecodeTable(possiblePatterns, Seq(WmaskFeild, SizeFeild))
   val mask        = decodeTable.decode(in.memOp)(WmaskFeild)
-  wmask := mask << in.waddr(1, 0)
-  val size = decodeTable.decode(in.memOp)(SizeFeild)
+  val wmask       = mask << in.waddr(1, 0)
+  val size        = decodeTable.decode(in.memOp)(SizeFeild)
 
   val raddr   = in.raddr
   val loffset = WireDefault(raddr(1, 0) << 3.U)

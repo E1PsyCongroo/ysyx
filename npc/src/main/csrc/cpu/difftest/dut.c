@@ -1,12 +1,13 @@
 #include <dlfcn.h>
 
-#include <isa.h>
 #include <cpu/cpu.h>
+#include <difftest-def.h>
+#include <isa.h>
 #include <memory/paddr.h>
 #include <utils.h>
-#include <difftest-def.h>
 
-void (*ref_difftest_memcpy)(paddr_t addr, void *buf, size_t n, bool direction) = NULL;
+void (*ref_difftest_memcpy)(paddr_t addr, void *buf, size_t n,
+                            bool direction) = NULL;
 void (*ref_difftest_regcpy)(void *dut, bool direction) = NULL;
 void (*ref_difftest_exec)(uint64_t n) = NULL;
 void (*ref_difftest_raise_intr)(uint64_t NO) = NULL;
@@ -39,7 +40,7 @@ void difftest_skip_ref() {
 void difftest_skip_dut(int nr_ref, int nr_dut) {
   skip_dut_nr_inst += nr_dut;
 
-  while (nr_ref -- > 0) {
+  while (nr_ref-- > 0) {
     ref_difftest_exec(1);
   }
 }
@@ -68,12 +69,19 @@ void init_difftest(char *ref_so_file, long img_size, int port) {
 
   Log("Differential testing: %s", ANSI_FMT("ON", ANSI_FG_GREEN));
   Log("The result of every instruction will be compared with %s. "
-      "This will help you a lot for debugging, but also significantly reduce the performance. "
-      "If it is not necessary, you can turn it off in menuconfig.", ref_so_file);
+      "This will help you a lot for debugging, but also significantly reduce "
+      "the performance. "
+      "If it is not necessary, you can turn it off in menuconfig.",
+      ref_so_file);
 
   ref_difftest_init(port);
-  uint8_t *dev_flash_to_host(paddr_t addr);
-  ref_difftest_memcpy(RESET_VECTOR, dev_flash_to_host(CONFIG_PC_RESET_OFFSET), img_size, DIFFTEST_TO_REF);
+  IFDEF(CONFIG_ISA_riscv_ysyxsoc, uint8_t * dev_flash_to_host(paddr_t addr));
+  MUXDEF(CONFIG_ISA_riscv_ysyxsoc,
+         ref_difftest_memcpy(RESET_VECTOR,
+                             dev_flash_to_host(CONFIG_PC_RESET_OFFSET),
+                             img_size, DIFFTEST_TO_REF),
+         ref_difftest_memcpy(RESET_VECTOR, guest_to_host(RESET_VECTOR),
+                             img_size, DIFFTEST_TO_REF));
   ref_difftest_regcpy(&cpu, DIFFTEST_TO_REF);
 }
 
@@ -95,14 +103,16 @@ void difftest_step(vaddr_t pc, vaddr_t npc) {
       checkregs(&ref_r, npc);
       return;
     }
-    skip_dut_nr_inst --;
+    skip_dut_nr_inst--;
     if (skip_dut_nr_inst == 0)
-      panic("can not catch up with ref.pc = " FMT_WORD " at pc = " FMT_WORD, ref_r.pc, pc);
+      panic("can not catch up with ref.pc = " FMT_WORD " at pc = " FMT_WORD,
+            ref_r.pc, pc);
     return;
   }
 
   if (is_skip_ref) {
-    // to skip the checking of an instruction, just copy the reg state to reference design
+    // to skip the checking of an instruction, just copy the reg state to
+    // reference design
     ref_difftest_regcpy(&cpu, DIFFTEST_TO_REF);
     is_skip_ref = false;
     return;
@@ -114,5 +124,5 @@ void difftest_step(vaddr_t pc, vaddr_t npc) {
   checkregs(&ref_r, pc);
 }
 #else
-void init_difftest(char *ref_so_file, long img_size, int port) { }
+void init_difftest(char *ref_so_file, long img_size, int port) {}
 #endif

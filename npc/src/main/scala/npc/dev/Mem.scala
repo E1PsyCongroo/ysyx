@@ -24,11 +24,11 @@ class Mem extends BlackBox with HasBlackBoxResource {
   addResource("/Mem.sv")
 }
 
-class AXILiteMem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module {
+class AXI4Mem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module {
   require(log2Ceil(size) < awidth)
   require(log2Ceil(size) < dwidth)
 
-  val io  = IO(new AXI4SlaveIO)
+  val io  = IO(Flipped(new AXI4MasterIO))
   val Mem = Module(new Mem)
   Mem.io.clock := clock
 
@@ -37,9 +37,17 @@ class AXILiteMem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Modu
   val bfire  = io.bvalid && io.bready
   val arfire = io.arvalid && io.arready
   val rfire  = io.rvalid && io.rready
+  assert(!(arfire && (awfire || wfire)))
 
   val sIdle :: sWaitWaddr :: sWaitWdata :: sWrite :: sRead :: Nil = Enum(5)
-  val state                                                       = RegInit(sIdle)
+
+  val state       = RegInit(sIdle)
+  val isIdle      = state === sIdle
+  val isWaitWaddr = state === sWaitWaddr
+  val isWaitWdata = state === sWaitWdata
+  val isWrite     = state === sWrite
+  val isRead      = state === sRead
+
   state := MuxLookup(state, sIdle)(
     Seq(
       sIdle -> MuxCase(
@@ -58,33 +66,19 @@ class AXILiteMem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Modu
     )
   )
 
-  val isIdle      = state === sIdle
-  val isWaitWaddr = state === sWaitWaddr
-  val isWaitWdata = state === sWaitWdata
-  val isWrite     = state === sWrite
-  val isRead      = state === sRead
-
   /* Write address channel */
-  val awready = WireDefault(true.B)
-  awready := isIdle || isWaitWaddr
-
-  val writeAddr        = RegEnable(io.awaddr, awfire)
-  val alignedWriteAddr = writeAddr(awidth - 1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
-  val writeAddrAligned = writeAddr === alignedWriteAddr
-  assert(writeAddrAligned)
+  val awready          = WireDefault(isIdle || isWaitWaddr)
+  val writeAddr        = RegEnable(io.awaddr, 0.U, awfire)
+  val writeSize        = RegEnable(io.awsize, awfire)
 
   /* Write data channel */
-  val wready = WireDefault(true.B)
-  wready := isIdle || isWaitWdata
-
+  val wready    = WireDefault(isIdle || isWaitWdata)
   val writeData = RegEnable(io.wdata, wfire)
   val writeMask = RegEnable(io.wstrb, wfire)
 
   /* Write response channel */
-  val bvalid = WireDefault(false.B)
-  bvalid := Mux(isWrite, true.B, false.B)
-
-  val bresp = WireDefault(TransactionResponse.okey.asUInt)
+  val bvalid = WireDefault(isWrite)
+  val bresp  = WireDefault(TransactionResponse.okey.asUInt)
   bresp        := TransactionResponse.okey.asUInt
   Mem.io.waddr := writeAddr
   Mem.io.wdata := writeData
@@ -92,15 +86,9 @@ class AXILiteMem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Modu
   Mem.io.wen   := isWrite
 
   /* Read address channel */
-  val arready = WireDefault(true.B)
-  arready := isIdle
-
-  val readAddr        = RegEnable(io.araddr, arfire)
-  val alignedReadAddr = readAddr(awidth - 1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U)
-  val readAddrAligned = readAddr === alignedReadAddr
-  assert(readAddrAligned)
-  Mem.io.ren   := arfire
+  val arready = WireDefault(isIdle)
   Mem.io.raddr := io.araddr
+  Mem.io.ren   := arfire
   val readData = RegEnable(Mem.io.rdata, arfire)
 
   /* Read data channel */
@@ -116,11 +104,9 @@ class AXILiteMem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Modu
     )
   )
 
-  val rvalid = WireDefault(false.B)
-  rvalid := Mux(isRead, isFetch, false.B)
-
-  val rdata = WireDefault(readData)
-  val rresp = WireDefault(TransactionResponse.okey.asUInt)
+  val rvalid = WireDefault(Mux(isRead, isFetch, false.B))
+  val rdata  = WireDefault(readData)
+  val rresp  = WireDefault(TransactionResponse.okey.asUInt)
   rresp := TransactionResponse.okey.asUInt
 
   /* io.bind */

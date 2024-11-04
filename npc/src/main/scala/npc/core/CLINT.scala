@@ -9,7 +9,7 @@ import chisel3.util._
 import Dev.CLINTAddr
 
 class CLINT(awidth: Int = 32, xlen: Int = 32) extends Module {
-  val io    = IO(new (AXI4SlaveIO))
+  val io    = IO(Flipped(new AXI4MasterIO))
   val mtime = RegInit(0.U(64.W))
 
   val awfire = io.awvalid && io.awready

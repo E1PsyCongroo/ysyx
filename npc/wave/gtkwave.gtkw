@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
-[*] Thu Oct 24 13:20:26 2024
+[*] Mon Nov  4 15:53:19 2024
 [*]
 [dumpfile] "/home/focused_xy/cs/ysyx/npc/build/npc-wave.vcd"
-[dumpfile_mtime] "Thu Oct 24 13:17:05 2024"
-[dumpfile_size] 247463378
+[dumpfile_mtime] "Mon Nov  4 15:48:13 2024"
+[dumpfile_size] 13976403
 [savefile] "/home/focused_xy/cs/ysyx/npc/wave/gtkwave.gtkw"
-[timestart] 1
-[size] 1920 997
-[pos] -1 -1
-*-7.200000 56 569530 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 81326
+[size] 2880 1510
+[pos] -481 -256
+*-7.200000 82138 569530 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.ysyxSoCFull.
 [treeopen] TOP.ysyxSoCFull.asic.
@@ -22,11 +22,11 @@
 [treeopen] TOP.ysyxSoCFull.asic.lpsram.mpsram.u0.
 [treeopen] TOP.ysyxSoCFull.asic.lspi.mspi.u0_spi_top.
 [treeopen] TOP.ysyxSoCFull.asic.luart.muart.Uregs.
-[treeopen] TOP.ysyxSoCFull.psram.
-[sst_width] 246
-[signals_width] 290
+[treeopen] TOP.ysyxSoCFull.sdram.
+[sst_width] 281
+[signals_width] 514
 [sst_expanded] 1
-[sst_vpaned_height] 328
+[sst_vpaned_height] 531
 @28
 TOP.clock
 @200
@@ -71,11 +71,12 @@ TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_awvalid
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_wvalid
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_bvalid
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_arvalid
+@29
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rvalid
 @200
 -Dev
 -Arbiter
-@29
+@28
 TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.state[1:0]
 @22
 TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.transAddr[31:0]
@@ -141,5 +142,7 @@ TOP.ysyxSoCFull.psram.data[31:0]
 -SPI
 @28
 TOP.ysyxSoCFull.asic.lspi.state[2:0]
+@200
+-SDRAM
 [pattern_trace] 1
 [pattern_trace] 0

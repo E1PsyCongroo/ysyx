@@ -11,8 +11,9 @@ remove_quote = $(patsubst "%",%,$(1))
 
 # Extract variabls from menuconfig
 GUEST_ISA         ?= $(call remove_quote,$(CONFIG_ISA))
+PLATFORM          ?= $(call remove_quote, $(CONFIG_PLATFORM))
 ENGINE            ?= $(call remove_quote,$(CONFIG_ENGINE))
-NAME              = $(GUEST_ISA)-$(ENGINE)
+NAME              = $(GUEST_ISA)$(PLATFORM)-$(ENGINE)
 
 # Include all filelist.mk to merge file lists
 FILELIST_MK       := $(shell find -L ./src -name "filelist.mk")

@@ -31,7 +31,6 @@ static void print_i_ring_buf() {
 #endif
 
 void device_update();
-void rvcpu_exit(void);
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
