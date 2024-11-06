@@ -17,12 +17,12 @@ class RVCPU(
   awidth:     Int     = 32,
   xlen:       Int     = 32,
   extentionE: Boolean = true,
-  PCReset:    BigInt  = BigInt("80000000", 16),
+  PCReset:    BigInt  = BigInt("30000000", 16),
   sim:        Boolean = true)
     extends Module {
   val io = IO(new RVCPUIO(xlen))
 
-  val IFU = Module(new IFU(xlen, PCReset))
+  val IFU = Module(new IFU(awidth, xlen, PCReset))
   val IDU = Module(new IDU(xlen, extentionE))
   val EXU = Module(new EXU(xlen))
   val LSU = Module(new LSU(xlen))
@@ -31,7 +31,7 @@ class RVCPU(
   LSU.io.out <> EXU.io.LSUOut
 
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
-  val CLINT   = Module(new CLINT(awidth, xlen))
+  val CLINT   = Module(new CLINT(awidth, xlen, Dev.CLINTAddr))
   RegFile.io.ra1           := IDU.io.RegFileAccess.ra1
   RegFile.io.ra2           := IDU.io.RegFileAccess.ra2
   IDU.io.RegFileReturn.rd1 := RegFile.io.rd1
@@ -134,7 +134,7 @@ class NPC(
   PCReset:    BigInt  = BigInt("80000000", 16),
   sim:        Boolean = true)
     extends Module {
-  val IFU = Module(new IFU(xlen, PCReset))
+  val IFU = Module(new IFU(awidth, xlen, PCReset))
   val IDU = Module(new IDU(xlen, extentionE))
   val EXU = Module(new EXU(xlen))
   val LSU = Module(new LSU(xlen))
@@ -143,7 +143,7 @@ class NPC(
   LSU.io.out <> EXU.io.LSUOut
 
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
-  val CLINT   = Module(new CLINT(awidth, xlen))
+  val CLINT   = Module(new CLINT(awidth, xlen, Dev.mtimeAddr))
   val AXI4Mem = Module(new AXI4Mem(awidth, xlen))
   val Uart    = Module(new Uart(awidth, xlen))
   RegFile.io.ra1           := IDU.io.RegFileAccess.ra1
@@ -159,7 +159,12 @@ class NPC(
   StageConnect(EXU.io.out, WBU.io.in)
   StageConnect(WBU.io.out, IFU.io.in)
 
-  val AXI4Interconnect = Module(new AXI4Interconnect(2, Seq(Dev.CLINTAddr.in,  Dev.uartAddr.in, !Dev.CLINTAddr.in(_))))
+  val AXI4Interconnect = Module(
+    new AXI4Interconnect(
+      2,
+      Seq(Dev.mtimeAddr.in, Dev.uartAddr.in, addr => !Dev.mtimeAddr.in(addr) && !Dev.uartAddr.in(addr))
+    )
+  )
   AXI4Interconnect.io.fanIn(0) <> IFU.io.master
   AXI4Interconnect.io.fanIn(1) <> LSU.io.master
   AXI4Interconnect.io.fanOut(0) <> CLINT.io
@@ -170,7 +175,8 @@ class NPC(
     EndControl(clock, IDU.io.isEnd, IDU.io.exitCode)
 
     val devs = Seq(
-      Dev.uartAddr,
+      Dev.mtimeAddr,
+      Dev.uartAddr
     )
     SkipDifftest(
       clock,

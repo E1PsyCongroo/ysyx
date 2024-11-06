@@ -47,7 +47,7 @@ gdb: run-env
 	$(call git_commit, "gdb NPC")
 	gdb -s $(BINARY) --args $(NPC_EXEC)
 
-perf:
+perf: $(BINARY)
 	@make -C $(NPC_HOME)/../am-kernels/benchmarks/microbench ARCH=riscv32e-ysyxsoc NPCFLAGS="-b" mainargs=train run
 
 sta: $(V_FILE_GEN)

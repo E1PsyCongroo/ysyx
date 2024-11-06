@@ -6,9 +6,7 @@ import rvcpu.dev._
 import chisel3._
 import chisel3.util._
 
-import Dev.CLINTAddr
-
-class CLINT(awidth: Int = 32, xlen: Int = 32) extends Module {
+class CLINT(awidth: Int = 32, xlen: Int = 32, area: Area = Dev.CLINTAddr) extends Module {
   val io    = IO(Flipped(new AXI4MasterIO))
   val mtime = RegInit(0.U(64.W))
 
@@ -60,8 +58,8 @@ class CLINT(awidth: Int = 32, xlen: Int = 32) extends Module {
 
   /* Write response channel */
   val bvalid    = WireDefault(isWrite)
-  val writeLow  = writeAddrAligned === CLINTAddr.start
-  val writeHigh = writeAddrAligned === (CLINTAddr.start + 4.U)
+  val writeLow  = writeAddrAligned === area.start
+  val writeHigh = writeAddrAligned === (area.start + 4.U)
   mtime := MuxCase(
     mtime + 1.U,
     Seq(
@@ -85,8 +83,8 @@ class CLINT(awidth: Int = 32, xlen: Int = 32) extends Module {
   /* Read data channel */
   val rvalid   = WireDefault(isRead)
   val rdata    = Wire(UInt(xlen.W))
-  val readLow  = alignedReadAddr === CLINTAddr.start
-  val readHigh = alignedReadAddr === (CLINTAddr.start + 4.U)
+  val readLow  = alignedReadAddr === area.start
+  val readHigh = alignedReadAddr === (area.start + 4.U)
   rdata := MuxCase(
     DontCare,
     Seq(

@@ -145,7 +145,7 @@ void rvcpu_exit(void) {
   Log("Number of fetch instructions: " NUMBERIC_FMT, g_nr_fetch_inst);
   Log("Number of fetch data: " NUMBERIC_FMT, g_nr_fetch_data_count);
   Log("Average cycle of fetch data: %f",
-      (double)g_nr_fetch_data_count/ g_nr_fetch_data_cycle);
+      (double)g_nr_fetch_data_cycle / g_nr_fetch_data_count);
   Log("Number of exec instructions: " NUMBERIC_FMT, g_nr_exec_inst);
   for (int i = 0; i < RISCV_TOTAL_TYPE; i++) {
     Log("Instruction for %s type (count: " NUMBERIC_FMT ", average exec cycle: %f)",
