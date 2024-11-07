@@ -17,6 +17,7 @@
 !Kconfig
 !*.sv
 !wave/*
+!.py
 include/config
 include/generated
 build/

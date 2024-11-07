@@ -54,15 +54,16 @@ class ICache(awidth: Int = 32, xlen: Int = 32, lineSize: Int = 4, lineNum: Int, 
   val set      = raddrReg(setWidth + offsetWidth - 1, offsetWidth)
   val tag      = raddrReg(tagWidth + setWidth + offsetWidth - 1, setWidth + offsetWidth)
 
-  val cacheNeed  = needCache(raddrReg)
-  val indexInSet = cacheLinesTag(set).onlyIndexWhere(_ === set)
-  val cacheHit   = cacheLinesTag(set).contains(set) && cacheLinesValid(set)(indexInSet)
-  val cacheData  = cacheLinesData(set)(indexInSet)
+  val need       = WireDefault(needCache(raddrReg))
+  val indexInSet = WireDefault(cacheLinesTag(set).onlyIndexWhere(_ === set))
+  val cacheHit   = WireDefault(need && cacheLinesTag(set).contains(set) && cacheLinesValid(set)(indexInSet))
+  val cacheData  = WireDefault(cacheLinesData(set)(indexInSet))
 
   val availableIndex = cacheLinesValid(set).indexWhere(_ === false.B)
-  cacheLinesValid(set)(availableIndex) := Mux(rfire, true.B, cacheLinesValid(set)(availableIndex))
-  cacheLinesTag(set)(availableIndex)   := Mux(rfire, tag, cacheLinesTag(set)(availableIndex))
-  cacheLinesData(set)(availableIndex)  := Mux(rfire, io.master.rdata, cacheLinesData(set)(availableIndex))
+  cacheLinesValid(set)(availableIndex) := Mux(rfire && need, true.B, cacheLinesValid(set)(availableIndex))
+  cacheLinesTag(set)(availableIndex)   := Mux(rfire && need, tag, cacheLinesTag(set)(availableIndex))
+  cacheLinesData(set)(availableIndex)  := Mux(rfire && need, io.master.rdata, cacheLinesData(set)(availableIndex))
+  val rdataReg = RegEnable(io.master.rdata, rfire)
 
   state := MuxLookup(state, sIdle)(
     Seq(
@@ -102,5 +103,5 @@ class ICache(awidth: Int = 32, xlen: Int = 32, lineSize: Int = 4, lineNum: Int, 
   io.in.ready := isIdle
 
   io.out.valid      := isSendBack
-  io.out.bits.rdata := cacheData(xlen - 1, 0)
+  io.out.bits.rdata := Mux(need, cacheData(xlen - 1, 0), rdataReg)
 }
