@@ -1,7 +1,7 @@
 PROJ_PATH = $(shell pwd)
 
-DESIGN ?= RVCPU
-SDC_FILE ?= $(PROJ_PATH)/$(DESIGN).sdc
+DESIGN ?= EXU
+SDC_FILE ?= $(PROJ_PATH)/RVCPU.sdc
 RTL_FILES ?= $(shell find $(PROJ_PATH)/* -name "*.sv")
 export CLK_FREQ_MHZ ?= 470
 

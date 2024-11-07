@@ -36,7 +36,7 @@ class RVCPU(
       xlen,
       4,
       16,
-      16,
+      1,
       addr =>
         Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
           addr
@@ -164,7 +164,7 @@ class NPC(
   EXU.io.LSUIn <> LSU.io.in
   LSU.io.out <> EXU.io.LSUOut
 
-  val ICache = Module(new ICache(awidth, xlen, 4, 16, 16, Dev.memoryAddr.in, sim))
+  val ICache = Module(new ICache(awidth, xlen, 4, 16, 1, Dev.memoryAddr.in, sim))
   ICache.io.in <> IFU.io.ICacheIn
   ICache.io.out <> IFU.io.ICacheOut
 

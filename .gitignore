@@ -6,6 +6,7 @@
 !/nanos-lite/*
 !/navy-apps/*
 !/npc/*
+!/cachesim/*
 !/resources/**
 !Makefile
 !README.md
@@ -17,3 +18,4 @@
 /digital-lab
 /yosys-sta
 /rt-thread-am
+/verilator

@@ -16,7 +16,7 @@ CFLAGS    += -fdata-sections -ffunction-sections
 LDFLAGS   += -T $(AM_HOME)/scripts/ysyxsoc-linker.ld
 LDFLAGS   += --gc-sections -e _start
 override NPCFLAGS += -l $(shell dirname $(IMAGE).elf)/npc-log.txt
-# override NPCFLAGS += -w $(shell dirname $(IMAGE).elf)/npc-wave.vcd
+# override NPCFLAGS += -w $(shell dirname $(IMAGE).elf)/npc-wave.fst
 
 CFLAGS += -DMAINARGS=\"$(mainargs)\"
 CFLAGS += -I$(AM_HOME)/am/src/riscv/ysyxsoc/include

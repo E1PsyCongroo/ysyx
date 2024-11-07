@@ -1,12 +1,11 @@
-#include "nvboard.h"
-#include "verilated.h"
 #include <VysyxSoCFull.h>
 #include <VysyxSoCFull__Dpi.h>
 #include <VysyxSoCFull___024root.h>
 #include <cstdint>
 #include <nvboard.h>
 #include <stdint.h>
-#include <verilated_vcd_c.h>
+#include <verilated.h>
+#include <verilated_fst_c.h>
 
 extern "C" {
 #include "local-include/verilating.h"
@@ -22,7 +21,7 @@ extern "C" {
 
 static VysyxSoCFull *rvcpu = nullptr;
 static VerilatedContext *contextp = nullptr;
-static VerilatedVcdC *tfp = nullptr;
+static VerilatedFstC *tfp = nullptr;
 static uint32_t cur_inst;
 
 uint64_t g_guest_cycle = 0;
@@ -52,54 +51,52 @@ static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
   cpu.pc = rvcpu->rootp
                ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__pc;
-  cpu.gpr[0] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_0;
+  cpu.gpr[0] = 0;
   cpu.gpr[1] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_1;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_0;
   cpu.gpr[2] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_2;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_1;
   cpu.gpr[3] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_3;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_2;
   cpu.gpr[4] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_4;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_3;
   cpu.gpr[5] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_5;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_4;
   cpu.gpr[6] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_6;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_5;
   cpu.gpr[7] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_7;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_6;
   cpu.gpr[8] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_8;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_7;
   cpu.gpr[9] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_9;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_8;
   cpu.gpr[10] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_10;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_9;
   cpu.gpr[11] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_11;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_10;
   cpu.gpr[12] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_12;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_11;
   cpu.gpr[13] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_13;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_12;
   cpu.gpr[14] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_14;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_13;
   cpu.gpr[15] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_15;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_14;
   cpu.mstatus =
       rvcpu->rootp
           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_4_2;
@@ -124,10 +121,10 @@ static void rvcpu_sync(void) {
 void rvcpu_init(const char *wave_file, int argc, char **argv) {
   contextp = new VerilatedContext;
   rvcpu = new VysyxSoCFull{contextp};
-  tfp = new VerilatedVcdC;
+  tfp = new VerilatedFstC;
   contextp->commandArgs(argc, argv);
   contextp->traceEverOn(true);
-  rvcpu->trace(tfp, 5);
+  rvcpu->trace(tfp, 0);
   if (wave_file) {
     tfp->open(wave_file);
     Log("Wave is written to %s", wave_file);
@@ -157,7 +154,8 @@ void rvcpu_exit(void) {
       (double)g_nr_fetch_inst / g_guest_cycle);
   Log("total cache access = " NUMBERIC_FMT, g_nr_cache_access);
   Log("total cache hit = " NUMBERIC_FMT, g_nr_cache_hit);
-  Log("cache hit ratio = %f%%", (double)g_nr_cache_hit / g_nr_cache_access * 100);
+  Log("cache hit ratio = %f%%",
+      (double)g_nr_cache_hit / g_nr_cache_access * 100);
   Log("average cache access time = %f",
       (double)g_cache_access_time / g_nr_cache_access);
   Log("average cache miss penalty = %f",

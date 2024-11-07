@@ -43,7 +43,13 @@ class EXU(xlen: Int = 32) extends Module {
   val BrCond     = Module(new BrCond)
 
   val sIdle :: sSendLSUReq :: sWaitLSURes :: sExec :: Nil = Enum(4)
-  val state                                               = RegInit(sIdle)
+
+  val state        = RegInit(sIdle)
+  val isIdle       = state === sIdle
+  val isSendLSUReq = state === sSendLSUReq
+  val isWaitLSURes = state === sWaitLSURes
+  val isExec       = state === sExec
+
   state := MuxLookup(state, sIdle)(
     Seq(
       sIdle -> MuxCase(
@@ -58,11 +64,6 @@ class EXU(xlen: Int = 32) extends Module {
       sExec -> Mux(io.out.fire, sIdle, sExec)
     )
   )
-
-  val isIdle       = state === sIdle
-  val isSendLSUReq = state === sSendLSUReq
-  val isWaitLSURes = state === sWaitLSURes
-  val isExec       = state === sExec
 
   val in      = RegEnable(io.in.bits, io.in.fire)
   val pc      = in.pc

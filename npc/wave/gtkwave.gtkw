@@ -2,7 +2,7 @@
 [*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
 [*] Thu Nov  7 06:57:21 2024
 [*]
-[dumpfile] "/home/focused_xy/cs/ysyx/npc/build/npc-wave.vcd"
+[dumpfile] "/home/focused_xy/cs/ysyx/npc/build/npc-wave.fst"
 [dumpfile_mtime] "Thu Nov  7 06:56:20 2024"
 [dumpfile_size] 3810756
 [savefile] "/home/focused_xy/cs/ysyx/npc/wave/gtkwave.gtkw"

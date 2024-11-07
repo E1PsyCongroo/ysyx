@@ -18,6 +18,7 @@
 !*.sv
 !wave/*
 !*.py
+!perf-log/*
 include/config
 include/generated
 build/

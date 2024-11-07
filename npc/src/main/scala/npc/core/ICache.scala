@@ -27,23 +27,24 @@ class ICache(
   xlen:      Int     = 32,
   lineSize:  Int     = 4,
   lineNum:   Int,
-  setNum:    Int,
+  wayNum:    Int,
   needCache: UInt => Bool,
   sim:       Boolean = true)
     extends Module {
   require(lineSize * 8 >= xlen)
+  require(lineNum % wayNum == 0)
 
-  val lineNumPerSet = lineNum / setNum
-  val offsetWidth   = log2Ceil(lineSize)
-  val setWidth      = log2Ceil(setNum)
-  val tagWidth      = awidth - setWidth - offsetWidth
+  val setNum      = lineNum / wayNum
+  val offsetWidth = log2Ceil(lineSize)
+  val setWidth    = log2Ceil(setNum)
+  val tagWidth    = awidth - setWidth - offsetWidth
 
   val io = IO(new ICacheIO(awidth, xlen) {
     val hit = if (sim) Some(DecoupledIO(Output(Bool()))) else None
   })
-  val cacheLinesValid = RegInit(VecInit.fill(setNum, lineNumPerSet)(false.B))
-  val cacheLinesTag   = Reg(Vec(setNum, Vec(lineNumPerSet, UInt(tagWidth.W))))
-  val cacheLinesData  = Reg(Vec(setNum, Vec(lineNumPerSet, UInt((lineSize * 8).W))))
+  val cacheLinesValid = RegInit(VecInit.fill(setNum, wayNum)(false.B))
+  val cacheLinesTag   = Reg(Vec(setNum, Vec(wayNum, UInt(tagWidth.W))))
+  val cacheLinesData  = Reg(Vec(setNum, Vec(wayNum, UInt((lineSize * 8).W))))
 
   val arfire = io.master.arvalid && io.master.arready
   val rfire  = io.master.rvalid && io.master.rready

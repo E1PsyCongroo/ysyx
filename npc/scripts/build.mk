@@ -25,11 +25,9 @@ RESOURCES_DIR       := $(SRC_DIR)/resources
 CONSTR_DIR          := $(SRC_DIR)/constr
 CHISEL_SRC_DIR      := $(SRC_DIR)/scala
 
-VERILATOR_ROOT      := /home/focused_xy/.conda/envs/ysyx/share/verilator
 INC_PATH            := $(WORK_DIR)/include $(VERILATOR_ROOT)/include $(VERILATOR_ROOT)/include/vltstd \
                        $(VERILATOR_DIR) $(INC_PATH)
 BINARY              := $(BUILD_DIR)/$(NAME)$(SO)
-
 
 # Project sources
 RESOURCES           ?= $(shell find $(RESOURCES_DIR) -type f -name "*.v" -or -name "*.sv")
@@ -57,10 +55,10 @@ CFLAGS              := -O2 -MMD -Wall -Werror $(INCLUDES) $(CFLAGS)
 LDFLAGS             := -O2 $(LDFLAGS)
 
 # Verilator flags
-VERILATOR           := verilator
+VERILATOR           := $(VERILATOR_ROOT)/bin/verilator
 VERILATOR_INC_PATH  := $(YSYXSOC_HOME)/perip/uart16550/rtl $(YSYXSOC_HOME)/perip/spi/rtl
 VERILATOR_INCLUDES   = $(addprefix -y , $(VERILATOR_INC_PATH))
-VERILATOR_CFLAGS    := --MMD --build --cc -O3 --trace --x-assign fast --x-initial fast \
+VERILATOR_CFLAGS    := --MMD --build --cc -O3 --trace-fst --x-assign fast --x-initial fast \
                        --autoflush --noassert --timescale "1ns/1ns" --no-timing --threads 2 -j 0 \
 											 $(VERILATOR_INCLUDES)
 
@@ -95,7 +93,7 @@ $(OBJ_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
 ifdef CONFIG_ISA_riscv_ysyxsoc
 CXXSRC             += $(OBJ_DIR)/$(PRJ)_auto_bind.cc
 endif
-ARCHIVES           += $(VERILATOR_DIR)/lib$(PRJ).a $(NVBOARD_ARCHIVE)
+ARCHIVES           += $(VERILATOR_DIR)/lib$(PRJ).so $(NVBOARD_ARCHIVE)
 OBJS                = $(SRCS:%.c=$(OBJ_DIR)/%.o) $(CXXSRC:%.cc=$(OBJ_DIR)/%.o)
 
 # Compilation patterns
@@ -127,7 +125,7 @@ $(BINARY):: $(ARCHIVES) $(OBJS)
 
 verilog: $(BUILD_DIR)/.stamp.verilog$(PLATFORM)
 
-verilator: $(VERILATOR_DIR)/lib$(PRJ).a
+verilator: $(VERILATOR_DIR)/lib$(PRJ).so
 
 clean:
 	-rm -rf $(BUILD_DIR)
