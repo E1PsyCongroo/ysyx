@@ -17,11 +17,10 @@
 !Kconfig
 !*.sv
 !wave/*
-!.py
+!*.py
 include/config
 include/generated
 build/
-yosys/result
 
 # mill
 out/

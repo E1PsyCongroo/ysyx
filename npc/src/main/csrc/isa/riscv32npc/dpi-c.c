@@ -34,8 +34,17 @@ void rvcpu_pmem_write(paddr_t waddr, word_t wdata, uint8_t wmask) {
 }
 
 void count_data_fetch(uint32_t cycle) {
-  g_nr_fetch_data_count++;
-  g_nr_fetch_data_cycle += cycle;
+  g_nr_fetch_data++;
+  g_fetch_data_cycle += cycle;
+}
+
+void count_cache_hit(int hit, uint32_t access_cycle, uint32_t miss_penalty) {
+  g_nr_cache_access++;
+  g_cache_access_time += access_cycle;
+  g_cache_miss_penalty += miss_penalty;
+  if (hit) {
+    g_nr_cache_hit++;
+  }
 }
 
 void decode_inst(uint32_t inst, uint64_t exec_cycle) {

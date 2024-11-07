@@ -17,7 +17,7 @@ module TracerDataFetch(
       start_flag <= 1'b1;
     end
     else if (start_flag && finish) begin
-      count_data_fetch(cycle_count);
+      count_data_fetch(cycle_count + 32'b1);
       start_flag <= 1'b0;
     end
     else begin

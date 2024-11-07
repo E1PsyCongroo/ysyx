@@ -29,11 +29,18 @@ typedef struct {
   uint64_t total_exec_cycle;
 } InstStatistic;
 
-extern uint64_t g_nr_guest_cycle;
+extern uint64_t g_guest_cycle;
 extern uint64_t g_nr_fetch_inst;
+
+extern uint64_t g_nr_inst;
 extern InstStatistic g_insts[RISCV_TOTAL_TYPE];
-extern uint64_t g_nr_exec_inst;
-extern uint64_t g_nr_fetch_data_cycle;
-extern uint64_t g_nr_fetch_data_count;
+
+extern uint64_t g_nr_fetch_data;
+extern uint64_t g_fetch_data_cycle;
+
+extern uint64_t g_nr_cache_access;
+extern uint64_t g_nr_cache_hit;
+extern uint64_t g_cache_access_time;
+extern uint64_t g_cache_miss_penalty;
 
 #endif

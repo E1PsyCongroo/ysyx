@@ -6,7 +6,6 @@ import rvcpu.dev._
 import rvcpu.utility._
 import chisel3._
 import chisel3.util._
-import org.apache.commons.compress.harmony.unpack200.bytecode.InnerClassesAttribute
 
 class RVCPUIO(awidth: Int = 32, xlen: Int = 32) extends Bundle {
   val interrupt = Input(Bool())
@@ -41,7 +40,8 @@ class RVCPU(
       addr =>
         Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
           addr
-        ) || Dev.SDRAMAddr.in(addr)
+        ) || Dev.SDRAMAddr.in(addr),
+      sim
     )
   )
   ICache.io.in <> IFU.io.ICacheIn
@@ -88,42 +88,46 @@ class RVCPU(
         (devs.map(dev => dev.in(LSU.io.in.bits.waddr) || dev.in(LSU.io.in.bits.raddr)).foldLeft(false.B)(_ || _))
     );
 
-    val IFUTracer = Module(new Tracer)
-    IFUTracer.io.raddr := IFU.io.out.bits.pc
-    IFUTracer.io.rlen  := 4.U
-    IFUTracer.io.rdata := IFU.io.out.bits.instruction
-    IFUTracer.io.ren   := IFU.io.out.fire
-    IFUTracer.io.waddr := DontCare
-    IFUTracer.io.wdata := DontCare
-    IFUTracer.io.wlen  := DontCare
-    IFUTracer.io.wen   := false.B
+    val ICacheArfire = ICache.io.master.arvalid && ICache.io.master.arready
+    val ICacheRfire  = ICache.io.master.rvalid && ICache.io.master.rready
+    val ICacheTracer = Module(new Tracer)
+    ICacheTracer.io.raddr := RegEnable(ICache.io.master.araddr, ICacheArfire)
+    ICacheTracer.io.rlen  := RegEnable(1.U << ICache.io.master.arsize, ICacheArfire)
+    ICacheTracer.io.rdata := ICache.io.master.rdata
+    ICacheTracer.io.ren   := ICacheRfire
+    ICacheTracer.io.waddr := DontCare
+    ICacheTracer.io.wdata := DontCare
+    ICacheTracer.io.wlen  := DontCare
+    ICacheTracer.io.wen   := false.B
 
+    val LSUArfire = LSU.io.master.arvalid && LSU.io.master.arready
+    val LSURfire  = LSU.io.master.rvalid && LSU.io.master.rready
+    val LSUAwfire = LSU.io.master.awvalid && LSU.io.master.awready
+    val LSUWfire  = LSU.io.master.wvalid && LSU.io.master.wready
+    val LSUBfire  = LSU.io.master.bvalid && LSU.io.master.bready
     val LSUTracer = Module(new Tracer)
-    val LSUIn     = RegEnable(LSU.io.in.bits, LSU.io.in.fire)
-    val LSUSize = MuxCase(
-      4.U(32.W),
-      Seq(
-        MemOp.memB -> 1.U(32.W),
-        MemOp.memH -> 2.U(32.W),
-        MemOp.memW -> 4.U(32.W),
-        MemOp.memBu -> 1.U(32.W),
-        MemOp.memHu -> 2.U(32.W)
-      ).map { case (key, data) => (key === LSUIn.memOp, data) }
-    )
-    LSUTracer.io.raddr := LSUIn.raddr
-    LSUTracer.io.rlen  := LSUSize
-    LSUTracer.io.rdata := LSU.io.out.bits.rdata
-    LSUTracer.io.ren   := LSUIn.ren && LSU.io.out.fire
-    LSUTracer.io.waddr := LSUIn.waddr
-    LSUTracer.io.wdata := LSUIn.wdata
-    LSUTracer.io.wlen  := LSUSize
-    LSUTracer.io.wen   := LSUIn.wen && LSU.io.out.fire
+    LSUTracer.io.raddr := RegEnable(LSU.io.master.araddr, LSUArfire)
+    LSUTracer.io.rlen  := RegEnable(1.U << LSU.io.master.arsize, LSUArfire)
+    LSUTracer.io.rdata := LSU.io.master.rdata
+    LSUTracer.io.ren   := LSURfire
+    LSUTracer.io.waddr := RegEnable(LSU.io.master.awaddr, LSUAwfire)
+    LSUTracer.io.wdata := RegEnable(LSU.io.master.wdata, LSUWfire)
+    LSUTracer.io.wlen  := RegEnable(LSU.io.master.awsize, LSUAwfire)
+    LSUTracer.io.wen   := LSUBfire
 
     val TracerDataFetch = Module(new TracerDataFetch)
     TracerDataFetch.io.clock  := clock
     TracerDataFetch.io.reset  := reset
     TracerDataFetch.io.start  := LSU.io.in.fire && LSU.io.in.bits.ren
     TracerDataFetch.io.finish := LSU.io.out.fire
+
+    ICache.io.hit.get.ready := true.B
+    val CacheTracer = Module(new CacheTracer)
+    CacheTracer.io.cacheHit          := RegEnable(ICache.io.hit.get.bits, ICache.io.hit.get.fire)
+    CacheTracer.io.cacheAccessStart  := ICache.io.in.fire
+    CacheTracer.io.cacheAccessFinish := ICache.io.out.fire
+    CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
+    CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rready
   }
 }
 
@@ -160,7 +164,7 @@ class NPC(
   EXU.io.LSUIn <> LSU.io.in
   LSU.io.out <> EXU.io.LSUOut
 
-  val ICache = Module(new ICache(awidth, xlen, 4, 16, 16, Dev.memoryAddr.in))
+  val ICache = Module(new ICache(awidth, xlen, 4, 16, 16, Dev.memoryAddr.in, sim))
   ICache.io.in <> IFU.io.ICacheIn
   ICache.io.out <> IFU.io.ICacheOut
 
@@ -212,5 +216,13 @@ class NPC(
     TracerDataFetch.io.reset  := reset
     TracerDataFetch.io.start  := LSU.io.in.fire && LSU.io.in.bits.ren
     TracerDataFetch.io.finish := LSU.io.out.fire
+
+    ICache.io.hit.get.ready := true.B
+    val CacheTracer = Module(new CacheTracer)
+    CacheTracer.io.cacheHit          := RegEnable(ICache.io.hit.get.bits, ICache.io.hit.get.fire)
+    CacheTracer.io.cacheAccessStart  := ICache.io.in.fire
+    CacheTracer.io.cacheAccessFinish := ICache.io.out.fire
+    CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
+    CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rready
   }
 }

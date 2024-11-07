@@ -7,7 +7,6 @@ import chisel3._
 import chisel3.util._
 
 import Dev.CLINTAddr
-import chisel3.SpecifiedDirection.Flip
 
 class ICacheIn(awidth: Int = 32) extends Bundle {
   val raddr = Input(UInt(awidth.W))
@@ -23,7 +22,14 @@ class ICacheIO(awidth: Int = 32, xlen: Int = 32) extends Bundle {
   val master = new AXI4MasterIO
 }
 
-class ICache(awidth: Int = 32, xlen: Int = 32, lineSize: Int = 4, lineNum: Int, setNum: Int, needCache: UInt => Bool)
+class ICache(
+  awidth:    Int     = 32,
+  xlen:      Int     = 32,
+  lineSize:  Int     = 4,
+  lineNum:   Int,
+  setNum:    Int,
+  needCache: UInt => Bool,
+  sim:       Boolean = true)
     extends Module {
   require(lineSize * 8 >= xlen)
 
@@ -32,7 +38,9 @@ class ICache(awidth: Int = 32, xlen: Int = 32, lineSize: Int = 4, lineNum: Int, 
   val setWidth      = log2Ceil(setNum)
   val tagWidth      = awidth - setWidth - offsetWidth
 
-  val io              = IO(new ICacheIO(awidth, xlen))
+  val io = IO(new ICacheIO(awidth, xlen) {
+    val hit = if (sim) Some(DecoupledIO(Output(Bool()))) else None
+  })
   val cacheLinesValid = RegInit(VecInit.fill(setNum, lineNumPerSet)(false.B))
   val cacheLinesTag   = Reg(Vec(setNum, Vec(lineNumPerSet, UInt(tagWidth.W))))
   val cacheLinesData  = Reg(Vec(setNum, Vec(lineNumPerSet, UInt((lineSize * 8).W))))
@@ -56,7 +64,7 @@ class ICache(awidth: Int = 32, xlen: Int = 32, lineSize: Int = 4, lineNum: Int, 
 
   val need       = WireDefault(needCache(raddrReg))
   val indexInSet = WireDefault(cacheLinesTag(set).onlyIndexWhere(_ === set))
-  val cacheHit   = WireDefault(need && cacheLinesTag(set).contains(set) && cacheLinesValid(set)(indexInSet))
+  val cacheHit   = WireDefault(need && cacheLinesTag(set).contains(tag) && cacheLinesValid(set)(indexInSet))
   val cacheData  = WireDefault(cacheLinesData(set)(indexInSet))
 
   val availableIndex = cacheLinesValid(set).indexWhere(_ === false.B)
@@ -104,4 +112,9 @@ class ICache(awidth: Int = 32, xlen: Int = 32, lineSize: Int = 4, lineNum: Int, 
 
   io.out.valid      := isSendBack
   io.out.bits.rdata := Mux(need, cacheData(xlen - 1, 0), rdataReg)
+
+  if (sim) {
+    io.hit.get.valid := isCheck
+    io.hit.get.bits  := cacheHit
+  }
 }

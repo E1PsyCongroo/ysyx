@@ -3,7 +3,7 @@ PROJ_PATH = $(shell pwd)
 DESIGN ?= RVCPU
 SDC_FILE ?= $(PROJ_PATH)/$(DESIGN).sdc
 RTL_FILES ?= $(shell find $(PROJ_PATH)/* -name "*.sv")
-export CLK_FREQ_MHZ ?= 460
+export CLK_FREQ_MHZ ?= 470
 
 RESULT_DIR = $(PROJ_PATH)/result/$(DESIGN)-$(CLK_FREQ_MHZ)MHz
 SCRIPT_DIR = $(YOSYS_HOME)/scripts

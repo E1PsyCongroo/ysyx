@@ -19,15 +19,22 @@ static VNPC *rvcpu = nullptr;
 static VerilatedContext *contextp = nullptr;
 static VerilatedVcdC *tfp = nullptr;
 static uint32_t cur_inst;
-uint64_t g_nr_guest_cycle = 0;
+
+uint64_t g_guest_cycle = 0;
 uint64_t g_nr_fetch_inst = 0;
+
 InstStatistic g_insts[RISCV_TOTAL_TYPE] = {
     {"JMP", 0, 0}, {"BRANCH", 0, 0}, {"LOAD", 0, 0}, {"STORE", 0, 0},
     {"AL", 0, 0},  {"ECALL", 0, 0},  {"CSR", 0, 0},
 };
-uint64_t g_nr_exec_inst = 0;
-uint64_t g_nr_fetch_data_cycle = 0;
-uint64_t g_nr_fetch_data_count = 0;
+
+uint64_t g_nr_fetch_data = 0;
+uint64_t g_fetch_data_cycle = 0;
+
+uint64_t g_nr_cache_access = 0;
+uint64_t g_nr_cache_hit = 0;
+uint64_t g_cache_access_time = 0;
+uint64_t g_cache_miss_penalty = 0;
 
 enum {
   RVCPU_IDLE = 0,
@@ -90,14 +97,23 @@ void rvcpu_exit(void) {
   delete tfp;
   setlocale(LC_NUMERIC, "");
 #define NUMBERIC_FMT MUXDEF(CONFIG_TARGET_AM, "%", "%'") PRIu64
-  Log("Number of fetch instructions: " NUMBERIC_FMT, g_nr_fetch_inst);
-  Log("Number of fetch data: " NUMBERIC_FMT, g_nr_fetch_data_count);
-  Log("Average cycle of fetch data: %f",
-      (double)g_nr_fetch_data_cycle / g_nr_fetch_data_count);
-  Log("Number of exec instructions: " NUMBERIC_FMT, g_nr_exec_inst);
+  Log("total guest cycles = " NUMBERIC_FMT, g_guest_cycle);
+  Log("total fetch instructions = " NUMBERIC_FMT, g_nr_fetch_inst);
+  Log("CPI(cycle per instruction) = %f",
+      (double)g_guest_cycle / g_nr_fetch_inst);
+  Log("IPC(instruction per cycle) = %f",
+      (double)g_nr_fetch_inst / g_guest_cycle);
+  Log("total cache access = " NUMBERIC_FMT, g_nr_cache_access);
+  Log("total cache hit = " NUMBERIC_FMT, g_nr_cache_hit);
+  Log("cache hit ratio = %f", (double)g_nr_cache_hit/g_nr_cache_access);
+  Log("average cache access time = %f", (double)g_cache_access_time/g_nr_cache_access);
+  Log("average cache miss penalty = %f", (double)g_cache_miss_penalty/g_nr_cache_access);
+  Log("total fetch data = " NUMBERIC_FMT, g_nr_fetch_data);
+  Log("average cycle of fetch data = %f",
+      (double)g_fetch_data_cycle / g_nr_fetch_data);
   for (int i = 0; i < RISCV_TOTAL_TYPE; i++) {
-    Log("Instruction for %s type (count: " NUMBERIC_FMT
-        ", average exec cycle: %f)",
+    Log("instructions for %s type (total = " NUMBERIC_FMT
+        ", average exec cycle = %f)",
         g_insts[i].inst_type, g_insts[i].total_inst_count,
         ((double)g_insts[i].total_exec_cycle / g_insts[i].total_inst_count));
   }
@@ -117,7 +133,7 @@ void rvcpu_single_cycle(void) {
   tfp->dump(contextp->time());
 
   rvcpu_sync();
-  g_nr_guest_cycle++;
+  g_guest_cycle++;
 }
 
 void rvcpu_single_exec(void) {
@@ -127,13 +143,12 @@ void rvcpu_single_exec(void) {
   }
   g_nr_fetch_inst++;
   /* Exec Instruction */
-  uint64_t cur_cycle = g_nr_guest_cycle;
+  uint64_t cur_cycle = g_guest_cycle;
   while (rvcpu->rootp->NPC__DOT__IFU__DOT__state != RVCPU_SETADDR) {
     rvcpu_single_cycle();
   }
   void decode_inst(uint32_t inst, uint64_t exec_cycle);
-  decode_inst(cur_inst, g_nr_guest_cycle - cur_cycle);
-  g_nr_exec_inst++;
+  decode_inst(cur_inst, g_guest_cycle - cur_cycle);
 }
 
 void rvcpu_reset(void) {
@@ -142,7 +157,7 @@ void rvcpu_reset(void) {
     rvcpu_single_cycle();
   }
   rvcpu->reset = 0;
-  g_nr_guest_cycle = 0;
+  g_guest_cycle = 0;
 }
 
 uint32_t rvcpu_ifetch(vaddr_t *pc, int len) {
