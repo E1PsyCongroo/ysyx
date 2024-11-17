@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <cache.h>
 #include <common.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -7,14 +8,12 @@
 #include <time.h>
 #include <unistd.h>
 
-uint32_t cpu_read(uintptr_t addr, int len);
-void cpu_write(uintptr_t addr, int len, uint32_t data);
+uint32_t cpu_read(Cache_t *cache, uintptr_t addr, int len);
+void cpu_write(Cache_t *cache, uintptr_t addr, int len, uint32_t data);
 uint32_t cpu_uncache_read(uintptr_t addr, int len);
 void cpu_uncache_write(uintptr_t addr, int len, uint32_t data);
 
 void init_mem(void);
-void init_cache(int total_size_width, int associativity_width);
-void display_statistic(void);
 
 static uint32_t seed;
 static char *tracefile;
@@ -26,52 +25,25 @@ static void init_rand(uint32_t seed) {
 
 static inline uint32_t choose(uint32_t n) { return rand() % n; }
 
-struct _trace {
-  uint32_t addr : 28;
-  uint8_t len : 3;
-  bool is_write : 1;
-};
-
-struct trace {
-  struct _trace t;
-  uint32_t data;
-};
-
-static void trace_exec(struct trace *t, bool is_check) {
-  if (t->t.is_write) {
-    cpu_write(t->t.addr, t->t.len, t->data);
-    if (is_check) {
-      cpu_uncache_write(t->t.addr, t->t.len, t->data);
-    }
-  } else {
-    uint32_t ret = cpu_read(t->t.addr, t->t.len);
-    if (is_check) {
-      uint32_t ret_uncache = cpu_uncache_read(t->t.addr, t->t.len);
-      assert(ret == ret_uncache);
-    }
+static void trace_exec(Cache_t *cache, uintptr_t addr, bool is_check) {
+  uint32_t ret = cpu_read(cache, addr, 4);
+  if (is_check) {
+    uint32_t ret_uncache = cpu_uncache_read(addr, 4);
+    assert(ret == ret_uncache);
   }
 }
 
-static void random_trace(void) {
-  const int choose_len[] = {1, 2, 4};
-  struct trace t;
-
-  int i;
-  for (i = 0; i < 1000000; i++) {
-    t.t.len = choose_len[choose(sizeof(choose_len) / sizeof(choose_len[0]))];
-    t.t.addr = choose(MEM_SIZE) & ~(t.t.len - 1);
-    t.t.is_write = choose(2);
-    if (t.t.is_write)
-      t.data = rand();
-
-    trace_exec(&t, true);
+static void random_trace(Cache_t *cache) {
+  for (int i = 0; i < 1000000; i++) {
+    uint32_t addr = choose(MEM_SIZE);
+    trace_exec(cache, addr, true);
   }
 }
 
-static void check_diff(void) {
+static void check_diff(Cache_t *cache) {
   uintptr_t addr = 0;
   for (addr = 0; addr < MEM_SIZE; addr += 4) {
-    uint32_t ret = cpu_read(addr, 4);
+    uint32_t ret = cpu_read(cache, addr, 4);
     uint32_t ret_uncache = cpu_uncache_read(addr, 4);
     assert(ret == ret_uncache);
   }
@@ -108,10 +80,10 @@ static void parse_args(int argc, char *argv[]) {
   }
 }
 
-void replay_trace(void) {
+void replay_trace(Cache_t *cache) {
   if (tracefile == NULL) {
-    random_trace();
-    check_diff();
+    random_trace(cache);
+    check_diff(cache);
     printf("Random test pass!\n");
     return;
   }
@@ -121,10 +93,12 @@ void replay_trace(void) {
   FILE *fp = popen(cmd, "r");
   assert(fp);
 
-  struct trace t;
-  while (fread(&t.t, sizeof(t.t), 1, fp) == 1) {
-    // do not care data
-    trace_exec(&t, false);
+  uint32_t count;
+  assert(fread(&count, sizeof(count), 1, fp) == 1);
+  while (count--) {
+    uint32_t addr;
+    assert(fread(&addr, sizeof(addr), 1, fp) == 1);
+    trace_exec(cache, addr, false);
   }
 
   pclose(fp);
@@ -136,11 +110,11 @@ int main(int argc, char *argv[]) {
   init_rand(seed);
   init_mem();
 
-  init_cache(14, 2);
+  Cache_t *cache = init_cache(6, 0, 2);
 
-  replay_trace();
+  replay_trace(cache);
 
-  display_statistic();
+  display_statistic(cache);
 
   return 0;
 }

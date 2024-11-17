@@ -31,6 +31,26 @@ config SERIAL_INPUT_FIFO
   default n
 endif # HAS_SERIAL
 
+menuconfig HAS_UART
+  bool "Enable uart"
+  default y
+
+if HAS_UART
+config UART_PORT
+  depends on HAS_PORT_IO
+  hex "Port address of the uart controller"
+  default 0x3f8
+
+config UART_MMIO
+  hex "MMIO address of the uart controller"
+  default 0x10000000
+
+config UART_INPUT_FIFO
+  bool "Enable input FIFO with /tmp/nemu.uart"
+  default n
+endif # HAS_UART
+
+
 menuconfig HAS_TIMER
   bool "Enable timer"
   default y

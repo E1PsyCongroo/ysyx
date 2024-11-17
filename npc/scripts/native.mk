@@ -48,7 +48,7 @@ gdb: run-env
 	gdb -s $(BINARY) --args $(NPC_EXEC)
 
 perf: $(BINARY)
-	@make -C $(NPC_HOME)/../am-kernels/benchmarks/microbench ARCH=riscv32e-ysyxsoc NPCFLAGS="-b" mainargs=train run
+	@make -C $(NPC_HOME)/../am-kernels/benchmarks/microbench ARCH=riscv32e-ysyxsoc NPCFLAGS="-b" mainargs=train run | tee perf-log/log_$(shell date +"%Y-%m-%dT%H_%M_%S").txt
 
 sta: $(V_FILE_GEN)
 	@make -C $(YOSYS_DIR) sta

@@ -15,6 +15,8 @@ CFLAGS += $(addprefix -I, $(INCPATH))
 CFLAGS += -Wall -Werror -MMD -std=gnu11 -ggdb
 LDFLAGS += -lm
 
+all: $(TARGET)
+
 # 生成 .o 文件时，将输出放入 BUILD_DIR 中
 $(BUILD_DIR)/%.o: ./src/%.c
 	@echo + CC $<
@@ -36,3 +38,5 @@ run: $(TARGET)
 # 清理目标
 clean:
 	-rm -rf $(BUILD_DIR)
+
+.PHONY: all run clean

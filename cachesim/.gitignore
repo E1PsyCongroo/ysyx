@@ -7,3 +7,6 @@
 !*.cc
 !.gitignore
 !README.md
+!*.py
+!*.bz2
+!.sh

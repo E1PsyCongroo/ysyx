@@ -8,15 +8,24 @@
 #define macro_exp2(x) (1 << (x))
 #define mask_with_len(x) (macro_exp2(x) - 1)
 
-#define MEM_SIZE (1 << 25) // 1MB
-#define BLOCK_WIDTH 6      // 64B
-#define BLOCK_SIZE macro_exp2(BLOCK_WIDTH)
+#define SRAM_BASE 0x0f000000
+#define SRAM_SIZE 0x01000000
 
-#define ADDRWIDTH 32
+#define MROM_BASE 0x20000000
+#define MROM_SIZE 0x1000
+
+#define PSRAM_BASE 0x80000000
+#define PSRAM_SIZE 0x20000000
+
+#define SDRAM_BASE 0xa0000000
+#define SDRAM_SIZE 0x20000000
+
+#define MEM_SIZE macro_exp2(24)
+
+#define ADDR_WIDTH 32
 #define XLEN 32
-#define byte_offset_width ((int)log2(XLEN / 8))
-#define block_offset_with (BLOCK_WIDTH - byte_offset_width)
+#define WORD_WIDTH ((int)log2(XLEN / 8))
 
-void cycle_increase(int n);
-
+#define ACCESS_TIME 2.275815
+#define MISS_TIME 33.495026
 #endif

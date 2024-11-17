@@ -2,6 +2,7 @@
 import re
 import subprocess
 import sys
+from copy import copy
 import openpyxl
 from openpyxl import load_workbook
 
@@ -27,6 +28,12 @@ patterns = {
     "CSR指令平均执行周期": r"instructions for CSR type \(total = [\d,]+, average exec cycle = ([\d.]+)\)",
     "ECALL/EBREAK指令计数器": r"instructions for ECALL type \(total = ([\d,]+),",
     "ECALL/EBREAK指令平均执行周期": r"instructions for ECALL type \(total = [\d,]+, average exec cycle = ([\d.]+)\)",
+    "缓存访问次数": r"total cache access = ([\d,]+)",
+    "缓存命中次数": r"total cache hit = ([\d,]+)",
+    "缓存命中率": r"cache hit ratio = ([\d.]+)",
+    "平均缓存访问时间": r"average cache access time = ([\d.]+)",
+    "平均缓存惩罚时间": r"average cache miss penalty = ([\d.]+)",
+    "AMAT": r"cache AMAT = ([\d.]+)"
 }
 
 
@@ -68,6 +75,13 @@ def update_excel(file_path, commit_hash, description, data):
         sheet.append(
             [commit_hash, description, None, None] + [data[key] for key in patterns.keys()]
         )
+
+        # 获取上一行的格式
+        if next_row > 2:  # 确保有上一行可以参考
+            for col in range(1, sheet.max_column + 1):
+                previous_cell = sheet.cell(row=next_row - 1, column=col)
+                current_cell = sheet.cell(row=next_row, column=col)
+                current_cell.style = copy(previous_cell.style)
 
         # 保存Excel文件
         workbook.save(file_path)

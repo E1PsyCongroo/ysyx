@@ -122,10 +122,15 @@ class RVCPU(
     TracerDataFetch.io.finish := LSU.io.out.fire
 
     ICache.io.hit.get.ready := true.B
+    val needCache = WireDefault(
+      Dev.MROMAddr.in(ICache.io.in.bits.raddr) || Dev.FlashAddr.in(ICache.io.in.bits.raddr) || Dev.ChipLinkMEMAddr.in(
+        ICache.io.in.bits.raddr
+      ) || Dev.PSRAMAddr.in(ICache.io.in.bits.raddr) || Dev.SDRAMAddr.in(ICache.io.in.bits.raddr),
+    )
     val CacheTracer = Module(new CacheTracer)
     CacheTracer.io.cacheHit          := RegEnable(ICache.io.hit.get.bits, ICache.io.hit.get.fire)
-    CacheTracer.io.cacheAccessStart  := ICache.io.in.fire
-    CacheTracer.io.cacheAccessFinish := ICache.io.out.fire
+    CacheTracer.io.cacheAccessStart  := ICache.io.in.fire && needCache
+    CacheTracer.io.cacheAccessFinish := ICache.io.out.fire && needCache
     CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
     CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rready
   }
@@ -218,10 +223,11 @@ class NPC(
     TracerDataFetch.io.finish := LSU.io.out.fire
 
     ICache.io.hit.get.ready := true.B
+    val needCache   = Dev.memoryAddr.in(ICache.io.in.bits.raddr)
     val CacheTracer = Module(new CacheTracer)
     CacheTracer.io.cacheHit          := RegEnable(ICache.io.hit.get.bits, ICache.io.hit.get.fire)
-    CacheTracer.io.cacheAccessStart  := ICache.io.in.fire
-    CacheTracer.io.cacheAccessFinish := ICache.io.out.fire
+    CacheTracer.io.cacheAccessStart  := ICache.io.in.fire && needCache
+    CacheTracer.io.cacheAccessFinish := ICache.io.out.fire && needCache
     CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
     CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rready
   }
