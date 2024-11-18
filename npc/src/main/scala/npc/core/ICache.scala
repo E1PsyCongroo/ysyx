@@ -51,7 +51,7 @@ class ICache(
 
   val cacheLinesValid = RegInit(VecInit.fill(setNum, associativity)(false.B))
   val cacheLinesTag   = Reg(Vec(setNum, Vec(associativity, UInt(tagWidth.W))))
-  val cacheLinesData  = Reg(Vec(setNum, Vec(associativity, Vec(1 << offsetWidth, UInt(32.W)))))
+  val cacheLinesData  = Reg(Vec(setNum, Vec(associativity, Vec(wordPerBlock, UInt(xlen.W)))))
 
   val arfire = io.master.arvalid && io.master.arready
   val rfire  = io.master.rvalid && io.master.rready
@@ -71,28 +71,32 @@ class ICache(
   val tag      = raddrReg(tagWidth + setWidth + blockWidth - 1, setWidth + blockWidth)
 
   val need       = WireDefault(needCache(raddrReg))
+  val burst      = WireDefault(supportBurst(raddrReg))
   val indexInSet = WireDefault(cacheLinesTag(set).onlyIndexWhere(_ === set))
   val cacheHit   = WireDefault(cacheLinesTag(set).contains(tag) && cacheLinesValid(set)(indexInSet))
-  val cacheData  = WireDefault(cacheLinesData(set)(indexInSet))
+  val cacheData  = WireDefault(cacheLinesData(set)(indexInSet)(offset))
 
-  val availableIndex = cacheLinesValid(set).indexWhere(_ === false.B)
-  val readCount      = if (offsetWidth != 0) RegInit(0.U(offsetWidth.W)) else 0.U
+  val readCount     = if (offsetWidth != 0) RegInit(0.U((offsetWidth + 1).W)) else 0.U
   val nextReadCount = readCount + 1.U
   if (offsetWidth != 0) {
     readCount := MuxCase(
-      0.U,
+      readCount,
       Seq(
-        (isFetch && rfire) -> nextReadCount,
-        isFetch -> readCount
+        isIdle -> 0.U,
+        rfire -> nextReadCount
       )
     )
   }
+  val lastTranmit = (nextReadCount === wordPerBlock.U) || !need
+
+  val availableIndex = Reg(UInt(associativityWidth.W))
+  availableIndex                       := Mux(isCheck, cacheLinesValid(set).indexWhere(_ === false.B), availableIndex)
   cacheLinesValid(set)(availableIndex) := Mux(rfire && need, true.B, cacheLinesValid(set)(availableIndex))
   cacheLinesTag(set)(availableIndex)   := Mux(rfire && need, tag, cacheLinesTag(set)(availableIndex))
-  cacheLinesData(set)(availableIndex)(readCount) := Mux(
+  cacheLinesData(set)(availableIndex)(readCount(offsetWidth - 1, 0)) := Mux(
     rfire && need,
     io.master.rdata,
-    cacheLinesData(set)(availableIndex)(readCount)
+    cacheLinesData(set)(availableIndex)(readCount(offsetWidth - 1, 0))
   )
   val rdataReg = RegEnable(io.master.rdata, rfire)
 
@@ -101,12 +105,19 @@ class ICache(
       sIdle -> Mux(io.in.fire, sCheck, sIdle),
       sCheck -> Mux(need && cacheHit, sSendBack, sSetAddr),
       sSetAddr -> Mux(arfire, sFetch, sSetAddr),
-      sFetch -> Mux(rfire && nextReadCount == wordPerBlock.U, sSendBack, sFetch),
+      sFetch -> MuxCase(
+        sFetch,
+        Seq(
+          (rfire && !burst && !lastTranmit) -> sSetAddr,
+          (rfire && lastTranmit) -> sSendBack
+        )
+      ),
       sSendBack -> Mux(io.out.fire, sIdle, sSendBack)
     )
   )
 
   assert(!rfire || io.master.rresp === "b00".U(2.W))
+  assert(!(rfire && lastTranmit) || io.master.rlast)
   /* IO bind */
   io.master.awvalid := false.B
   io.master.awaddr  := DontCare
@@ -123,9 +134,13 @@ class ICache(
   io.master.bready := false.B
 
   io.master.arvalid := isSetAddr
-  io.master.araddr  := raddrReg
+  io.master.araddr := Mux(
+    need,
+    raddrReg(xlen - 1, blockWidth) ## Fill(blockWidth, "b0".U) + (readCount << 2.U),
+    raddrReg
+  )
   io.master.arid    := 0.U
-  io.master.arlen   := (wordPerBlock - 1).U
+  io.master.arlen   := Mux(need && burst, (wordPerBlock - 1).U, 0.U)
   io.master.arsize  := "b010".U
   io.master.arburst := "b01".U
 
@@ -134,7 +149,7 @@ class ICache(
   io.in.ready := isIdle
 
   io.out.valid      := isSendBack
-  io.out.bits.rdata := Mux(need, cacheData(offset), rdataReg)
+  io.out.bits.rdata := Mux(need, cacheData, rdataReg)
 
   if (sim) {
     io.hit.get.valid := isCheck
