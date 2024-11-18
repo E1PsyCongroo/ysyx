@@ -72,7 +72,7 @@ class ICache(
 
   val need       = WireDefault(needCache(raddrReg))
   val burst      = WireDefault(supportBurst(raddrReg))
-  val indexInSet = WireDefault(cacheLinesTag(set).onlyIndexWhere(_ === set))
+  val indexInSet = WireDefault(cacheLinesTag(set).onlyIndexWhere(_ === tag))
   val cacheHit   = WireDefault(cacheLinesTag(set).contains(tag) && cacheLinesValid(set)(indexInSet))
   val cacheData  = WireDefault(cacheLinesData(set)(indexInSet)(offset))
 

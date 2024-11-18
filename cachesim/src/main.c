@@ -126,6 +126,14 @@ int main(int argc, char *argv[]) {
   display_statistic(cache);
   free(cache);
 
+  cache = init_cache(6, 0, 5);
+  printf("replay_trace total_size_width: %d associativity_width: %d "
+         "block_width: %d:\n",
+         6, 0, 5);
+  replay_trace(cache);
+  display_statistic(cache);
+  free(cache);
+
   cache = init_cache(6, 0, 6);
   printf("replay_trace total_size_width: %d associativity_width: %d "
          "block_width: %d:\n",

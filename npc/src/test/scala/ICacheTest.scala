@@ -17,7 +17,7 @@ class ICacheTest extends Module {
 
   val memSize = 128  // byte
   val mem = Mem(memSize / 4, UInt(32.W))
-  val dut = Module(new ICache(7, 32, 4, 16, 1, addr => true.B, false))
+  val dut = Module(new ICache(7, 32, 6, 5, 0, addr => true.B, addr => false.B, false))
 
   val raddrReg = RegEnable(dut.io.master.araddr, dut.io.master.arvalid && dut.io.master.arready)
 
