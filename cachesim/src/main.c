@@ -111,10 +111,84 @@ int main(int argc, char *argv[]) {
   init_mem();
 
   Cache_t *cache = init_cache(6, 0, 2);
-
+  printf("replay_trace total_size_width: %d associativity_width: %d "
+         "block_width: %d:\n",
+         6, 0, 2);
   replay_trace(cache);
-
   display_statistic(cache);
+  free(cache);
+
+  cache = init_cache(6, 0, 4);
+  printf("replay_trace total_size_width: %d associativity_width: %d "
+         "block_width: %d:\n",
+         6, 0, 4);
+  replay_trace(cache);
+  display_statistic(cache);
+  free(cache);
+
+  cache = init_cache(6, 0, 6);
+  printf("replay_trace total_size_width: %d associativity_width: %d "
+         "block_width: %d:\n",
+         6, 0, 6);
+  replay_trace(cache);
+  display_statistic(cache);
+  free(cache);
+
+  cache = init_cache(6, 2, 4);
+  printf("replay_trace total_size_width: %d associativity_width: %d "
+         "block_width: %d:\n",
+         6, 2, 4);
+  replay_trace(cache);
+  display_statistic(cache);
+  free(cache);
+
+  cache = init_cache(4, 0, 4);
+  printf("replay_trace total_size_width: %d associativity_width: %d "
+         "block_width: %d:\n",
+         4, 0, 4);
+  replay_trace(cache);
+  display_statistic(cache);
+  free(cache);
+
+  cache = init_cache(4, 0, 2);
+  printf("replay_trace total_size_width: %d associativity_width: %d "
+         "block_width: %d:\n",
+         4, 0, 2);
+  replay_trace(cache);
+  display_statistic(cache);
+  free(cache);
+
+  cache = init_cache(4, 2, 2);
+  printf("replay_trace total_size_width: %d associativity_width: %d "
+         "block_width: %d:\n",
+         4, 2, 2);
+  replay_trace(cache);
+  display_statistic(cache);
+  free(cache);
+
+  cache = init_cache(5, 0, 2);
+  printf("replay_trace total_size_width: %d associativity_width: %d "
+         "block_width: %d:\n",
+         5, 0, 2);
+  replay_trace(cache);
+  display_statistic(cache);
+  free(cache);
+
+  cache = init_cache(5, 0, 4);
+  printf("replay_trace total_size_width: %d associativity_width: %d "
+         "block_width: %d:\n",
+         5, 0, 4);
+  replay_trace(cache);
+  display_statistic(cache);
+  free(cache);
+
+  cache = init_cache(5, 0, 5);
+  printf("replay_trace total_size_width: %d associativity_width: %d "
+         "block_width: %d:\n",
+         5, 0, 5);
+  replay_trace(cache);
+  display_statistic(cache);
+  free(cache);
 
   return 0;
 }

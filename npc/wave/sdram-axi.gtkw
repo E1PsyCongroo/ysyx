@@ -1,0 +1,137 @@
+[*]
+[*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
+[*] Sun Nov 17 15:02:38 2024
+[*]
+[dumpfile] "/home/focused_xy/cs/ysyx/npc/build/npc-sdram-axi-wave.fst"
+[dumpfile_mtime] "Sun Nov 17 14:10:59 2024"
+[dumpfile_size] 607304
+[savefile] "/home/focused_xy/cs/ysyx/npc/wave/sdram-axi.gtkw"
+[timestart] 72788
+[size] 2560 1330
+[pos] -1 -1
+*-2.700000 72836 569530 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[treeopen] TOP.ysyxSoCFull.
+[treeopen] TOP.ysyxSoCFull.asic.
+[treeopen] TOP.ysyxSoCFull.asic.cpu.
+[treeopen] TOP.ysyxSoCFull.asic.cpu.cpu.
+[treeopen] TOP.ysyxSoCFull.asic.cpu.cpu.EXU.
+[treeopen] TOP.ysyxSoCFull.asic.lkeyboard.
+[treeopen] TOP.ysyxSoCFull.asic.lpsram.mpsram.u0.
+[treeopen] TOP.ysyxSoCFull.asic.lsdram_axi.
+[treeopen] TOP.ysyxSoCFull.asic.lsdram_axi.msdram.
+[treeopen] TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.
+[treeopen] TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.u_axi.
+[treeopen] TOP.ysyxSoCFull.asic.lspi.mspi.u0_spi_top.
+[treeopen] TOP.ysyxSoCFull.asic.luart.muart.Uregs.
+[treeopen] TOP.ysyxSoCFull.sdram.
+[sst_width] 381
+[signals_width] 514
+[sst_expanded] 1
+[sst_vpaned_height] 493
+@28
+TOP.clock
+@200
+-CPU Core
+@28
+TOP.ysyxSoCFull.asic.cpu.reset
+@200
+-IFU
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.IFU.state[1:0]
+@22
+TOP.ysyxSoCFull.asic.cpu.cpu.IFU.io_in_bits_nextPc[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.IFU.pc[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.IFU.instruction[31:0]
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.IFU.io_out_valid
+@200
+-EXU
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.EXU.state[1:0]
+@22
+TOP.ysyxSoCFull.asic.cpu.cpu.EXU.CSRControl.io_csrAddr[11:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.EXU.CSRControl.io_csrOut[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.EXU.CSRControl.io_csrIn[31:0]
+@200
+-LSU
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.state[2:0]
+@22
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_awaddr[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_wdata[31:0]
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_wstrb[3:0]
+@22
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_araddr[31:0]
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_arsize[2:0]
+@22
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rdata[31:0]
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_awvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_wvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_bvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_arvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rvalid
+@200
+-Dev
+-Arbiter
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.state[1:0]
+@22
+TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.transAddr[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.io_fanIn_0_araddr[31:0]
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.io_fanIn_0_arvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.io_fanIn_1_arvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.selectedReg
+TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.isIdle
+@200
+-SDRAM_CTL
+@821
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.u_core.dbg_state[79:0]
+@22
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.inport_araddr_i[31:0]
+@28
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.inport_arvalid_i
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.inport_rvalid_o
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.u_axi.resp_is_read_w
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.u_axi.ram_accept_i
+@22
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.u_core.state_q[3:0]
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.u_core.delay_r[3:0]
+@28
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.u_core.ram_accept_w
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.u_core.ram_ack_w
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.u_core.ack_q
+@22
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.u_core.rd_q[3:0]
+@28
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.u_axi.resp_valid_w
+@22
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.inport_awaddr_i[31:0]
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.inport_wdata_i[31:0]
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.inport_wstrb_i[3:0]
+@28
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.inport_awvalid_i
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.inport_wvalid_i
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.inport_bvalid_o
+TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.inport_bready_i
+@200
+-SDRAM
+@28
+TOP.ysyxSoCFull.sdram.clk
+@22
+TOP.ysyxSoCFull.sdram.sdram0.rdata[15:0]
+@28
+TOP.ysyxSoCFull.sdram.cmd[2:0]
+TOP.ysyxSoCFull.sdram.state[1:0]
+@22
+TOP.ysyxSoCFull.sdram.io_dqm[3:0]
+@28
+TOP.ysyxSoCFull.sdram.sdram0.wen
+TOP.ysyxSoCFull.sdram.sdram0.ren
+TOP.ysyxSoCFull.sdram.sdram1.wen
+[pattern_trace] 1
+[pattern_trace] 0

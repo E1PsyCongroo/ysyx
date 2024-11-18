@@ -3,6 +3,7 @@
 
 #include <debug.h>
 #include <math.h>
+#include <stdint.h>
 #include <utils.h>
 
 #define macro_exp2(x) (1 << (x))
@@ -24,7 +25,7 @@
 
 #define ADDR_WIDTH 32
 #define XLEN 32
-#define WORD_WIDTH ((int)log2(XLEN / 8))
+#define WORD_WIDTH ((uint32_t)log2(XLEN / 8))
 
 #define ACCESS_TIME 2.275815
 #define MISS_TIME 33.495026

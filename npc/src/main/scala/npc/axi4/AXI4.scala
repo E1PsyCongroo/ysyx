@@ -281,7 +281,7 @@ class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Modu
   val wfire  = io.fanIn(selectedReg).wvalid && io.fanIn(selectedReg).wready
   val bfire  = io.fanIn(selectedReg).bvalid && io.fanIn(selectedReg).bready
   val arfire = io.fanIn(selectedReg).arvalid && io.fanIn(selectedReg).arready
-  val rfire  = io.fanIn(selectedReg).rvalid && io.fanIn(selectedReg).rready
+  val rfire  = io.fanIn(selectedReg).rvalid && io.fanIn(selectedReg).rready && io.fanIn(selectedReg).rlast
 
   state := MuxLookup(state, sIdle)(
     Seq(

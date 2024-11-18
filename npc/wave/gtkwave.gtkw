@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
-[*] Thu Nov  7 06:57:21 2024
+[*] Mon Nov 18 02:10:42 2024
 [*]
 [dumpfile] "/home/focused_xy/cs/ysyx/npc/build/npc-wave.fst"
-[dumpfile_mtime] "Thu Nov  7 06:56:20 2024"
-[dumpfile_size] 3810756
+[dumpfile_mtime] "Mon Nov 18 02:09:21 2024"
+[dumpfile_size] 6728652
 [savefile] "/home/focused_xy/cs/ysyx/npc/wave/gtkwave.gtkw"
-[timestart] 86
+[timestart] 1
 [size] 2880 1510
 [pos] -1 -1
-*-9.000000 2538 569530 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-6.000000 88 569530 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.ysyxSoCFull.
 [treeopen] TOP.ysyxSoCFull.asic.
@@ -17,8 +17,6 @@
 [treeopen] TOP.ysyxSoCFull.asic.cpu.cpu.
 [treeopen] TOP.ysyxSoCFull.asic.cpu.cpu.EXU.
 [treeopen] TOP.ysyxSoCFull.asic.lkeyboard.
-[treeopen] TOP.ysyxSoCFull.asic.lpsram.
-[treeopen] TOP.ysyxSoCFull.asic.lpsram.mpsram.
 [treeopen] TOP.ysyxSoCFull.asic.lpsram.mpsram.u0.
 [treeopen] TOP.ysyxSoCFull.asic.lspi.mspi.u0_spi_top.
 [treeopen] TOP.ysyxSoCFull.asic.luart.muart.Uregs.
@@ -26,7 +24,7 @@
 [sst_width] 381
 [signals_width] 514
 [sst_expanded] 1
-[sst_vpaned_height] 531
+[sst_vpaned_height] 570
 @28
 TOP.clock
 @200
@@ -44,69 +42,10 @@ TOP.ysyxSoCFull.asic.cpu.cpu.IFU.instruction[31:0]
 @28
 TOP.ysyxSoCFull.asic.cpu.cpu.IFU.io_out_valid
 @200
--ICache
-@c00022
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
+-Cache
 @28
-(0)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(1)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(2)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(3)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(4)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(5)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(6)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(7)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(8)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(9)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(10)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(11)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(12)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(13)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(14)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(15)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(16)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(17)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(18)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(19)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(20)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(21)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(22)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(23)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(24)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(25)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(26)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(27)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(28)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(29)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(30)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-(31)TOP.ysyxSoCFull.asic.cpu.cpu.ICache.raddrReg[31:0]
-@1401200
--group_end
-@28
+TOP.ysyxSoCFull.asic.cpu.cpu.ICache.state[2:0]
 TOP.ysyxSoCFull.asic.cpu.cpu.ICache.need
-@22
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_1_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_2_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_3_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_4_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_5_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_6_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_7_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_8_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_9_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_10_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_11_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_12_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_13_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_14_0[25:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesTag_15_0[25:0]
-@28
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesValid_0_0
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesValid_1_0
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesValid_2_0
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesValid_3_0
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesValid_4_0
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheLinesValid_5_0
 TOP.ysyxSoCFull.asic.cpu.cpu.ICache.cacheHit
 @200
 -EXU
@@ -151,62 +90,71 @@ TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.io_fanIn_1_arvalid
 TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.selectedReg
 TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.isIdle
 @200
--PSRAM_MR
-@22
-TOP.ysyxSoCFull.asic.lpsram.mpsram.u0.MR.counter[7:0]
+-SDRAM_CTL
+-SDRAM
 @28
-TOP.ysyxSoCFull.asic.lpsram.mpsram.u0.MR.state
-@200
--PSRAM
-@28
-TOP.ysyxSoCFull.psram.isReadData
-TOP.ysyxSoCFull.psram.isWrite
-TOP.ysyxSoCFull.psram.io_ce_n
-TOP.ysyxSoCFull.psram.io_sck
-TOP.ysyxSoCFull.psram.count[2:0]
-TOP.ysyxSoCFull.psram.state[2:0]
-@800022
-TOP.ysyxSoCFull.psram.io_dio[3:0]
-@1001200
--group_end
+TOP.ysyxSoCFull.sdram.clk
+TOP.ysyxSoCFull.sdram.cmd[2:0]
+TOP.ysyxSoCFull.sdram.state[1:0]
 @22
-TOP.ysyxSoCFull.psram.inst[7:0]
+TOP.ysyxSoCFull.sdram.io_dqm[3:0]
 @c00022
-TOP.ysyxSoCFull.psram.addr[23:0]
+TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
 @28
-(0)TOP.ysyxSoCFull.psram.addr[23:0]
-(1)TOP.ysyxSoCFull.psram.addr[23:0]
-(2)TOP.ysyxSoCFull.psram.addr[23:0]
-(3)TOP.ysyxSoCFull.psram.addr[23:0]
-(4)TOP.ysyxSoCFull.psram.addr[23:0]
-(5)TOP.ysyxSoCFull.psram.addr[23:0]
-(6)TOP.ysyxSoCFull.psram.addr[23:0]
-(7)TOP.ysyxSoCFull.psram.addr[23:0]
-(8)TOP.ysyxSoCFull.psram.addr[23:0]
-(9)TOP.ysyxSoCFull.psram.addr[23:0]
-(10)TOP.ysyxSoCFull.psram.addr[23:0]
-(11)TOP.ysyxSoCFull.psram.addr[23:0]
-(12)TOP.ysyxSoCFull.psram.addr[23:0]
-(13)TOP.ysyxSoCFull.psram.addr[23:0]
-(14)TOP.ysyxSoCFull.psram.addr[23:0]
-(15)TOP.ysyxSoCFull.psram.addr[23:0]
-(16)TOP.ysyxSoCFull.psram.addr[23:0]
-(17)TOP.ysyxSoCFull.psram.addr[23:0]
-(18)TOP.ysyxSoCFull.psram.addr[23:0]
-(19)TOP.ysyxSoCFull.psram.addr[23:0]
-(20)TOP.ysyxSoCFull.psram.addr[23:0]
-(21)TOP.ysyxSoCFull.psram.addr[23:0]
-(22)TOP.ysyxSoCFull.psram.addr[23:0]
-(23)TOP.ysyxSoCFull.psram.addr[23:0]
+(0)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(1)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(2)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(3)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(4)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(5)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(6)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(7)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(8)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(9)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(10)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(11)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(12)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(13)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(14)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(15)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(16)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(17)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(18)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(19)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(20)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(21)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(22)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(23)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(24)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(25)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(26)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(27)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(28)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(29)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(30)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
+(31)TOP.ysyxSoCFull.sdram.sdram0.raddr[31:0]
 @1401200
 -group_end
 @22
-TOP.ysyxSoCFull.psram.data[31:0]
-@200
--SPI
+TOP.ysyxSoCFull.sdram.sdram0.rdata[15:0]
 @28
-TOP.ysyxSoCFull.asic.lspi.state[2:0]
-@200
--SDRAM
+TOP.ysyxSoCFull.sdram.sdram0.ren
+@22
+TOP.ysyxSoCFull.sdram.sdram1.waddr[31:0]
+TOP.ysyxSoCFull.sdram.sdram0.wdata[15:0]
+@28
+TOP.ysyxSoCFull.sdram.sdram0.dqm[1:0]
+TOP.ysyxSoCFull.sdram.sdram0.wen
+@22
+TOP.ysyxSoCFull.sdram.sdram1.raddr[31:0]
+TOP.ysyxSoCFull.sdram.sdram1.rdata[15:0]
+@28
+TOP.ysyxSoCFull.sdram.sdram1.ren
+@22
+TOP.ysyxSoCFull.sdram.sdram1.waddr[31:0]
+TOP.ysyxSoCFull.sdram.sdram1.wdata[15:0]
+@28
+TOP.ysyxSoCFull.sdram.sdram0.dqm[1:0]
+TOP.ysyxSoCFull.sdram.sdram1.wen
 [pattern_trace] 1
 [pattern_trace] 0

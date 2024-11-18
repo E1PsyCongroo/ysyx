@@ -11,13 +11,6 @@
 void mem_read(uintptr_t block_num, uint32_t block_width, uint8_t *buf);
 void mem_write(uintptr_t block_num, uint32_t block_width, const uint8_t *buf);
 
-static inline void access_increase(Cache_t *cache, bool hit) {
-  cache->access_cnt++;
-  if (!hit) {
-    cache->miss_cnt++;
-  }
-}
-
 static inline uint32_t get_word_index(Cache_t *cache, uint32_t addr) {
   return ((addr) >> WORD_WIDTH) &
          mask_with_len(cache->block_width - WORD_WIDTH);
@@ -32,6 +25,7 @@ static inline uint32_t get_cache_tag(Cache_t *cache, uint32_t addr) {
 }
 
 static size_t check_in_cache(Cache_t *cache, uintptr_t addr) {
+  total_time_inc(cache, ACCESS_TIME);
   int set_index = get_set_index(cache, addr);
   int cache_tag = get_cache_tag(cache, addr);
   int invalid_index = -1;
@@ -45,8 +39,9 @@ static size_t check_in_cache(Cache_t *cache, uintptr_t addr) {
     }
   }
 
+  access_increase(cache, false);
+  total_time_inc(cache, MISS_TIME * (cache->block_width / WORD_WIDTH));
   if (invalid_index == -1) {
-    access_increase(cache, false);
     invalid_index = rand() % cache->associativity;
     if (cache->cset[set_index][invalid_index].dirty) {
       int victim_tag = cache->cset[set_index][invalid_index].tag;
@@ -85,9 +80,10 @@ void cache_write(Cache_t *cache, uintptr_t addr, uint32_t data,
 
 Cache_t *init_cache(int total_size_width, int associativity_width,
                     int block_width) {
-  assert(total_size_width > block_width);
+  assert(total_size_width >= block_width);
   assert(associativity_width >= 0);
   Cache_t *cache = malloc(sizeof(Cache_t));
+  memset(cache, 0, sizeof(Cache_t));
   cache->block_width = block_width;
   cache->blocksz = pow(2, block_width);
   cache->blocknum = pow(2, total_size_width - block_width);
@@ -112,11 +108,22 @@ Cache_t *init_cache(int total_size_width, int associativity_width,
   return cache;
 }
 
+void destructs_cache(Cache_t *cache) {
+  for (int i = 0; i < cache->setnum; i++) {
+    for (int j = 0; j < cache->associativity; j++) {
+      free(cache->cset[i][j].data);
+    }
+    free(cache->cset[i]);
+  }
+  free(cache->cset);
+  free(cache);
+}
+
 void display_statistic(Cache_t *cache) {
   uint64_t hit_count = cache->access_cnt - cache->miss_cnt;
   printf("Access count: %lu\n", cache->access_cnt);
   printf("Hit count: %lu\n", hit_count);
   double hit_rate = (double)hit_count / cache->access_cnt;
   printf("Hit Rate: %f%%\n", hit_rate * 100);
-  printf("AMAT: %f\n", ACCESS_TIME + (1. - hit_rate) * MISS_TIME);
+  printf("AMAT: %f\n", cache->total_time / cache->access_cnt);
 }

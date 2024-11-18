@@ -35,12 +35,13 @@ class RVCPU(
       awidth,
       xlen,
       4,
-      16,
-      1,
+      2,
+      0,
       addr =>
         Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
           addr
         ) || Dev.SDRAMAddr.in(addr),
+      Dev.SDRAMAddr.in,
       sim
     )
   )
@@ -112,7 +113,7 @@ class RVCPU(
     LSUTracer.io.ren   := LSURfire
     LSUTracer.io.waddr := RegEnable(LSU.io.master.awaddr, LSUAwfire)
     LSUTracer.io.wdata := RegEnable(LSU.io.master.wdata, LSUWfire)
-    LSUTracer.io.wlen  := RegEnable(LSU.io.master.awsize, LSUAwfire)
+    LSUTracer.io.wlen  := RegEnable(1.U << LSU.io.master.awsize, LSUAwfire)
     LSUTracer.io.wen   := LSUBfire
 
     val TracerDataFetch = Module(new TracerDataFetch)
@@ -125,7 +126,7 @@ class RVCPU(
     val needCache = WireDefault(
       Dev.MROMAddr.in(ICache.io.in.bits.raddr) || Dev.FlashAddr.in(ICache.io.in.bits.raddr) || Dev.ChipLinkMEMAddr.in(
         ICache.io.in.bits.raddr
-      ) || Dev.PSRAMAddr.in(ICache.io.in.bits.raddr) || Dev.SDRAMAddr.in(ICache.io.in.bits.raddr),
+      ) || Dev.PSRAMAddr.in(ICache.io.in.bits.raddr) || Dev.SDRAMAddr.in(ICache.io.in.bits.raddr)
     )
     val CacheTracer = Module(new CacheTracer)
     CacheTracer.io.cacheHit          := RegEnable(ICache.io.hit.get.bits, ICache.io.hit.get.fire)
@@ -169,7 +170,7 @@ class NPC(
   EXU.io.LSUIn <> LSU.io.in
   LSU.io.out <> EXU.io.LSUOut
 
-  val ICache = Module(new ICache(awidth, xlen, 4, 16, 1, Dev.memoryAddr.in, sim))
+  val ICache = Module(new ICache(awidth, xlen, 4, 2, 0, Dev.memoryAddr.in, sim), _ => false.B)
   ICache.io.in <> IFU.io.ICacheIn
   ICache.io.out <> IFU.io.ICacheOut
 
