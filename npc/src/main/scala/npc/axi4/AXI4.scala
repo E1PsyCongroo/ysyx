@@ -271,7 +271,7 @@ class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Modu
   val requests      = waddrRequests | wdataRequests | readRequests
 
   val selected           = PriorityEncoder(requests)
-  val selectedReg        = RegEnable(selected, 0.U, isIdle)
+  val selectedReg        = RegEnable(selected, isIdle)
   val isWaddrTransaction = waddrRequests(selected)
   val isWdataTransaction = wdataRequests(selected)
   val isReadTransaction  = readRequests(selected)
@@ -310,7 +310,7 @@ class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Modu
   )
   val matches     = VecInit(fanOutSeq.map(_(transAddr))).asUInt
   val fanOutValid = isWaitWdata || isWaitBresp || isWaitRresp
-  val outSelect   = RegEnable(PriorityEncoder(matches), 0.U, isIdle)
+  val outSelect   = RegEnable(PriorityEncoder(matches), isIdle)
 
   for (i <- 0 until fanInNum) {
     io.fanIn(i) <> AXI4.none
@@ -321,5 +321,21 @@ class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Modu
 
   when(fanOutValid) {
     io.fanIn(selectedReg) <> io.fanOut(outSelect)
+  }
+}
+
+object AXI4Interconnect {
+  def apply(
+    fanIn: Seq[AXI4MasterIO],
+    fanOutArea: Seq[UInt => Bool],
+    fanOut: Seq[AXI4MasterIO]
+  ) = {
+    val AXI4Interconnect = Module(new AXI4Interconnect(fanIn.length, fanOutArea))
+    for (i <- 0 until fanIn.length) {
+      AXI4Interconnect.io.fanIn(i) <> fanIn(i)
+    }
+    for (i <- 0 until fanOut.length) {
+      AXI4Interconnect.io.fanOut(i) <> fanOut(i)
+    }
   }
 }

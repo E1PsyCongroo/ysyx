@@ -115,7 +115,7 @@ static void rvcpu_sync(void) {
   /* synchronizing instruction with rvcpu */
   cur_inst =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__instruction;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IDU__DOT__in_instruction;
 }
 
 void rvcpu_init(const char *wave_file, int argc, char **argv) {

@@ -6,23 +6,23 @@ import rvcpu.utility._
 import chisel3._
 import chisel3.util._
 
-class IFUOut(xlen: Int = 32) extends Bundle {
+class IFUOut(xlen: Int) extends Bundle {
   val pc          = Output(UInt(xlen.W))
   val instruction = Output(UInt(32.W))
 }
 
-class IFUIO(awidth: Int = 32, xlen: Int = 32) extends Bundle {
-  val in     = Flipped(DecoupledIO(new WBUOut))
-  val out    = DecoupledIO(new IFUOut)
-  val ICacheIn = DecoupledIO(new ICacheIn(awidth))
+class IFUIO(awidth: Int, xlen: Int) extends Bundle {
+  val in        = Flipped(DecoupledIO(new WBUOut(xlen)))
+  val out       = DecoupledIO(new IFUOut(xlen))
+  val ICacheIn  = DecoupledIO(new ICacheIn(awidth))
   val ICacheOut = Flipped(DecoupledIO(new ICacheOut(xlen)))
 }
 
-class IFU(awidth: Int = 32, xlen: Int = 32, PCReset: BigInt = BigInt("80000000", 16)) extends Module {
-  val io     = IO(new IFUIO(awidth, xlen))
+class IFU(awidth: Int, xlen: Int, PCReset: BigInt) extends Module {
+  val io = IO(new IFUIO(awidth, xlen))
 
   val pc          = RegEnable(io.in.bits.nextPc, PCReset.U, io.in.fire)
-  val instruction = RegEnable(io.ICacheOut.bits.rdata, Instruction.nop.bitPat.value.U, io.ICacheOut.fire)
+  val instruction = RegEnable(io.ICacheOut.bits.rdata, io.ICacheOut.fire)
 
   val sIdle :: sSetAddr :: sFetch :: sExec :: Nil = Enum(4)
 
@@ -46,8 +46,7 @@ class IFU(awidth: Int = 32, xlen: Int = 32, PCReset: BigInt = BigInt("80000000",
   io.ICacheIn.bits.raddr := pc
   io.ICacheOut.ready     := isFetch
 
-  io.in.ready := isIdle
-
+  io.in.ready             := isIdle
   io.out.valid            := isExec
   io.out.bits.pc          := pc
   io.out.bits.instruction := instruction

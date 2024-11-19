@@ -3,7 +3,7 @@ package rvcpu.core
 import chisel3._
 import chisel3.util._
 
-class IDUOut(xlen: Int = 32) extends Bundle {
+class IDUOut(xlen: Int) extends Bundle {
   val pc   = Output(UInt(xlen.W))
   val rd1  = Output(UInt(xlen.W))
   val rd2  = Output(UInt(xlen.W))
@@ -26,9 +26,9 @@ class IDUOut(xlen: Int = 32) extends Bundle {
   }
 }
 
-class IDUIO(xlen: Int = 32, extentionE: Boolean = true) extends Bundle {
-  val in  = Flipped(DecoupledIO(new IFUOut))
-  val out = DecoupledIO(new IDUOut)
+class IDUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
+  val in  = Flipped(DecoupledIO(new IFUOut(xlen)))
+  val out = DecoupledIO(new IDUOut(xlen))
   val RegFileAccess = new Bundle {
     val ra1 = Output(UInt(if (extentionE) 4.W else 5.W))
     val ra2 = Output(UInt(if (extentionE) 4.W else 5.W))
@@ -38,32 +38,41 @@ class IDUIO(xlen: Int = 32, extentionE: Boolean = true) extends Bundle {
     val rd2 = Input(UInt(xlen.W))
   }
   val fence_i  = Output(Bool())
-  val isEnd    = Output(Bool())
-  val exitCode = Output(UInt(32.W))
+  val isEnd    = if (sim) Some(Output(Bool())) else None
+  val exitCode = if (sim) Some(Output(UInt(32.W))) else None
 }
 
-class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
-  val io = IO(new IDUIO(xlen, extentionE))
+class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) extends Module {
+  val io = IO(new IDUIO(xlen, extentionE, sim))
 
-  val sExec :: Nil = Enum(1)
-  val state        = RegInit(sExec)
-  state := MuxLookup(state, sExec)(
+  val in =  RegEnable(io.in.bits, io.in.fire)
+
+  val sIdle :: sDecode :: Nil = Enum(2)
+
+  val state    = RegInit(sIdle)
+  val isIdle   = state === sIdle
+  val isDecode = state === sDecode
+
+  state := MuxLookup(state, sIdle)(
     Seq(
-      sExec -> sExec
+      sIdle -> Mux(io.in.fire, sDecode, sIdle),
+      sDecode -> Mux(io.out.fire, sIdle, sDecode),
     )
   )
 
-  val isExec = state === sExec
-
   val ImmGen  = Module(new ImmGen(xlen))
-  val Control = Module(new Control)
+  val Control = Module(new Control(sim))
 
-  val instruction = io.in.bits.instruction
+  val instruction = in.instruction
   val rs1         = instruction(19, 15)
   val rs2         = instruction(24, 20)
   val rd          = instruction(11, 7)
 
-  io.RegFileAccess.ra1 := Mux(Control.io.isEnd, 10.U(5.W), rs1)
+  if (sim) {
+    io.RegFileAccess.ra1 := Mux(Control.io.isEnd.get, 10.U, rs1)
+  } else {
+    io.RegFileAccess.ra1 := rs1
+  }
   io.RegFileAccess.ra2 := rs2
 
   ImmGen.io.instruction := instruction
@@ -71,9 +80,9 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
 
   Control.io.instruction := instruction
 
-  io.in.ready                 := io.out.ready
-  io.out.valid                := io.in.valid
-  io.out.bits.pc              := io.in.bits.pc
+  io.in.ready                 := isIdle
+  io.out.valid                := isDecode
+  io.out.bits.pc              := in.pc
   io.out.bits.rd1             := io.RegFileReturn.rd1
   io.out.bits.rd2             := io.RegFileReturn.rd2
   io.out.bits.wa              := rd
@@ -92,6 +101,9 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
   io.out.bits.control.memWen  := Control.io.memWen
   io.out.bits.control.memOp   := Control.io.memOp
   io.fence_i                  := Control.io.fence_i
-  io.isEnd                    := Control.io.isEnd
-  io.exitCode                 := io.RegFileReturn.rd1
+
+  if (sim) {
+    io.isEnd.get                := Control.io.isEnd.get
+    io.exitCode.get             := io.RegFileReturn.rd1
+  }
 }

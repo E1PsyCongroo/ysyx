@@ -77,7 +77,7 @@ class ICache(
   val cacheData      = Wire(UInt(xlen.W))
   val availableIndex = Reg(UInt(associativityWidth.W))
 
-  val readCount     = if (offsetWidth != 0) RegInit(0.U((offsetWidth + 1).W)) else 0.U
+  val readCount     = RegInit(0.U((offsetWidth + 1).W))
   val nextReadCount = readCount + 1.U
   readCount := Mux(isIdle, 0.U, Mux(rfire, nextReadCount, readCount))
   val lastTranmit = (nextReadCount === wordPerBlock.U) || !need

@@ -40,7 +40,7 @@ static size_t check_in_cache(Cache_t *cache, uintptr_t addr) {
   }
 
   access_increase(cache, false);
-  total_time_inc(cache, MISS_TIME);
+  total_time_inc(cache, MISS_TIME * (cache->block_width / WORD_WIDTH));
   if (invalid_index == -1) {
     invalid_index = rand() % cache->associativity;
     if (cache->cset[set_index][invalid_index].dirty) {

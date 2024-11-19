@@ -270,7 +270,7 @@ object EndControlField extends DecodeField[Instruction, Bool] {
   }
 }
 
-class ControlIO extends Bundle {
+class ControlIO(sim: Boolean) extends Bundle {
   val instruction = Input(UInt(32.W))
   val immType     = Output(UInt(ImmType.getWidth.W))
   val regWe       = Output(Bool())
@@ -286,11 +286,11 @@ class ControlIO extends Bundle {
   val memWen      = Output(Bool())
   val memOp       = Output(UInt(MemOp.getWidth.W))
   val fence_i     = Output(Bool())
-  val isEnd       = Output(Bool())
+  val isEnd       = if (sim) Some(Output(Bool())) else None
 }
 
-class Control extends Module {
-  val io = IO(new ControlIO)
+class Control(sim: Boolean) extends Module {
+  val io = IO(new ControlIO(sim))
   import InstructionMap._
 
   val possiblePatterns = Seq(
@@ -378,5 +378,7 @@ class Control extends Module {
   io.memWen  := decodeResult(MemWenControlField)
   io.memOp   := decodeResult(MemOpControlField)
   io.fence_i := decodeResult(FENCE_IField)
-  io.isEnd   := decodeResult(EndControlField)
+  if (sim) {
+    io.isEnd.get := decodeResult(EndControlField)
+  }
 }

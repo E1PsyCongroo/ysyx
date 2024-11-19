@@ -7,13 +7,13 @@ import chisel3.experimental.BundleLiterals._
 
 import ImmType._
 
-class ImmGenIO(xlen: Int = 32) extends Bundle {
+class ImmGenIO(xlen: Int) extends Bundle {
   val instruction = Input(UInt(32.W))
   val immType     = Input(UInt(ImmType.getWidth.W))
   val imm         = Output(UInt(xlen.W))
 }
 
-class ImmGen(xlen: Int = 32) extends Module {
+class ImmGen(xlen: Int) extends Module {
   val io     = IO(new ImmGenIO(xlen))
   val isImmI = io.immType === immI
   val isImmS = io.immType === immS

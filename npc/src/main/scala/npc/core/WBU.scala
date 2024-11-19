@@ -3,13 +3,13 @@ package rvcpu.core
 import chisel3._
 import chisel3.util._
 
-class WBUOut(xlen: Int = 32) extends Bundle {
+class WBUOut(xlen: Int) extends Bundle {
   val nextPc = Output(UInt(xlen.W))
 }
 
-class WBUIO(xlen: Int = 32, extentionE: Boolean = true) extends Bundle {
-  val in  = Flipped(DecoupledIO(new EXUOut))
-  val out = DecoupledIO(new WBUOut)
+class WBUIO(xlen: Int, extentionE: Boolean) extends Bundle {
+  val in  = Flipped(DecoupledIO(new EXUOut(xlen)))
+  val out = DecoupledIO(new WBUOut(xlen))
   val RegFileAccess = new Bundle {
     val wa = Output(UInt(if (extentionE) 4.W else 5.W))
     val we = Output(Bool())
@@ -17,24 +17,29 @@ class WBUIO(xlen: Int = 32, extentionE: Boolean = true) extends Bundle {
   }
 }
 
-class WBU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
+class WBU(xlen: Int, extentionE: Boolean) extends Module {
   val io = IO(new WBUIO(xlen, extentionE))
 
-  val sExec :: Nil = Enum(1)
-  val state        = RegInit(sExec)
-  state := MuxLookup(state, sExec)(
+  val in      = RegEnable(io.in.bits, io.in.fire)
+  val wa      = in.wa
+  val pcCom   = in.pcCom
+  val aluOut  = in.aluOut
+  val memOut  = in.memOut
+  val csrOut  = in.csrOut
+  val control = in.control
+
+  val sIdle :: sWriteBack :: Nil = Enum(2)
+
+  val state       = RegInit(sIdle)
+  val isIdle      = state === sIdle
+  val isWriteBack = state === sWriteBack
+
+  state := MuxLookup(state, sIdle)(
     Seq(
-      sExec -> sExec
+      sIdle -> Mux(io.in.fire, sWriteBack, sIdle),
+      sWriteBack -> Mux(io.out.fire, sIdle, sWriteBack)
     )
   )
-
-  val isExec = state === sExec
-
-  val pcCom   = io.in.bits.pcCom
-  val aluOut  = io.in.bits.aluOut
-  val memOut  = io.in.bits.memOut
-  val csrOut  = io.in.bits.csrOut
-  val control = io.in.bits.control
 
   val pcSrc = MuxCase(
     pcCom,
@@ -53,10 +58,10 @@ class WBU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
     ).map { case (key, data) => (control.wbSrc === key, data) }
   )
 
-  io.in.ready         := io.out.ready
-  io.out.valid        := io.in.valid
+  io.in.ready         := isIdle
+  io.out.valid        := isWriteBack
   io.out.bits.nextPc  := pcSrc
-  io.RegFileAccess.wa := io.in.bits.wa
-  io.RegFileAccess.we := io.in.bits.control.regWe && io.out.valid
+  io.RegFileAccess.wa := wa
+  io.RegFileAccess.we := control.regWe && isWriteBack
   io.RegFileAccess.wd := wbSrc
 }

@@ -3,7 +3,6 @@ package rvcpu.core
 import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
-import rvcpu.core.CSR.CSRAddress.{mvendorid => mvendorid}
 
 object CSR {
   object PrivMode {
@@ -80,7 +79,7 @@ class CSRControl(xlen: Int) extends Module {
           case CSRAddress.mstatus   => RegInit(0x1800.U(xlen.W))
           case CSRAddress.mvendorid => WireDefault(0x79737978.U(xlen.W))
           case CSRAddress.marchid   => WireDefault(0x0.U(xlen.W))
-          case _                    => RegInit(0.U(xlen.W))
+          case _                    => Reg(UInt(xlen.W))
         }
       )
     )

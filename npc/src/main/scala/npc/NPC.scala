@@ -23,7 +23,7 @@ class RVCPU(
   val io = IO(new RVCPUIO(xlen))
 
   val IFU = Module(new IFU(awidth, xlen, PCReset))
-  val IDU = Module(new IDU(xlen, extentionE))
+  val IDU = Module(new IDU(xlen, extentionE, sim))
   val EXU = Module(new EXU(xlen))
   val LSU = Module(new LSU(xlen))
   val WBU = Module(new WBU(xlen, extentionE))
@@ -35,7 +35,7 @@ class RVCPU(
       awidth,
       xlen,
       6,
-      6,
+      5,
       0,
       addr =>
         Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
@@ -65,15 +65,15 @@ class RVCPU(
   StageConnect(EXU.io.out, WBU.io.in)
   StageConnect(WBU.io.out, IFU.io.in)
 
-  val AXI4Interconnect = Module(new AXI4Interconnect(2, Seq(Dev.CLINTAddr.in, !Dev.CLINTAddr.in(_))))
-  AXI4Interconnect.io.fanIn(0) <> ICache.io.master
-  AXI4Interconnect.io.fanIn(1) <> LSU.io.master
-  AXI4Interconnect.io.fanOut(0) <> CLINT.io
-  AXI4Interconnect.io.fanOut(1) <> io.master
+  AXI4Interconnect(
+    Seq(ICache.io.master, LSU.io.master),
+    Seq(Dev.CLINTAddr.in, !Dev.CLINTAddr.in(_)),
+    Seq(CLINT.io, io.master)
+  )
   io.slave <> AXI4.none
 
   if (sim) {
-    EndControl(clock, IDU.io.isEnd, IDU.io.exitCode)
+    EndControl(clock, IDU.io.isEnd.get, IDU.io.exitCode.get)
 
     val devs = Seq(
       Dev.CLINTAddr,
@@ -123,7 +123,7 @@ class RVCPU(
     TracerDataFetch.io.start  := LSU.io.in.fire && LSU.io.in.bits.ren
     TracerDataFetch.io.finish := LSU.io.out.fire
 
-    ICache.io.hit.get.ready := true.B
+    ICache.io.hit.get.ready  := true.B
     ICache.io.last.get.ready := true.B
     val needCache = WireDefault(
       Dev.MROMAddr.in(ICache.io.in.bits.raddr) || Dev.FlashAddr.in(ICache.io.in.bits.raddr) || Dev.ChipLinkMEMAddr.in(
@@ -165,7 +165,7 @@ class NPC(
   sim:        Boolean = true)
     extends Module {
   val IFU = Module(new IFU(awidth, xlen, PCReset))
-  val IDU = Module(new IDU(xlen, extentionE))
+  val IDU = Module(new IDU(xlen, extentionE, sim))
   val EXU = Module(new EXU(xlen))
   val LSU = Module(new LSU(xlen))
   val WBU = Module(new WBU(xlen, extentionE))
@@ -195,20 +195,14 @@ class NPC(
   StageConnect(EXU.io.out, WBU.io.in)
   StageConnect(WBU.io.out, IFU.io.in)
 
-  val AXI4Interconnect = Module(
-    new AXI4Interconnect(
-      2,
-      Seq(Dev.mtimeAddr.in, Dev.uartAddr.in, addr => !Dev.mtimeAddr.in(addr) && !Dev.uartAddr.in(addr))
-    )
+  AXI4Interconnect(
+    Seq(ICache.io.master, LSU.io.master),
+    Seq(Dev.mtimeAddr.in, Dev.uartAddr.in, addr => !Dev.mtimeAddr.in(addr) && !Dev.uartAddr.in(addr)),
+    Seq(CLINT.io, Uart.io, AXI4Mem.io)
   )
-  AXI4Interconnect.io.fanIn(0) <> ICache.io.master
-  AXI4Interconnect.io.fanIn(1) <> LSU.io.master
-  AXI4Interconnect.io.fanOut(0) <> CLINT.io
-  AXI4Interconnect.io.fanOut(1) <> Uart.io
-  AXI4Interconnect.io.fanOut(2) <> AXI4Mem.io
 
   if (sim) {
-    EndControl(clock, IDU.io.isEnd, IDU.io.exitCode)
+    EndControl(clock, IDU.io.isEnd.get, IDU.io.exitCode.get)
 
     val devs = Seq(
       Dev.mtimeAddr,
