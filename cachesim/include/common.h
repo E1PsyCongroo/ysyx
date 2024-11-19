@@ -27,6 +27,6 @@
 #define XLEN 32
 #define WORD_WIDTH ((uint32_t)log2(XLEN / 8))
 
-#define ACCESS_TIME 2.275815
-#define MISS_TIME 33.495026
+#define ACCESS_TIME 2.064507
+#define MISS_TIME 75.683682
 #endif

@@ -17,9 +17,13 @@ class RegFile(xlen: Int = 32, addrWidth: Int = 4) extends Module {
   require(xlen >= 32 && addrWidth > 0)
   val regNum = 1 << addrWidth
   val io     = IO(new RegFileIO(xlen, addrWidth))
-  val reg = Reg(Vec((1 << addrWidth) - 1, UInt(xlen.W)))
-  io.rd1     := Mux(io.ra1 =/= 0.U, reg(io.ra1 - 1.U), 0.U)
-  io.rd2     := Mux(io.ra2 =/= 0.U, reg(io.ra2 - 1.U), 0.U)
 
-  reg(io.wa - 1.U) := Mux(io.we && io.wa =/= 0.U, io.wd, reg(io.wa - 1.U))
+  val reg = WireDefault(0.U(xlen.W)) +: Seq.fill(regNum - 1)(Reg(UInt(xlen.W)))
+  for (i <- 1 until regNum) {
+    reg(i) := Mux(io.we && io.wa === i.U, io.wd, reg(i))
+  }
+
+  val regLookup = (0 until regNum).map { i => i.U -> reg(i) }.toSeq
+  io.rd1 := MuxLookup(io.ra1, 0.U)(regLookup)
+  io.rd2 := MuxLookup(io.ra2, 0.U)(regLookup)
 }

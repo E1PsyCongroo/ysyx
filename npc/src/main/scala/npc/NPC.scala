@@ -35,7 +35,7 @@ class RVCPU(
       awidth,
       xlen,
       6,
-      5,
+      6,
       0,
       addr =>
         Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
