@@ -29,7 +29,7 @@ uint64_t g_nr_fetch_inst = 0;
 
 InstStatistic g_insts[RISCV_TOTAL_TYPE] = {
     {"JMP", 0, 0}, {"BRANCH", 0, 0}, {"LOAD", 0, 0}, {"STORE", 0, 0},
-    {"AL", 0, 0},  {"ECALL", 0, 0},  {"CSR", 0, 0},
+    {"AL", 0, 0},  {"ECALL", 0, 0},  {"CSR", 0, 0}, {"FENCE_I", 0, 0}
 };
 
 uint64_t g_nr_fetch_data = 0;

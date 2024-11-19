@@ -35,7 +35,7 @@ class RVCPU(
       awidth,
       xlen,
       6,
-      6,
+      5,
       0,
       addr =>
         Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
@@ -47,6 +47,7 @@ class RVCPU(
   )
   ICache.io.in <> IFU.io.ICacheIn
   ICache.io.out <> IFU.io.ICacheOut
+  ICache.io.flush := IDU.io.fence_i
 
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
   RegFile.io.ra1           := IDU.io.RegFileAccess.ra1
@@ -123,6 +124,7 @@ class RVCPU(
     TracerDataFetch.io.finish := LSU.io.out.fire
 
     ICache.io.hit.get.ready := true.B
+    ICache.io.last.get.ready := true.B
     val needCache = WireDefault(
       Dev.MROMAddr.in(ICache.io.in.bits.raddr) || Dev.FlashAddr.in(ICache.io.in.bits.raddr) || Dev.ChipLinkMEMAddr.in(
         ICache.io.in.bits.raddr
@@ -132,8 +134,8 @@ class RVCPU(
     CacheTracer.io.cacheHit          := RegEnable(ICache.io.hit.get.bits, ICache.io.hit.get.fire)
     CacheTracer.io.cacheAccessStart  := ICache.io.in.fire && needCache
     CacheTracer.io.cacheAccessFinish := ICache.io.out.fire && needCache
-    CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
-    CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rready
+    CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid && needCache
+    CacheTracer.io.cacheFetchFinish  := ICache.io.last.get.fire && ICache.io.last.get.bits && needCache
   }
 }
 
@@ -173,6 +175,7 @@ class NPC(
   val ICache = Module(new ICache(awidth, xlen, 6, 5, 0, Dev.memoryAddr.in, _ => false.B, sim))
   ICache.io.in <> IFU.io.ICacheIn
   ICache.io.out <> IFU.io.ICacheOut
+  ICache.io.flush := IDU.io.fence_i
 
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
   RegFile.io.ra1           := IDU.io.RegFileAccess.ra1
@@ -229,7 +232,7 @@ class NPC(
     CacheTracer.io.cacheHit          := RegEnable(ICache.io.hit.get.bits, ICache.io.hit.get.fire)
     CacheTracer.io.cacheAccessStart  := ICache.io.in.fire && needCache
     CacheTracer.io.cacheAccessFinish := ICache.io.out.fire && needCache
-    CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
-    CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rready
+    CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid && needCache
+    CacheTracer.io.cacheFetchFinish  := ICache.io.last.get.fire && ICache.io.last.get.bits && needCache
   }
 }

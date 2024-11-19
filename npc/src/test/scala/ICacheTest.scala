@@ -23,6 +23,7 @@ class ICacheTest extends Module {
 
   dut.io.in <> io.req
   dut.io.out.ready := true.B
+  dut.io.flush := false.B
   dut.io.master <> AXI4.none
   dut.io.master.arready := true.B
   dut.io.master.rvalid := true.B

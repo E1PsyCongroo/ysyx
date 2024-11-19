@@ -28,6 +28,8 @@ patterns = {
     "CSR指令平均执行周期": r"instructions for CSR type \(total = [\d,]+, average exec cycle = ([\d.]+)\)",
     "ECALL/EBREAK指令计数器": r"instructions for ECALL type \(total = ([\d,]+),",
     "ECALL/EBREAK指令平均执行周期": r"instructions for ECALL type \(total = [\d,]+, average exec cycle = ([\d.]+)\)",
+    "FENCE.I指令计数器": r"instructions for FENCE_I type \(total = ([\d,]+),",
+    "FENCE.I指令平均执行周期": r"instructions for FENCE_I type \(total = [\d,]+, average exec cycle = ([\d.]+)\)",
     "缓存访问次数": r"total cache access = ([\d,]+)",
     "缓存命中次数": r"total cache hit = ([\d,]+)",
     "缓存命中率": r"cache hit ratio = ([\d.]+)",

@@ -37,6 +37,7 @@ class IDUIO(xlen: Int = 32, extentionE: Boolean = true) extends Bundle {
     val rd1 = Input(UInt(xlen.W))
     val rd2 = Input(UInt(xlen.W))
   }
+  val fence_i  = Output(Bool())
   val isEnd    = Output(Bool())
   val exitCode = Output(UInt(32.W))
 }
@@ -90,6 +91,7 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true) extends Module {
   io.out.bits.control.memRen  := Control.io.memRen
   io.out.bits.control.memWen  := Control.io.memWen
   io.out.bits.control.memOp   := Control.io.memOp
+  io.fence_i                  := Control.io.fence_i
   io.isEnd                    := Control.io.isEnd
   io.exitCode                 := io.RegFileReturn.rd1
 }

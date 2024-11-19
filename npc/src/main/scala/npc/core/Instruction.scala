@@ -24,7 +24,7 @@ object Instruction {
     val RType, IType, SType, BType, UType, JType = Value
   }
 
-  object InstricitonMap {
+  object InstructionMap {
     val LUI   = Instruction(opcode = BitPat("b0110111"))
     val AUIPC = Instruction(opcode = BitPat("b0010111"))
     val JAL   = Instruction(opcode = BitPat("b1101111"))
@@ -79,6 +79,9 @@ object Instruction {
       rs2    = BitPat("b00001"),
       rd     = BitPat("b00000")
     )
+
+    val FENCE_I = Instruction(opcode = BitPat("b0001111"), funct3 = BitPat("b001"))
+
     val CSRRW  = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b001"))
     val CSRRS  = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b010"))
     val CSRRC  = Instruction(opcode = BitPat("b1110011"), funct3 = BitPat("b011"))

@@ -29,7 +29,7 @@ $(BUILD_DIR)/%.o: ./src/%.c
 $(TARGET): $(OBJFILES)
 	@echo + LD $@
 	@mkdir -p $(BUILD_DIR)
-	@$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	@$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 # 运行目标
 run: $(TARGET)

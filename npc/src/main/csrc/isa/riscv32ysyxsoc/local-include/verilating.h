@@ -20,6 +20,7 @@ enum {
   RISCV_AL,
   RISCV_SYSTEM,
   RISCV_CSR,
+  RISCV_FENCE_I,
   RISCV_TOTAL_TYPE,
 };
 
