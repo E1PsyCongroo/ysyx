@@ -13,6 +13,26 @@ class RVCPUIO(awidth: Int = 32, xlen: Int = 32) extends Bundle {
   val slave     = Flipped(new AXI4MasterIO)
 }
 
+object StageConnect {
+  var arch = "pipeline"
+
+  def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T]) = {
+    if (arch == "single") {
+      right.bits  := left.bits
+      left.ready  := true.B
+      right.valid := true.B
+    } else if (arch == "multi") {
+      right <> left
+    } else if (arch == "pipeline") {
+      left.ready := right.ready
+      right.bits := RegEnable(left.bits, left.fire)
+      right.valid := RegNext(Mux(left.fire, true.B, Mux(right.fire, false.B, right.valid)))
+    } else if (arch == "ooo") {
+      right <> Queue(left, 16)
+    }
+  }
+}
+
 class RVCPU(
   awidth:     Int     = 32,
   xlen:       Int     = 32,
@@ -66,7 +86,7 @@ class RVCPU(
   StageConnect(WBU.io.out, IFU.io.in)
 
   AXI4Interconnect(
-    Seq(ICache.io.master, LSU.io.master),
+    Seq(LSU.io.master, ICache.io.master),
     Seq(Dev.CLINTAddr.in, !Dev.CLINTAddr.in(_)),
     Seq(CLINT.io, io.master)
   )
@@ -136,24 +156,6 @@ class RVCPU(
     CacheTracer.io.cacheAccessFinish := ICache.io.out.fire && needCache
     CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid && needCache
     CacheTracer.io.cacheFetchFinish  := ICache.io.last.get.fire && ICache.io.last.get.bits && needCache
-  }
-}
-
-object StageConnect {
-  var arch = "multi"
-
-  def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T]) = {
-    if (arch == "single") {
-      right.bits  := left.bits
-      left.ready  := true.B
-      right.valid := true.B
-    } else if (arch == "multi") {
-      right <> left
-    } else if (arch == "pipeline") {
-      right <> RegEnable(left, left.fire)
-    } else if (arch == "ooo") {
-      right <> Queue(left, 16)
-    }
   }
 }
 

@@ -84,7 +84,7 @@ class CSRControl(xlen: Int) extends Module {
       )
     )
     .toMap
-  val csrRead  = WireDefault(MuxCase(0.U, csrs.toSeq.map { case (key, data) => (key === io.csrAddr, data) }))
+  val csrRead  = WireDefault(MuxLookup(io.csrAddr, 0.U)(csrs.toSeq.map { case (addr, csr) => (addr.value.asUInt, csr) }))
   val csrSet   = WireDefault(csrRead | io.csrIn)
   val csrClear = WireDefault(csrRead & (~io.csrIn))
   val csrCommonWrite = WireDefault(

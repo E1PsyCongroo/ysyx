@@ -29,8 +29,7 @@ uint64_t g_nr_fetch_inst = 0;
 
 InstStatistic g_insts[RISCV_TOTAL_TYPE] = {
     {"JMP", 0, 0}, {"BRANCH", 0, 0}, {"LOAD", 0, 0}, {"STORE", 0, 0},
-    {"AL", 0, 0},  {"ECALL", 0, 0},  {"CSR", 0, 0}, {"FENCE_I", 0, 0}
-};
+    {"AL", 0, 0},  {"ECALL", 0, 0},  {"CSR", 0, 0},  {"FENCE_I", 0, 0}};
 
 uint64_t g_nr_fetch_data = 0;
 uint64_t g_fetch_data_cycle = 0;
@@ -169,7 +168,9 @@ void rvcpu_exit(void) {
     Log("instructions for %s type (total = " NUMBERIC_FMT
         ", average exec cycle = %f)",
         g_insts[i].inst_type, g_insts[i].total_inst_count,
-        ((double)g_insts[i].total_exec_cycle / g_insts[i].total_inst_count));
+        g_insts[i].total_inst_count ? ((double)g_insts[i].total_exec_cycle /
+                                       g_insts[i].total_inst_count)
+                                    : 0);
   }
 }
 
