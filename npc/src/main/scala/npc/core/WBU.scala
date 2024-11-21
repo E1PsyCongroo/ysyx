@@ -8,7 +8,7 @@ class WBUOut(xlen: Int) extends Bundle {
 }
 
 class WBUIO(xlen: Int, extentionE: Boolean) extends Bundle {
-  val in  = Flipped(DecoupledIO(new EXUOut(xlen)))
+  val in  = Flipped(DecoupledIO(new LSUOut(xlen, extentionE)))
   val out = DecoupledIO(new WBUOut(xlen))
   val RegFileAccess = new Bundle {
     val wa = Output(UInt(if (extentionE) 4.W else 5.W))
@@ -17,10 +17,10 @@ class WBUIO(xlen: Int, extentionE: Boolean) extends Bundle {
   }
 }
 
-class WBU(xlen: Int, extentionE: Boolean) extends Module {
+class WBU(xlen: Int, extentionE: Boolean, PCReset: BigInt) extends Module {
   val io = IO(new WBUIO(xlen, extentionE))
 
-  val in      = RegEnable(io.in.bits, io.in.fire)
+  val in      = WireDefault(io.in.bits)
   val wa      = in.wa
   val pcCom   = in.pcCom
   val aluOut  = in.aluOut
@@ -28,16 +28,18 @@ class WBU(xlen: Int, extentionE: Boolean) extends Module {
   val csrOut  = in.csrOut
   val control = in.control
 
-  val sIdle :: sWriteBack :: Nil = Enum(2)
+  val sIdle :: sWriteBack :: sReset :: Nil = Enum(3)
 
-  val state       = RegInit(sIdle)
+  val state       = RegInit(sReset)
   val isIdle      = state === sIdle
   val isWriteBack = state === sWriteBack
+  val isReset     = state === sReset
 
   state := MuxLookup(state, sIdle)(
     Seq(
       sIdle -> Mux(io.in.fire, sWriteBack, sIdle),
-      sWriteBack -> Mux(io.out.fire, sIdle, sWriteBack)
+      sWriteBack -> Mux(io.out.fire, sIdle, sWriteBack),
+      sReset -> Mux(io.out.fire, sIdle, sReset)
     )
   )
 
@@ -59,8 +61,8 @@ class WBU(xlen: Int, extentionE: Boolean) extends Module {
   )
 
   io.in.ready         := isIdle
-  io.out.valid        := isWriteBack
-  io.out.bits.nextPc  := pcSrc
+  io.out.valid        := isWriteBack || isReset
+  io.out.bits.nextPc  := Mux(isReset, PCReset.U, pcSrc)
   io.RegFileAccess.wa := wa
   io.RegFileAccess.we := control.regWe && isWriteBack
   io.RegFileAccess.wd := wbSrc

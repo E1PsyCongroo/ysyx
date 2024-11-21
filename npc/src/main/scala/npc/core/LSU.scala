@@ -40,25 +40,36 @@ object SizeFeild extends DecodeField[MemControlPattern, UInt] {
   }
 }
 
-class LSUOut(xlen: Int) extends Bundle {
-  val bresp = Output(UInt(2.W))
-  val rdata = Output(UInt(xlen.W))
+class LSUOut(xlen: Int, extentionE: Boolean) extends Bundle {
+  val wa     = Output(UInt(if (extentionE) 4.W else 5.W))
+  val pcCom  = Output(UInt(xlen.W))
+  val aluOut = Output(UInt(xlen.W))
+  val memOut = Output(UInt(xlen.W))
+  val csrOut = Output(UInt(xlen.W))
+  val control = new Bundle {
+    val regWe = Bool()
+    val pcSrc = Output(UInt(PCSrcFrom.getWidth.W))
+    val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
+  }
 }
 
-class LSUIO(xlen: Int) extends Bundle {
-  val in     = Flipped(DecoupledIO(new LSUIn(xlen)))
-  val out    = DecoupledIO(new LSUOut(xlen))
+class LSUIO(xlen: Int, extentionE: Boolean) extends Bundle {
+  val in     = Flipped(DecoupledIO(new EXUOut(xlen, extentionE)))
+  val out    = DecoupledIO(new LSUOut(xlen, extentionE))
   val master = new AXI4MasterIO
 }
 
-class LSU(xlen: Int) extends Module {
-  val io = IO(new LSUIO(xlen))
+class LSU(xlen: Int, extentionE: Boolean) extends Module {
+  val io = IO(new LSUIO(xlen, extentionE))
 
-  val in    = RegEnable(io.in.bits, io.in.fire)
-  val memOp = in.memOp
-  val raddr = in.raddr
-  val waddr = in.waddr
-  val wdata = in.wdata
+  val in        = WireDefault(io.in.bits)
+  val wen       = in.control.memWen
+  val ren       = in.control.memRen
+  val memOp     = in.control.memOp
+  val raddr     = in.aluOut
+  val waddr     = in.aluOut
+  val wdata     = in.wdata
+  val memAccess = wen | ren
 
   val possiblePatterns = Seq(
     MemControlPattern(memW),
@@ -91,75 +102,61 @@ class LSU(xlen: Int) extends Module {
   val arfire = io.master.arvalid && io.master.arready
   val rfire  = io.master.rvalid && io.master.rready
 
-  val sIdle :: sSetWrite :: sSetWaddr :: sSetWdata :: sWaitBresp :: sSetRaddr :: sWaitRead :: sSendOut :: Nil = Enum(8)
+  val sIdle :: sSendReq :: sWaitResp :: sSendOut :: Nil = Enum(4)
 
-  val state       = RegInit(sIdle)
-  val isIdle      = state === sIdle
-  val isSetWrite  = state === sSetWrite
-  val isSetWaddr  = state === sSetWaddr
-  val isSetWdata  = state === sSetWdata
-  val isWaitBresp = state === sWaitBresp
-  val isSetRaddr  = state === sSetRaddr
-  val isWaitRead  = state === sWaitRead
-  val isSendOut   = state === sSendOut
+  val state      = RegInit(sIdle)
+  val isIdle     = state === sIdle
+  val isSendReq  = state === sSendReq
+  val isWaitResp = state === sWaitResp
+  val isSendOut  = state === sSendOut
 
   state := MuxLookup(state, sIdle)(
     Seq(
-      sIdle -> MuxCase(
-        sIdle,
-        Seq(
-          (io.in.fire && io.in.bits.wen) -> sSetWrite,
-          (io.in.fire && io.in.bits.ren) -> sSetRaddr
-        )
+      sIdle -> Mux(io.in.fire, sSendReq, sIdle),
+      sSendReq -> Mux(
+        memAccess,
+        Mux(arfire || (awfire && wfire), sWaitResp, sSendReq),
+        Mux(io.out.fire, sIdle, sSendOut)
       ),
-      sSetWrite -> MuxCase(
-        sSetWrite,
-        Seq(
-          (awfire && wfire) -> sWaitBresp,
-          awfire -> sSetWdata,
-          wfire -> sSetWaddr
-        )
-      ),
-      sSetWaddr -> Mux(awfire, sWaitBresp, sSetWaddr),
-      sSetWdata -> Mux(wfire, sWaitBresp, sSetWdata),
-      sWaitBresp -> Mux(bfire, sSendOut, sWaitBresp),
-      sSetRaddr -> Mux(arfire, sWaitRead, sSetRaddr),
-      sWaitRead -> Mux(rfire, sSendOut, sWaitRead),
+      sWaitResp -> Mux(bfire || rfire, sSendOut, sWaitResp),
       sSendOut -> Mux(io.out.fire, sIdle, sSendOut)
     )
   )
 
-  assert((io.master.araddr & ~((1.U(32.W) << size) >> 1.U)) === io.master.araddr, "%x %x", io.master.araddr, size)
-  assert((io.master.awaddr & ~((1.U(32.W) << size) >> 1.U)) === io.master.awaddr, "%x %x", io.master.awaddr, size)
   assert(!bfire || io.master.bresp === "b00".U(2.W))
   assert(!rfire || io.master.rresp === "b00".U(2.W))
   /* IO bind */
-  io.in.ready := isIdle
-
-  io.out.valid      := isSendOut
-  io.out.bits.bresp := RegEnable(io.master.bresp, bfire)
-  io.out.bits.rdata := RegEnable(rdata, rfire)
-
-  io.master.awvalid := isSetWrite || isSetWaddr
+  io.master.awvalid := isSendReq && wen
   io.master.awaddr  := waddr
   io.master.awid    := 0.U
   io.master.awlen   := 0.U
   io.master.awsize  := size
   io.master.awburst := "b01".U
 
-  io.master.wvalid := isSetWrite || isSetWdata
+  io.master.wvalid := isSendReq && wen
   io.master.wdata  := wdata << (waddr(1, 0) << 3.U)
   io.master.wstrb  := wmask
-  io.master.wlast  := isSetWrite || isSetWdata
+  io.master.wlast  := isSendReq
 
-  io.master.bready := isWaitBresp
+  io.master.bready := isWaitResp
 
-  io.master.arvalid := isSetRaddr
+  io.master.arvalid := isSendReq && ren
   io.master.araddr  := raddr
   io.master.arid    := 0.U
   io.master.arlen   := 0.U
   io.master.arsize  := size
   io.master.arburst := "b01".U
 
-  io.master.rready := isWaitRead
+  io.master.rready := isWaitResp
+
+  io.in.ready               := isIdle
+  io.out.valid              := isSendOut || (isSendReq && !memAccess)
+  io.out.bits.wa            := in.wa
+  io.out.bits.pcCom         := in.pcCom
+  io.out.bits.aluOut        := in.aluOut
+  io.out.bits.memOut        := RegEnable(rdata, rfire)
+  io.out.bits.csrOut        := in.csrOut
+  io.out.bits.control.regWe := in.control.regWe
+  io.out.bits.control.pcSrc := in.control.pcSrc
+  io.out.bits.control.wbSrc := in.control.wbSrc
 }

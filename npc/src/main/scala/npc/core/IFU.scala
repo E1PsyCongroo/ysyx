@@ -18,15 +18,15 @@ class IFUIO(awidth: Int, xlen: Int) extends Bundle {
   val ICacheOut = Flipped(DecoupledIO(new ICacheOut(xlen)))
 }
 
-class IFU(awidth: Int, xlen: Int, PCReset: BigInt) extends Module {
+class IFU(awidth: Int, xlen: Int) extends Module {
   val io = IO(new IFUIO(awidth, xlen))
 
-  val pc          = RegEnable(io.in.bits.nextPc, PCReset.U, io.in.fire)
-  val instruction = RegEnable(io.ICacheOut.bits.rdata, io.ICacheOut.fire)
+  val pc          = WireDefault(io.in.bits.nextPc)
+  val instruction = WireDefault(io.ICacheOut.bits.rdata)
 
   val sIdle :: sSetAddr :: sFetch :: sExec :: Nil = Enum(4)
 
-  val state     = RegInit(sSetAddr)
+  val state     = RegInit(sIdle)
   val isIdle    = state === sIdle
   val isSetAddr = state === sSetAddr
   val isFetch   = state === sFetch

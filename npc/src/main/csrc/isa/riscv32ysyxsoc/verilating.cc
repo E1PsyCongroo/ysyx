@@ -49,7 +49,7 @@ enum {
 static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
   cpu.pc = rvcpu->rootp
-               ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__pc;
+               ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU_io_in_bits_r_nextPc;
   cpu.gpr[0] = 0;
   cpu.gpr[1] =
       rvcpu->rootp
@@ -71,7 +71,7 @@ static void rvcpu_sync(void) {
           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_6;
   cpu.gpr[7] =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_6;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_7;
   cpu.gpr[8] =
       rvcpu->rootp
           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_8;
@@ -114,7 +114,7 @@ static void rvcpu_sync(void) {
   /* synchronizing instruction with rvcpu */
   cur_inst =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IDU__DOT__in_instruction;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IDU_io_in_bits_r_instruction;
 }
 
 void rvcpu_init(const char *wave_file, int argc, char **argv) {
@@ -187,7 +187,6 @@ void rvcpu_single_cycle(void) {
   contextp->timeInc(1);
   tfp->dump(contextp->time());
 
-  rvcpu_sync();
   nvboard_update();
   g_guest_cycle++;
 }
@@ -200,6 +199,7 @@ void rvcpu_single_exec(void) {
       RVCPU_EXEC) {
     rvcpu_single_cycle();
   }
+  rvcpu_sync();
   g_nr_fetch_inst++;
   /* Exec Instruction */
   uint64_t cur_cycle = g_guest_cycle;
@@ -209,6 +209,7 @@ void rvcpu_single_exec(void) {
       RVCPU_SETADDR) {
     rvcpu_single_cycle();
   }
+  rvcpu_sync();
   void decode_inst(uint32_t inst, uint64_t exec_cycle);
   decode_inst(cur_inst, g_guest_cycle - cur_cycle);
 }

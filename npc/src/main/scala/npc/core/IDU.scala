@@ -3,11 +3,11 @@ package rvcpu.core
 import chisel3._
 import chisel3.util._
 
-class IDUOut(xlen: Int) extends Bundle {
+class IDUOut(xlen: Int, extentionE: Boolean) extends Bundle {
   val pc   = Output(UInt(xlen.W))
   val rd1  = Output(UInt(xlen.W))
   val rd2  = Output(UInt(xlen.W))
-  val wa   = Output(UInt(5.W))
+  val wa   = Output(UInt(if (extentionE) 4.W else 5.W))
   val imm  = Output(UInt(xlen.W))
   val uimm = Output(UInt(xlen.W))
   val control = new Bundle {
@@ -28,7 +28,7 @@ class IDUOut(xlen: Int) extends Bundle {
 
 class IDUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
   val in  = Flipped(DecoupledIO(new IFUOut(xlen)))
-  val out = DecoupledIO(new IDUOut(xlen))
+  val out = DecoupledIO(new IDUOut(xlen, extentionE))
   val RegFileAccess = new Bundle {
     val ra1 = Output(UInt(if (extentionE) 4.W else 5.W))
     val ra2 = Output(UInt(if (extentionE) 4.W else 5.W))
@@ -45,7 +45,7 @@ class IDUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
 class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) extends Module {
   val io = IO(new IDUIO(xlen, extentionE, sim))
 
-  val in =  RegEnable(io.in.bits, io.in.fire)
+  val in = WireDefault(io.in.bits)
 
   val sIdle :: sDecode :: Nil = Enum(2)
 
@@ -56,7 +56,7 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
   state := MuxLookup(state, sIdle)(
     Seq(
       sIdle -> Mux(io.in.fire, sDecode, sIdle),
-      sDecode -> Mux(io.out.fire, sIdle, sDecode),
+      sDecode -> Mux(io.out.fire, sIdle, sDecode)
     )
   )
 
@@ -103,7 +103,7 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
   io.fence_i                  := Control.io.fence_i
 
   if (sim) {
-    io.isEnd.get                := Control.io.isEnd.get
-    io.exitCode.get             := io.RegFileReturn.rd1
+    io.isEnd.get    := Control.io.isEnd.get
+    io.exitCode.get := io.RegFileReturn.rd1
   }
 }

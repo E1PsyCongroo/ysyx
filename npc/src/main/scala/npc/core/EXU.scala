@@ -6,39 +6,31 @@ import rvcpu.dev._
 import chisel3._
 import chisel3.util._
 
-class EXUOut(xlen: Int) extends Bundle {
-  val wa     = Output(UInt(5.W))
+class EXUOut(xlen: Int, extentionE: Boolean) extends Bundle {
+  val wa     = Output(UInt(if (extentionE) 4.W else 5.W))
   val pcCom  = Output(UInt(xlen.W))
   val aluOut = Output(UInt(xlen.W))
-  val memOut = Output(UInt(xlen.W))
   val csrOut = Output(UInt(xlen.W))
+  val wdata  = Output(UInt(xlen.W))
   val control = new Bundle {
-    val regWe = Bool()
-    val pcSrc = Output(UInt(PCSrcFrom.getWidth.W))
-    val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
+    val regWe  = Bool()
+    val pcSrc  = Output(UInt(PCSrcFrom.getWidth.W))
+    val wbSrc  = Output(UInt(WBSrcFrom.getWidth.W))
+    val memRen = Output(Bool())
+    val memWen = Output(Bool())
+    val memOp  = Output(UInt(MemOp.getWidth.W))
   }
 }
 
-class LSUIn(xlen: Int) extends Bundle {
-  val memOp = Output(UInt(MemOp.getWidth.W))
-  val ren   = Output(Bool())
-  val raddr = Output(UInt(xlen.W))
-  val wen   = Output(Bool())
-  val waddr = Output(UInt(xlen.W))
-  val wdata = Output(UInt(xlen.W))
+class EXUIO(xlen: Int, extentionE: Boolean) extends Bundle {
+  val in  = Flipped(DecoupledIO(new IDUOut(xlen, extentionE)))
+  val out = DecoupledIO(new EXUOut(xlen, extentionE))
 }
 
-class EXUIO(xlen: Int) extends Bundle {
-  val in     = Flipped(DecoupledIO(new IDUOut(xlen)))
-  val out    = DecoupledIO(new EXUOut(xlen))
-  val LSUIn  = DecoupledIO(new LSUIn(xlen))
-  val LSUOut = Flipped(DecoupledIO(new LSUOut(xlen)))
-}
+class EXU(xlen: Int, extentionE: Boolean) extends Module {
+  val io = IO(new EXUIO(xlen, extentionE))
 
-class EXU(xlen: Int) extends Module {
-  val io = IO(new EXUIO(xlen))
-
-  val in      = RegEnable(io.in.bits, io.in.fire)
+  val in      = WireDefault(io.in.bits)
   val pc      = in.pc
   val imm     = in.imm
   val uimm    = in.uimm
@@ -46,31 +38,19 @@ class EXU(xlen: Int) extends Module {
   val rd2     = in.rd2
   val control = in.control
 
-  val lsuOut = RegEnable(io.LSUOut.bits, io.LSUOut.fire)
-
   val ALU        = Module(new ALU(xlen))
   val CSRControl = Module(new CSRControl(xlen))
   val BrCond     = Module(new BrCond)
 
-  val sIdle :: sSendLSUReq :: sWaitLSUResp :: sExec :: Nil = Enum(4)
+  val sIdle :: sExec :: Nil = Enum(2)
 
-  val state         = RegInit(sIdle)
-  val isIdle        = state === sIdle
-  val isSendLSUReq  = state === sSendLSUReq
-  val isWaitLSUResp = state === sWaitLSUResp
-  val isExec        = state === sExec
+  val state  = RegInit(sIdle)
+  val isIdle = state === sIdle
+  val isExec = state === sExec
 
   state := MuxLookup(state, sIdle)(
     Seq(
-      sIdle -> MuxCase(
-        sIdle,
-        Seq(
-          (io.in.fire && (io.in.bits.control.memWen || io.in.bits.control.memRen)) -> sSendLSUReq,
-          (io.in.fire) -> sExec
-        )
-      ),
-      sSendLSUReq -> Mux(io.LSUIn.fire, sWaitLSUResp, sSendLSUReq),
-      sWaitLSUResp -> Mux(io.LSUOut.fire, sExec, sWaitLSUResp),
+      sIdle -> Mux(io.in.fire, sExec, sIdle),
       sExec -> Mux(io.out.fire, sIdle, sExec)
     )
   )
@@ -113,25 +93,17 @@ class EXU(xlen: Int) extends Module {
   val pcBSrc = Mux(BrCond.io.PCBSrc, pc, rd1)
   val pcCom  = pcASrc + pcBSrc
 
-  /* IO bind */
-  io.LSUIn.valid      := isSendLSUReq
-  io.LSUIn.bits.memOp := control.memOp
-  io.LSUIn.bits.ren   := control.memRen
-  io.LSUIn.bits.raddr := ALU.io.aluOut
-  io.LSUIn.bits.wen   := control.memWen
-  io.LSUIn.bits.waddr := ALU.io.aluOut
-  io.LSUIn.bits.wdata := rd2
-
-  io.LSUOut.ready := isWaitLSUResp
-
-  io.in.ready               := isIdle
-  io.out.valid              := isExec
-  io.out.bits.wa            := in.wa
-  io.out.bits.pcCom         := pcCom
-  io.out.bits.aluOut        := ALU.io.aluOut
-  io.out.bits.memOut        := lsuOut.rdata
-  io.out.bits.csrOut        := CSRControl.io.csrOut
-  io.out.bits.control.regWe := control.regWe
-  io.out.bits.control.pcSrc := control.pcSrc
-  io.out.bits.control.wbSrc := control.wbSrc
+  io.in.ready                := isIdle
+  io.out.valid               := isExec
+  io.out.bits.wa             := in.wa
+  io.out.bits.pcCom          := pcCom
+  io.out.bits.aluOut         := ALU.io.aluOut
+  io.out.bits.csrOut         := CSRControl.io.csrOut
+  io.out.bits.wdata          := rd2
+  io.out.bits.control.regWe  := control.regWe
+  io.out.bits.control.pcSrc  := control.pcSrc
+  io.out.bits.control.wbSrc  := control.wbSrc
+  io.out.bits.control.memRen := control.memRen
+  io.out.bits.control.memWen := control.memWen
+  io.out.bits.control.memOp  := control.memOp
 }

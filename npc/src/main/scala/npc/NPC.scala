@@ -26,7 +26,8 @@ object StageConnect {
     } else if (arch == "pipeline") {
       left.ready := right.ready
       right.bits := RegEnable(left.bits, left.fire)
-      right.valid := RegNext(Mux(left.fire, true.B, Mux(right.fire, false.B, right.valid)))
+      // right.valid := RegNext(Mux(left.fire, true.B, Mux(right.fire, false.B, right.valid)))
+      right.valid := left.valid
     } else if (arch == "ooo") {
       right <> Queue(left, 16)
     }
@@ -42,13 +43,17 @@ class RVCPU(
     extends Module {
   val io = IO(new RVCPUIO(xlen))
 
-  val IFU = Module(new IFU(awidth, xlen, PCReset))
+  val IFU = Module(new IFU(awidth, xlen))
   val IDU = Module(new IDU(xlen, extentionE, sim))
-  val EXU = Module(new EXU(xlen))
-  val LSU = Module(new LSU(xlen))
-  val WBU = Module(new WBU(xlen, extentionE))
-  EXU.io.LSUIn <> LSU.io.in
-  LSU.io.out <> EXU.io.LSUOut
+  val EXU = Module(new EXU(xlen, extentionE))
+  val LSU = Module(new LSU(xlen, extentionE))
+  val WBU = Module(new WBU(xlen, extentionE, PCReset))
+
+  StageConnect(IFU.io.out, IDU.io.in)
+  StageConnect(IDU.io.out, EXU.io.in)
+  StageConnect(EXU.io.out, LSU.io.in)
+  StageConnect(LSU.io.out, WBU.io.in)
+  StageConnect(WBU.io.out, IFU.io.in)
 
   val ICache = Module(
     new ICache(
@@ -65,7 +70,7 @@ class RVCPU(
       sim
     )
   )
-  ICache.io.in <> IFU.io.ICacheIn
+  StageConnect(IFU.io.ICacheIn, ICache.io.in)
   ICache.io.out <> IFU.io.ICacheOut
   ICache.io.flush := IDU.io.fence_i
 
@@ -79,11 +84,6 @@ class RVCPU(
   RegFile.io.wd            := WBU.io.RegFileAccess.wd
 
   val CLINT = Module(new CLINT(awidth, xlen, Dev.CLINTAddr))
-
-  StageConnect(IFU.io.out, IDU.io.in)
-  StageConnect(IDU.io.out, EXU.io.in)
-  StageConnect(EXU.io.out, WBU.io.in)
-  StageConnect(WBU.io.out, IFU.io.in)
 
   AXI4Interconnect(
     Seq(LSU.io.master, ICache.io.master),
@@ -107,7 +107,7 @@ class RVCPU(
     SkipDifftest(
       clock,
       LSU.io.in.fire &&
-        (devs.map(dev => dev.in(LSU.io.in.bits.waddr) || dev.in(LSU.io.in.bits.raddr)).foldLeft(false.B)(_ || _))
+        (devs.map(dev => dev.in(EXU.io.out.bits.aluOut)).foldLeft(false.B)(_ || _))
     );
 
     val ICacheArfire = ICache.io.master.arvalid && ICache.io.master.arready
@@ -140,15 +140,16 @@ class RVCPU(
     val TracerDataFetch = Module(new TracerDataFetch)
     TracerDataFetch.io.clock  := clock
     TracerDataFetch.io.reset  := reset
-    TracerDataFetch.io.start  := LSU.io.in.fire && LSU.io.in.bits.ren
-    TracerDataFetch.io.finish := LSU.io.out.fire
+    TracerDataFetch.io.start  := LSU.io.master.arvalid
+    TracerDataFetch.io.finish := LSU.io.master.rvalid && LSU.io.master.rready
 
     ICache.io.hit.get.ready  := true.B
     ICache.io.last.get.ready := true.B
     val needCache = WireDefault(
-      Dev.MROMAddr.in(ICache.io.in.bits.raddr) || Dev.FlashAddr.in(ICache.io.in.bits.raddr) || Dev.ChipLinkMEMAddr.in(
-        ICache.io.in.bits.raddr
-      ) || Dev.PSRAMAddr.in(ICache.io.in.bits.raddr) || Dev.SDRAMAddr.in(ICache.io.in.bits.raddr)
+      Dev.MROMAddr.in(IFU.io.ICacheIn.bits.raddr) || Dev.FlashAddr.in(IFU.io.ICacheIn.bits.raddr) || Dev.ChipLinkMEMAddr
+        .in(
+          IFU.io.ICacheIn.bits.raddr
+        ) || Dev.PSRAMAddr.in(IFU.io.ICacheIn.bits.raddr) || Dev.SDRAMAddr.in(IFU.io.ICacheIn.bits.raddr)
     )
     val CacheTracer = Module(new CacheTracer)
     CacheTracer.io.cacheHit          := RegEnable(ICache.io.hit.get.bits, ICache.io.hit.get.fire)
@@ -166,17 +167,22 @@ class NPC(
   PCReset:    BigInt  = BigInt("80000000", 16),
   sim:        Boolean = true)
     extends Module {
-  val IFU = Module(new IFU(awidth, xlen, PCReset))
+
+  val IFU = Module(new IFU(awidth, xlen))
   val IDU = Module(new IDU(xlen, extentionE, sim))
-  val EXU = Module(new EXU(xlen))
-  val LSU = Module(new LSU(xlen))
-  val WBU = Module(new WBU(xlen, extentionE))
-  EXU.io.LSUIn <> LSU.io.in
-  LSU.io.out <> EXU.io.LSUOut
+  val EXU = Module(new EXU(xlen, extentionE))
+  val LSU = Module(new LSU(xlen, extentionE))
+  val WBU = Module(new WBU(xlen, extentionE, PCReset))
+
+  StageConnect(IFU.io.out, IDU.io.in)
+  StageConnect(IDU.io.out, EXU.io.in)
+  StageConnect(EXU.io.out, LSU.io.in)
+  StageConnect(LSU.io.out, WBU.io.in)
+  StageConnect(WBU.io.out, IFU.io.in)
 
   val ICache = Module(new ICache(awidth, xlen, 6, 5, 0, Dev.memoryAddr.in, _ => false.B, sim))
-  ICache.io.in <> IFU.io.ICacheIn
-  ICache.io.out <> IFU.io.ICacheOut
+  StageConnect(IFU.io.ICacheIn, ICache.io.in)
+  StageConnect(ICache.io.out, IFU.io.ICacheOut)
   ICache.io.flush := IDU.io.fence_i
 
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
@@ -191,11 +197,6 @@ class NPC(
   val AXI4Mem = Module(new AXI4Mem(awidth, xlen))
   val CLINT   = Module(new CLINT(awidth, xlen, Dev.mtimeAddr))
   val Uart    = Module(new Uart(awidth, xlen))
-
-  StageConnect(IFU.io.out, IDU.io.in)
-  StageConnect(IDU.io.out, EXU.io.in)
-  StageConnect(EXU.io.out, WBU.io.in)
-  StageConnect(WBU.io.out, IFU.io.in)
 
   AXI4Interconnect(
     Seq(ICache.io.master, LSU.io.master),
@@ -213,17 +214,17 @@ class NPC(
     SkipDifftest(
       clock,
       LSU.io.in.fire &&
-        (devs.map(dev => dev.in(LSU.io.in.bits.waddr) || dev.in(LSU.io.in.bits.raddr)).foldLeft(false.B)(_ || _))
+        (devs.map(dev => dev.in(EXU.io.out.bits.aluOut)).foldLeft(false.B)(_ || _))
     );
 
     val TracerDataFetch = Module(new TracerDataFetch)
     TracerDataFetch.io.clock  := clock
     TracerDataFetch.io.reset  := reset
-    TracerDataFetch.io.start  := LSU.io.in.fire && LSU.io.in.bits.ren
-    TracerDataFetch.io.finish := LSU.io.out.fire
+    TracerDataFetch.io.start  := LSU.io.master.arvalid
+    TracerDataFetch.io.finish := LSU.io.master.rvalid && LSU.io.master.rready
 
     ICache.io.hit.get.ready := true.B
-    val needCache   = Dev.memoryAddr.in(ICache.io.in.bits.raddr)
+    val needCache   = Dev.memoryAddr.in(IFU.io.ICacheIn.bits.raddr)
     val CacheTracer = Module(new CacheTracer)
     CacheTracer.io.cacheHit          := RegEnable(ICache.io.hit.get.bits, ICache.io.hit.get.fire)
     CacheTracer.io.cacheAccessStart  := ICache.io.in.fire && needCache

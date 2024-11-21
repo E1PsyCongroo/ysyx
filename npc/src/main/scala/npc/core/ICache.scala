@@ -67,7 +67,7 @@ class ICache(
   val isFetch    = state === sFetch
   val isSendBack = state === sSendBack
 
-  val raddrReg       = RegEnable(io.in.bits.raddr, io.in.fire)
+  val raddrReg       = WireDefault(io.in.bits.raddr)
   val offset         = if (offsetWidth != 0) raddrReg(offsetWidth + wordWidth - 1, wordWidth) else 0.U
   val set            = if (setWidth != 0) raddrReg(setWidth + blockWidth - 1, blockWidth) else 0.U
   val tag            = raddrReg(tagWidth + setWidth + blockWidth - 1, setWidth + blockWidth)
@@ -136,7 +136,7 @@ class ICache(
   io.master.awvalid := false.B
   io.master.awaddr  := DontCare
   io.master.awid    := DontCare
-  io.master.awlen   := 0.U
+  io.master.awlen   := DontCare
   io.master.awsize  := DontCare
   io.master.awburst := DontCare
 
