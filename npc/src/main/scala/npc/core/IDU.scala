@@ -4,12 +4,12 @@ import chisel3._
 import chisel3.util._
 
 class IDUOut(xlen: Int, extentionE: Boolean) extends Bundle {
-  val pc   = Output(UInt(xlen.W))
-  val rd1  = Output(UInt(xlen.W))
-  val rd2  = Output(UInt(xlen.W))
-  val wa   = Output(UInt(if (extentionE) 4.W else 5.W))
-  val imm  = Output(UInt(xlen.W))
-  val uimm = Output(UInt(xlen.W))
+  val pc  = Output(UInt(xlen.W))
+  val rs1 = Output(UInt(if (extentionE) 4.W else 5.W))
+  val rd1 = Output(UInt(xlen.W))
+  val rd2 = Output(UInt(xlen.W))
+  val wa  = Output(UInt(if (extentionE) 4.W else 5.W))
+  val imm = Output(UInt(xlen.W))
   val control = new Bundle {
     val regWe   = Output(Bool())
     val aluASrc = Output(UInt(ALUASrcFrom.getWidth.W))
@@ -87,7 +87,7 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
   io.out.bits.rd2             := io.RegFileReturn.rd2
   io.out.bits.wa              := rd
   io.out.bits.imm             := ImmGen.io.imm
-  io.out.bits.uimm            := rs1.pad(32)
+  io.out.bits.rs1             := rs1
   io.out.bits.control.regWe   := Control.io.regWe
   io.out.bits.control.aluASrc := Control.io.aluASrc
   io.out.bits.control.aluBSrc := Control.io.aluBSrc

@@ -17,12 +17,10 @@ class CLINT(awidth: Int = 32, xlen: Int = 32, area: Area = Dev.CLINTAddr) extend
   val rfire  = io.rvalid && io.rready
   assert(!(arfire && (awfire || wfire)))
 
-  val sIdle :: sWaitWaddr :: sWaitWdata :: sWrite :: sRead :: Nil = Enum(5)
+  val sIdle :: sWrite :: sRead :: Nil = Enum(3)
 
   val state       = RegInit(sIdle)
   val isIdle      = state === sIdle
-  val isWaitWaddr = state === sWaitWaddr
-  val isWaitWdata = state === sWaitWdata
   val isWrite     = state === sWrite
   val isRead      = state === sRead
 
@@ -33,33 +31,27 @@ class CLINT(awidth: Int = 32, xlen: Int = 32, area: Area = Dev.CLINTAddr) extend
         Seq(
           arfire -> sRead,
           (awfire && wfire) -> sWrite,
-          wfire -> sWaitWaddr,
-          awfire -> sWaitWdata
         )
       ),
-      sWaitWaddr -> Mux(awfire, sWrite, sWaitWaddr),
-      sWaitWdata -> Mux(wfire, sWrite, sWaitWdata),
       sWrite -> Mux(bfire, sIdle, sWrite),
       sRead -> Mux(rfire, sIdle, sRead)
     )
   )
 
   /* Write address channel */
-  val awready          = WireDefault(isIdle || isWaitWaddr)
-  val writeAddr        = RegEnable(io.awaddr, 0.U, awfire)
+  val awready          = WireDefault(isIdle)
+  val writeAddr        = io.awaddr
   val alignedWriteAddr = writeAddr(awidth - 1, 2) ## Fill(2, "b0".U)
-  val writeAddrAligned = writeAddr === alignedWriteAddr
-  assert(writeAddrAligned)
 
   /* Write data channel */
-  val wready    = WireDefault(isIdle || isWaitWdata)
-  val writeData = RegEnable(io.wdata, wfire)
-  val writeMask = RegEnable(io.wstrb, wfire)
+  val wready    = WireDefault(isIdle)
+  val writeData = io.wdata
+  val writeMask = io.wstrb
 
   /* Write response channel */
   val bvalid    = WireDefault(isWrite)
-  val writeLow  = writeAddrAligned === area.start
-  val writeHigh = writeAddrAligned === (area.start + 4.U)
+  val writeLow  = alignedWriteAddr === area.start
+  val writeHigh = alignedWriteAddr === (area.start + 4.U)
   mtime := MuxCase(
     mtime + 1.U,
     Seq(
@@ -75,10 +67,8 @@ class CLINT(awidth: Int = 32, xlen: Int = 32, area: Area = Dev.CLINTAddr) extend
 
   /* Read address channel */
   val arready         = WireDefault(isIdle)
-  val readAddr        = RegEnable(io.araddr, arfire)
+  val readAddr        = io.araddr
   val alignedReadAddr = readAddr(awidth - 1, 2) ## Fill(2, "b0".U)
-  val readAddrAligned = readAddr === alignedReadAddr
-  assert(readAddrAligned)
 
   /* Read data channel */
   val rvalid   = WireDefault(isRead)

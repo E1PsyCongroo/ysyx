@@ -3,7 +3,7 @@
 #include <VNPC___024root.h>
 #include <cstdint>
 #include <verilated.h>
-#include <verilated_vcd_c.h>
+#include <verilated_fst_c.h>
 
 extern "C" {
 #include "local-include/verilating.h"
@@ -17,7 +17,7 @@ extern "C" {
 
 static VNPC *rvcpu = nullptr;
 static VerilatedContext *contextp = nullptr;
-static VerilatedVcdC *tfp = nullptr;
+static VerilatedFstC *tfp = nullptr;
 static uint32_t cur_inst;
 
 uint64_t g_guest_cycle = 0;
@@ -25,8 +25,7 @@ uint64_t g_nr_fetch_inst = 0;
 
 InstStatistic g_insts[RISCV_TOTAL_TYPE] = {
     {"JMP", 0, 0}, {"BRANCH", 0, 0}, {"LOAD", 0, 0}, {"STORE", 0, 0},
-    {"AL", 0, 0},  {"ECALL", 0, 0},  {"CSR", 0, 0},
-};
+    {"AL", 0, 0},  {"ECALL", 0, 0},  {"CSR", 0, 0},  {"FENCE_I", 0, 0}};
 
 uint64_t g_nr_fetch_data = 0;
 uint64_t g_fetch_data_cycle = 0;
@@ -38,15 +37,12 @@ uint64_t g_cache_miss_penalty = 0;
 
 enum {
   RVCPU_IDLE = 0,
-  RVCPU_SETADDR = 1,
-  RVCPU_FETCH = 2,
-  RVCPU_EXEC = 3,
 };
 
 static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
-  cpu.pc = rvcpu->rootp->NPC__DOT__IFU__DOT__pc;
-  cpu.gpr[0] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_0;
+  cpu.pc = rvcpu->rootp->NPC__DOT__IFU_io_in_bits_r_nextPc;
+  cpu.gpr[0] = 0;
   cpu.gpr[1] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_1;
   cpu.gpr[2] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_2;
   cpu.gpr[3] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_3;
@@ -69,16 +65,16 @@ static void rvcpu_sync(void) {
   cpu.priv = static_cast<decltype(cpu.priv)>(
       rvcpu->rootp->NPC__DOT__EXU__DOT__CSRControl__DOT__priv);
   /* synchronizing instruction with rvcpu */
-  cur_inst = rvcpu->rootp->NPC__DOT__IFU__DOT__instruction;
+  cur_inst = rvcpu->rootp->NPC__DOT__IDU_io_in_bits_r_instruction;
 }
 
 void rvcpu_init(const char *wave_file, int argc, char **argv) {
   contextp = new VerilatedContext;
   rvcpu = new VNPC{contextp};
-  tfp = new VerilatedVcdC;
+  tfp = new VerilatedFstC;
   contextp->commandArgs(argc, argv);
   contextp->traceEverOn(true);
-  rvcpu->trace(tfp, 5);
+  rvcpu->trace(tfp, 0);
   if (wave_file) {
     tfp->open(wave_file);
     Log("Wave is written to %s", wave_file);
@@ -105,9 +101,14 @@ void rvcpu_exit(void) {
       (double)g_nr_fetch_inst / g_guest_cycle);
   Log("total cache access = " NUMBERIC_FMT, g_nr_cache_access);
   Log("total cache hit = " NUMBERIC_FMT, g_nr_cache_hit);
-  Log("cache hit ratio = %f", (double)g_nr_cache_hit/g_nr_cache_access);
-  Log("average cache access time = %f", (double)g_cache_access_time/g_nr_cache_access);
-  Log("average cache miss penalty = %f", (double)g_cache_miss_penalty/g_nr_cache_access);
+  Log("cache hit ratio = %f%%",
+      (double)g_nr_cache_hit / g_nr_cache_access * 100);
+  Log("average cache access time = %f",
+      (double)g_cache_access_time / g_nr_cache_access);
+  Log("average cache miss penalty = %f",
+      (double)g_cache_miss_penalty / (g_nr_cache_access - g_nr_cache_hit));
+  Log("cache AMAT = %f",
+      ((double)g_cache_access_time + g_cache_miss_penalty) / g_nr_cache_access);
   Log("total fetch data = " NUMBERIC_FMT, g_nr_fetch_data);
   Log("average cycle of fetch data = %f",
       (double)g_fetch_data_cycle / g_nr_fetch_data);
@@ -115,7 +116,9 @@ void rvcpu_exit(void) {
     Log("instructions for %s type (total = " NUMBERIC_FMT
         ", average exec cycle = %f)",
         g_insts[i].inst_type, g_insts[i].total_inst_count,
-        ((double)g_insts[i].total_exec_cycle / g_insts[i].total_inst_count));
+        g_insts[i].total_inst_count ? ((double)g_insts[i].total_exec_cycle /
+                                       g_insts[i].total_inst_count)
+                                    : 0);
   }
 }
 
@@ -132,21 +135,28 @@ void rvcpu_single_cycle(void) {
   contextp->timeInc(1);
   tfp->dump(contextp->time());
 
-  rvcpu_sync();
   g_guest_cycle++;
 }
 
 void rvcpu_single_exec(void) {
   /* Fetch Instruction */
-  while (rvcpu->rootp->NPC__DOT__IFU__DOT__state != RVCPU_EXEC) {
+  while (rvcpu->rootp->NPC__DOT__IFU__DOT__ICache__DOT__state == RVCPU_IDLE) {
     rvcpu_single_cycle();
   }
+  while (rvcpu->rootp->NPC__DOT__IFU__DOT__ICache__DOT__state != RVCPU_IDLE) {
+    rvcpu_single_cycle();
+  }
+  rvcpu_sync();
   g_nr_fetch_inst++;
   /* Exec Instruction */
   uint64_t cur_cycle = g_guest_cycle;
-  while (rvcpu->rootp->NPC__DOT__IFU__DOT__state != RVCPU_SETADDR) {
+  while (rvcpu->rootp->NPC__DOT__WBU__DOT__state == RVCPU_IDLE) {
     rvcpu_single_cycle();
   }
+  while (rvcpu->rootp->NPC__DOT__WBU__DOT__state != RVCPU_IDLE) {
+    rvcpu_single_cycle();
+  }
+  rvcpu_sync();
   void decode_inst(uint32_t inst, uint64_t exec_cycle);
   decode_inst(cur_inst, g_guest_cycle - cur_cycle);
 }
@@ -157,6 +167,9 @@ void rvcpu_reset(void) {
     rvcpu_single_cycle();
   }
   rvcpu->reset = 0;
+  while (rvcpu->rootp->NPC__DOT__IFU__DOT__ICache__DOT__state == RVCPU_IDLE) {
+    rvcpu_single_cycle();
+  }
   g_guest_cycle = 0;
 }
 

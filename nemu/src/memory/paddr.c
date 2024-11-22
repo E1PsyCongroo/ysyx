@@ -104,19 +104,21 @@ static void sdram_write(paddr_t addr, int len, word_t data) {
 uint8_t *guest_to_host(paddr_t paddr) {
   if (in_pmem(paddr)) {
     return pmem + paddr - CONFIG_MBASE;
-  } else if (in_mrom(paddr)) {
-    return mrom + paddr - CONFIG_MROM_BASE;
-  } else if (in_flash(paddr)) {
-    return flash + paddr - CONFIG_FLASH_BASE;
-  } else if (in_sram(paddr)) {
-    return sram + paddr - CONFIG_SRAM_BASE;
-  } else if (in_psram(paddr)) {
-    return psram + paddr - CONFIG_SRAM_BASE;
-  } else if (in_sdram(paddr)) {
-    return sdram + paddr - CONFIG_SRAM_BASE;
-  } else {
-    TODO();
   }
+  IFDEF(
+      CONFIG_HAS_MROM, if (in_mrom(paddr)) { mrom + paddr - CONFIG_MROM_BASE; })
+  IFDEF(
+      CONFIG_HAS_FLASH,
+      if (in_flash(paddr)) { flash + paddr - CONFIG_FLASH_BASE; })
+  IFDEF(
+      CONFIG_HAS_SRAM, if (in_sram(paddr)) { sram + paddr - CONFIG_SRAM_BASE; })
+  IFDEF(
+      CONFIG_HAS_PSRAM,
+      if (in_psram(paddr)) { psram + paddr - CONFIG_PSRAM_BASE; })
+  IFDEF(
+      CONFIG_HAS_SDRAM,
+      if (in_sdram(paddr)) { sdram + paddr - CONFIG_SDRAM_BASE; })
+  TODO();
 }
 paddr_t host_to_guest(uint8_t *haddr) { return haddr - pmem + CONFIG_MBASE; }
 

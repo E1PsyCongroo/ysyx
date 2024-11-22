@@ -33,7 +33,7 @@ class EXU(xlen: Int, extentionE: Boolean) extends Module {
   val in      = WireDefault(io.in.bits)
   val pc      = in.pc
   val imm     = in.imm
-  val uimm    = in.uimm
+  val uimm    = in.rs1.pad(32)
   val rd1     = in.rd1
   val rd2     = in.rd2
   val control = in.control

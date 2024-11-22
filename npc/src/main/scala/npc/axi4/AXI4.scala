@@ -257,25 +257,21 @@ class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Modu
     val fanOut = Vec(fanOutSeq.size, new AXI4MasterIO)
   })
 
-  val sIdle :: sWaitWdata :: sWaitBresp :: sWaitRresp :: Nil = Enum(4)
+  val sIdle :: sWaitBresp :: sWaitRresp :: Nil = Enum(3)
 
   val state       = RegInit(sIdle)
   val isIdle      = state === sIdle
-  val isWaitWdata = state === sWaitWdata
   val isWaitBresp = state === sWaitBresp
   val isWaitRresp = state === sWaitRresp
 
-  val waddrRequests = VecInit(io.fanIn.map(in => in.awvalid)).asUInt
-  val wdataRequests = VecInit(io.fanIn.map(in => in.wvalid)).asUInt
+  val writeRequests = VecInit(io.fanIn.map(in => in.awvalid)).asUInt
   val readRequests  = VecInit(io.fanIn.map(in => in.arvalid)).asUInt
-  val requests      = waddrRequests | wdataRequests | readRequests
+  val requests      = writeRequests | readRequests
 
   val selected           = PriorityEncoder(requests)
   val selectedReg        = RegEnable(selected, isIdle)
-  val isWaddrTransaction = waddrRequests(selected)
-  val isWdataTransaction = wdataRequests(selected)
+  val isWriteTransaction = writeRequests(selected)
   val isReadTransaction  = readRequests(selected)
-  assert(!((isWaddrTransaction || isWdataTransaction) && isReadTransaction))
 
   val awfire = io.fanIn(selectedReg).awvalid && io.fanIn(selectedReg).awready
   val wfire  = io.fanIn(selectedReg).wvalid && io.fanIn(selectedReg).wready
@@ -288,12 +284,10 @@ class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Modu
       sIdle -> MuxCase(
         sIdle,
         Seq(
-          (isWaddrTransaction && isWdataTransaction) -> sWaitBresp,
-          isWaddrTransaction -> sWaitWdata,
+          isWriteTransaction -> sWaitBresp,
           isReadTransaction -> sWaitRresp
         )
       ),
-      sWaitWdata -> Mux(wfire, sWaitBresp, sWaitWdata),
       sWaitBresp -> Mux(bfire, sIdle, sWaitBresp),
       sWaitRresp -> Mux(rfire, sIdle, sWaitRresp)
     )
@@ -304,12 +298,12 @@ class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Modu
       0.U,
       Seq(
         (isIdle && isReadTransaction) -> io.fanIn(selected).araddr,
-        (isIdle && isWaddrTransaction) -> io.fanIn(selected).awaddr
+        (isIdle && isWriteTransaction) -> io.fanIn(selected).awaddr
       )
     )
   )
   val matches     = VecInit(fanOutSeq.map(_(transAddr))).asUInt
-  val fanOutValid = isWaitWdata || isWaitBresp || isWaitRresp
+  val fanOutValid = isWaitBresp || isWaitRresp
   val outSelect   = RegEnable(PriorityEncoder(matches), isIdle)
 
   for (i <- 0 until fanInNum) {

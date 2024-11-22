@@ -12,42 +12,48 @@ class IFUOut(xlen: Int) extends Bundle {
 }
 
 class IFUIO(awidth: Int, xlen: Int) extends Bundle {
-  val in        = Flipped(DecoupledIO(new WBUOut(xlen)))
-  val out       = DecoupledIO(new IFUOut(xlen))
-  val ICacheIn  = DecoupledIO(new ICacheIn(awidth))
-  val ICacheOut = Flipped(DecoupledIO(new ICacheOut(xlen)))
+  val in     = Flipped(DecoupledIO(new WBUOut(xlen)))
+  val out    = DecoupledIO(new IFUOut(xlen))
+  val flush  = Input(Bool())
+  val master = new AXI4MasterIO
 }
 
-class IFU(awidth: Int, xlen: Int) extends Module {
-  val io = IO(new IFUIO(awidth, xlen))
+class IFU(
+  awidth:             Int,
+  xlen:               Int,
+  totalWidth:         Int     = 4,
+  blockWidth:         Int     = 2,
+  associativityWidth: Int     = 0,
+  needCache:          UInt => Bool,
+  supportBurst:       UInt => Bool,
+  sim:                Boolean = true)
+    extends Module {
+  val io = IO(new IFUIO(awidth, xlen) {
+    val ICacheTrace = if (sim) Some(new ICacheTrace) else None
+  })
 
-  val pc          = WireDefault(io.in.bits.nextPc)
-  val instruction = WireDefault(io.ICacheOut.bits.rdata)
+  val pc = WireDefault(io.in.bits.nextPc)
 
-  val sIdle :: sSetAddr :: sFetch :: sExec :: Nil = Enum(4)
-
-  val state     = RegInit(sIdle)
-  val isIdle    = state === sIdle
-  val isSetAddr = state === sSetAddr
-  val isFetch   = state === sFetch
-  val isExec    = state === sExec
-
-  state := MuxLookup(state, sSetAddr)(
-    Seq(
-      sIdle -> Mux(io.in.fire, sSetAddr, sIdle),
-      sSetAddr -> Mux(io.ICacheIn.fire, sFetch, sSetAddr),
-      sFetch -> Mux(io.ICacheOut.fire, sExec, sFetch),
-      sExec -> Mux(io.out.fire, sIdle, sExec)
-    )
+  val ICache = Module(
+    new ICache(awidth, xlen, totalWidth, blockWidth, associativityWidth, needCache, supportBurst, sim)
   )
+  ICache.io.flush := io.flush
+
+  val instruction = WireDefault(ICache.io.out.bits.rdata)
 
   /* IO bind */
-  io.ICacheIn.valid      := isSetAddr
-  io.ICacheIn.bits.raddr := pc
-  io.ICacheOut.ready     := isFetch
+  ICache.io.in.valid      := io.in.valid
+  io.in.ready             := ICache.io.in.ready
+  ICache.io.in.bits.raddr := pc
 
-  io.in.ready             := isIdle
-  io.out.valid            := isExec
+  io.out.valid            := ICache.io.out.valid
+  ICache.io.out.ready     := io.out.ready
   io.out.bits.pc          := pc
   io.out.bits.instruction := instruction
+
+  io.master <> ICache.io.master
+
+  if (sim) {
+    io.ICacheTrace.get <> ICache.io.trace.get
+  }
 }

@@ -8,17 +8,27 @@ import chisel3.util._
 
 import Dev.CLINTAddr
 
-class ICacheIn(awidth: Int = 32) extends Bundle {
+class ICacheIn(awidth: Int) extends Bundle {
   val raddr = Input(UInt(awidth.W))
 }
 
-class ICacheOut(xlen: Int = 32) extends Bundle {
+class ICacheOut(xlen: Int) extends Bundle {
   val rdata = Output(UInt(xlen.W))
 }
 
-class ICacheIO(awidth: Int = 32, xlen: Int = 32) extends Bundle {
-  val in     = Flipped(DecoupledIO(new ICacheIn))
-  val out    = DecoupledIO(new ICacheOut)
+class ICacheTrace extends Bundle {
+  val need        = Output(Bool())
+  val hit         = Output(Bool())
+  val accessStart = Output(Bool())
+  val accessFin   = Output(Bool())
+  val missStart   = Output(Bool())
+  val missFin     = Output(Bool())
+}
+
+class ICacheIO(awidth: Int, xlen: Int, sim: Boolean) extends Bundle {
+  val in     = Flipped(DecoupledIO(new ICacheIn(awidth)))
+  val out    = DecoupledIO(new ICacheOut(xlen))
+  val trace  = if (sim) Some(new ICacheTrace) else None
   val flush  = Input(Bool())
   val master = new AXI4MasterIO
 }
@@ -46,10 +56,7 @@ class ICache(
   val setWidth      = log2Ceil(setNum)
   val tagWidth      = awidth - setWidth - blockWidth
 
-  val io = IO(new ICacheIO(awidth, xlen) {
-    val hit  = if (sim) Some(DecoupledIO(Output(Bool()))) else None
-    val last = if (sim) Some(DecoupledIO(Output(Bool()))) else None
-  })
+  val io = IO(new ICacheIO(awidth, xlen, sim))
 
   val cacheBlocksValid = Seq.fill(setNum, associativity)(RegInit(false.B))
   val cacheBlocksTag   = Seq.fill(setNum, associativity)(Reg(UInt(tagWidth.W)))
@@ -67,12 +74,12 @@ class ICache(
   val isFetch    = state === sFetch
   val isSendBack = state === sSendBack
 
-  val raddrReg       = WireDefault(io.in.bits.raddr)
-  val offset         = if (offsetWidth != 0) raddrReg(offsetWidth + wordWidth - 1, wordWidth) else 0.U
-  val set            = if (setWidth != 0) raddrReg(setWidth + blockWidth - 1, blockWidth) else 0.U
-  val tag            = raddrReg(tagWidth + setWidth + blockWidth - 1, setWidth + blockWidth)
-  val need           = WireDefault(needCache(raddrReg))
-  val burst          = WireDefault(supportBurst(raddrReg))
+  val raddr          = WireDefault(io.in.bits.raddr)
+  val offset         = if (offsetWidth != 0) raddr(offsetWidth + wordWidth - 1, wordWidth) else 0.U
+  val set            = if (setWidth != 0) raddr(setWidth + blockWidth - 1, blockWidth) else 0.U
+  val tag            = raddr(tagWidth + setWidth + blockWidth - 1, setWidth + blockWidth)
+  val need           = WireDefault(needCache(raddr))
+  val burst          = WireDefault(supportBurst(raddr))
   val cacheHit       = WireDefault(false.B)
   val cacheData      = Wire(UInt(xlen.W))
   val availableIndex = Reg(UInt(associativityWidth.W))
@@ -150,8 +157,8 @@ class ICache(
   io.master.arvalid := isSetAddr
   io.master.araddr := Mux(
     need,
-    raddrReg(xlen - 1, blockWidth) ## Fill(blockWidth, "b0".U) + (readCount << 2.U),
-    raddrReg
+    raddr(xlen - 1, blockWidth) ## Fill(blockWidth, "b0".U) + (readCount << 2.U),
+    raddr
   )
   io.master.arid    := 0.U
   io.master.arlen   := Mux(need && burst, (wordPerBlock - 1).U, 0.U)
@@ -166,10 +173,11 @@ class ICache(
   io.out.bits.rdata := Mux(need, cacheData, rdataReg)
 
   if (sim) {
-    io.hit.get.valid := isCheck
-    io.hit.get.bits  := cacheHit
-
-    io.last.get.valid := isFetch && rfire && lastTranmit
-    io.last.get.bits  := lastTranmit
+    io.trace.get.hit         := RegEnable(cacheHit, isCheck)
+    io.trace.get.need        := RegEnable(need, isCheck)
+    io.trace.get.accessStart := io.in.valid
+    io.trace.get.accessFin   := io.out.valid
+    io.trace.get.missStart   := io.master.arvalid
+    io.trace.get.missFin     := io.master.rvalid && io.master.rready && lastTranmit
   }
 }

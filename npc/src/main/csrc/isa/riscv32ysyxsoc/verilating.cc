@@ -3,7 +3,6 @@
 #include <VysyxSoCFull___024root.h>
 #include <cstdint>
 #include <nvboard.h>
-#include <stdint.h>
 #include <verilated.h>
 #include <verilated_fst_c.h>
 
@@ -41,15 +40,13 @@ uint64_t g_cache_miss_penalty = 0;
 
 enum {
   RVCPU_IDLE = 0,
-  RVCPU_SETADDR = 1,
-  RVCPU_FETCH = 2,
-  RVCPU_EXEC = 3,
 };
 
 static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
-  cpu.pc = rvcpu->rootp
-               ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU_io_in_bits_r_nextPc;
+  cpu.pc =
+      rvcpu->rootp
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU_io_in_bits_r_nextPc;
   cpu.gpr[0] = 0;
   cpu.gpr[1] =
       rvcpu->rootp
@@ -195,8 +192,14 @@ void rvcpu_single_exec(void) {
   /* Fetch Instruction */
   while (
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__state !=
-      RVCPU_EXEC) {
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__ICache__DOT__state ==
+      RVCPU_IDLE) {
+    rvcpu_single_cycle();
+  }
+  while (
+      rvcpu->rootp
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__ICache__DOT__state !=
+      RVCPU_IDLE) {
     rvcpu_single_cycle();
   }
   rvcpu_sync();
@@ -205,8 +208,14 @@ void rvcpu_single_exec(void) {
   uint64_t cur_cycle = g_guest_cycle;
   while (
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__state !=
-      RVCPU_SETADDR) {
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU__DOT__state ==
+      RVCPU_IDLE) {
+    rvcpu_single_cycle();
+  }
+  while (
+      rvcpu->rootp
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU__DOT__state !=
+      RVCPU_IDLE) {
     rvcpu_single_cycle();
   }
   rvcpu_sync();
@@ -228,6 +237,12 @@ void rvcpu_reset(void) {
   while (
       rvcpu->rootp
           ->ysyxSoCFull__DOT__asic__DOT__cpu_reset_chain__DOT__output_chain__DOT__sync_0) {
+    rvcpu_single_cycle();
+  }
+  while (
+      rvcpu->rootp
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__ICache__DOT__state ==
+      RVCPU_IDLE) {
     rvcpu_single_cycle();
   }
   g_guest_cycle = 0;

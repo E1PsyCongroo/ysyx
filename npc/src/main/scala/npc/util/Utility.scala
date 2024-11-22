@@ -122,6 +122,7 @@ class CacheCount extends BlackBox with HasBlackBoxResource {
 
 class CacheTracer extends Module {
   val io = IO(new Bundle {
+    val cacheNeed         = Input(Bool())
     val cacheHit          = Input(Bool())
     val cacheAccessStart  = Input(Bool())
     val cacheAccessFinish = Input(Bool())
@@ -165,7 +166,7 @@ class CacheTracer extends Module {
   )
 
   val cacheTracer = Module(new CacheCount)
-  cacheTracer.io.enable       := io.cacheAccessFinish
+  cacheTracer.io.enable       := io.cacheAccessFinish && io.cacheNeed
   cacheTracer.io.hit          := io.cacheHit
   cacheTracer.io.access_cycle := accessCount - missPenaltyCount + 1.U
   cacheTracer.io.miss_penalty := missPenaltyCount
