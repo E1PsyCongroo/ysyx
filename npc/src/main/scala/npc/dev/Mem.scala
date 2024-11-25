@@ -37,59 +37,61 @@ class AXI4Mem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module 
   val bfire  = io.bvalid && io.bready
   val arfire = io.arvalid && io.arready
   val rfire  = io.rvalid && io.rready
-  assert(!(arfire && (awfire || wfire)))
 
-  val sIdle :: sWaitWaddr :: sWaitWdata :: sWrite :: sRead :: Nil = Enum(5)
+  val sWriteIdle :: sSendBresp :: Nil = Enum(2)
+  val sReadIdle :: sSendRresp :: Nil  = Enum(2)
 
-  val state       = RegInit(sIdle)
-  val isIdle      = state === sIdle
-  val isWaitWaddr = state === sWaitWaddr
-  val isWaitWdata = state === sWaitWdata
-  val isWrite     = state === sWrite
-  val isRead      = state === sRead
+  val writeState  = RegInit(sWriteIdle)
+  val isWriteIdle = writeState === sWriteIdle
+  val isSendBresp = writeState === sSendBresp
 
-  state := MuxLookup(state, sIdle)(
+  val readState   = RegInit(sReadIdle)
+  val isReadIdle  = readState === sReadIdle
+  val isSendRresp = readState === sSendRresp
+
+  writeState := MuxLookup(writeState, sWriteIdle)(
     Seq(
-      sIdle -> MuxCase(
-        sIdle,
-        Seq(
-          arfire -> sRead,
-          (awfire && wfire) -> sWrite,
-          wfire -> sWaitWaddr,
-          awfire -> sWaitWdata
-        )
-      ),
-      sWaitWaddr -> Mux(awfire, sWrite, sWaitWaddr),
-      sWaitWdata -> Mux(wfire, sWrite, sWaitWdata),
-      sWrite -> Mux(bfire, sIdle, sWrite),
-      sRead -> Mux(rfire, sIdle, sRead)
+      sWriteIdle -> Mux(awfire && wfire, sSendBresp, sWriteIdle),
+      sSendBresp -> Mux(bfire, sWriteIdle, sSendBresp)
+    )
+  )
+
+  readState := MuxLookup(readState, sReadIdle)(
+    Seq(
+      sReadIdle -> Mux(arfire, sSendRresp, sReadIdle),
+      sSendRresp -> Mux(rfire && io.rlast, sReadIdle, sSendRresp)
     )
   )
 
   /* Write address channel */
-  val awready          = WireDefault(isIdle || isWaitWaddr)
-  val writeAddr        = RegEnable(io.awaddr, 0.U, awfire)
-  val writeSize        = RegEnable(io.awsize, awfire)
+  val awready   = WireDefault(isWriteIdle)
+  val writeAddr = WireDefault(io.awaddr)
+  val writeSize = WireDefault(io.awsize)
 
   /* Write data channel */
-  val wready    = WireDefault(isIdle || isWaitWdata)
-  val writeData = RegEnable(io.wdata, wfire)
-  val writeMask = RegEnable(io.wstrb, wfire)
+  val wready    = WireDefault(isWriteIdle)
+  val writeData = WireDefault(io.wdata)
+  val writeMask = WireDefault(io.wstrb)
 
   /* Write response channel */
-  val bvalid = WireDefault(isWrite)
+  val bvalid = WireDefault(isSendBresp)
   val bresp  = WireDefault(TransactionResponse.okey.asUInt)
   bresp        := TransactionResponse.okey.asUInt
   Mem.io.waddr := writeAddr
   Mem.io.wdata := writeData
   Mem.io.wmask := writeMask
-  Mem.io.wen   := isWrite
+  Mem.io.wen   := isWriteIdle && awfire && wfire
 
   /* Read address channel */
-  val arready = WireDefault(isIdle)
-  Mem.io.raddr := io.araddr
-  Mem.io.ren   := arfire
-  val readData = RegEnable(Mem.io.rdata, arfire)
+  val arready       = WireDefault(isReadIdle)
+  val arlen         = RegEnable(io.arlen + 1.U, isReadIdle)
+  val araddr        = RegEnable(io.araddr, isReadIdle)
+  val readCount     = RegInit(0.U(8.W))
+  val nextReadCount = readCount + 1.U
+  readCount    := Mux(io.rlast, 0.U, Mux(rfire, nextReadCount, readCount))
+  Mem.io.raddr := araddr(awidth - 1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U) + (readCount << 2.U)
+  Mem.io.ren   := isSendRresp
+  val readData = Mem.io.rdata
 
   /* Read data channel */
   // val delay       = LSFR(rfire)
@@ -97,14 +99,15 @@ class AXI4Mem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module 
   val delayCount = RegInit(0.U(delay.getWidth.W))
   val isFetch    = delayCount === delay - 1.U
   delayCount := MuxCase(
-    0.U,
+    delayCount,
     Seq(
-      (isRead && !isFetch) -> (delayCount + 1.U),
-      (isRead && isFetch) -> delayCount
+      isReadIdle -> 0.U,
+      (isSendRresp && !io.rvalid) -> (delayCount + 1.U)
     )
   )
 
-  val rvalid = WireDefault(Mux(isRead, isFetch, false.B))
+  val rvalid = WireDefault(isFetch && isSendRresp)
+  val rlast  = WireDefault(isSendRresp && isFetch && nextReadCount === arlen)
   val rdata  = WireDefault(readData)
   val rresp  = WireDefault(TransactionResponse.okey.asUInt)
   rresp := TransactionResponse.okey.asUInt
@@ -119,6 +122,6 @@ class AXI4Mem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module 
   io.rvalid  := rvalid
   io.rdata   := rdata
   io.rresp   := rresp
-  io.rlast   := true.B
+  io.rlast   := rlast
   io.rid     := DontCare
 }

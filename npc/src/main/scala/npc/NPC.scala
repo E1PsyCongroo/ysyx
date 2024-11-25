@@ -46,8 +46,7 @@ class RVCPU(
     Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
       addr
     ) || Dev.SDRAMAddr.in(addr)
-  val supportBurst: UInt => Bool = Dev.SDRAMAddr.in
-  val IFU = Module(new IFU(awidth, xlen, 6, 5, 0, needCache, supportBurst, sim))
+  val IFU = Module(new IFU(awidth, xlen, 6, 5, 0, needCache, sim))
   val IDU = Module(new IDU(xlen, extentionE, sim))
   val EXU = Module(new EXU(xlen, extentionE))
   val LSU = Module(new LSU(xlen, extentionE))
@@ -146,8 +145,7 @@ class NPC(
     extends Module {
 
   val needCache:    UInt => Bool = Dev.memoryAddr.in
-  val supportBurst: UInt => Bool = _ => false.B
-  val IFU = Module(new IFU(awidth, xlen, 6, 5, 0, needCache, supportBurst, sim))
+  val IFU = Module(new IFU(awidth, xlen, 6, 5, 0, needCache, sim))
   val IDU = Module(new IDU(xlen, extentionE, sim))
   val EXU = Module(new EXU(xlen, extentionE))
   val LSU = Module(new LSU(xlen, extentionE))

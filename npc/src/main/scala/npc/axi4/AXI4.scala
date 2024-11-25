@@ -180,12 +180,11 @@ class AXI4Xbar(slaves: Seq[Area]) extends Module {
 
   val sIdle :: sWaitWaddr :: sWaitBresp :: sWaitRresp :: Nil = Enum(4)
 
+  val state       = RegInit(sIdle)
   val isIdle      = state === sIdle
   val isWaitWaddr = state === sWaitWaddr
   val isWaitBresp = state === sWaitBresp
   val isWaitRresp = state === sWaitRresp
-
-  val state = RegInit(sIdle)
 
   val isWaddrTransaction = io.master.awvalid
   val isWdataTransaction = io.master.wvalid
@@ -257,54 +256,56 @@ class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Modu
     val fanOut = Vec(fanOutSeq.size, new AXI4MasterIO)
   })
 
-  val sIdle :: sWaitBresp :: sWaitRresp :: Nil = Enum(3)
+  val sWriteIdle :: sWaitBresp :: Nil = Enum(2)
+  val sReadIdle :: sWaitRresp :: Nil  = Enum(2)
 
-  val state       = RegInit(sIdle)
-  val isIdle      = state === sIdle
-  val isWaitBresp = state === sWaitBresp
-  val isWaitRresp = state === sWaitRresp
+  val writeState  = RegInit(sWriteIdle)
+  val isWriteIdle = writeState === sWriteIdle
+  val isWaitBresp = writeState === sWaitBresp
+
+  val readState   = RegInit(sReadIdle)
+  val isReadIdle  = readState === sReadIdle
+  val isWaitRresp = readState === sWaitRresp
 
   val writeRequests = VecInit(io.fanIn.map(in => in.awvalid)).asUInt
   val readRequests  = VecInit(io.fanIn.map(in => in.arvalid)).asUInt
-  val requests      = writeRequests | readRequests
 
-  val selected           = PriorityEncoder(requests)
-  val selectedReg        = RegEnable(selected, isIdle)
-  val isWriteTransaction = writeRequests(selected)
-  val isReadTransaction  = readRequests(selected)
+  val writeSelected    = PriorityEncoder(writeRequests)
+  val writeSelectedReg = RegEnable(writeSelected, isWriteIdle)
+  val write            = writeRequests(writeSelected)
 
-  val awfire = io.fanIn(selectedReg).awvalid && io.fanIn(selectedReg).awready
-  val wfire  = io.fanIn(selectedReg).wvalid && io.fanIn(selectedReg).wready
-  val bfire  = io.fanIn(selectedReg).bvalid && io.fanIn(selectedReg).bready
-  val arfire = io.fanIn(selectedReg).arvalid && io.fanIn(selectedReg).arready
-  val rfire  = io.fanIn(selectedReg).rvalid && io.fanIn(selectedReg).rready && io.fanIn(selectedReg).rlast
+  val readSelected    = PriorityEncoder(readRequests)
+  val readSelectedReg = RegEnable(readSelected, isReadIdle)
+  val read            = readRequests(readSelected)
 
-  state := MuxLookup(state, sIdle)(
+  val awfire = io.fanIn(writeSelectedReg).awvalid && io.fanIn(writeSelectedReg).awready
+  val wfire  = io.fanIn(writeSelectedReg).wvalid && io.fanIn(writeSelectedReg).wready
+  val bfire  = io.fanIn(writeSelectedReg).bvalid && io.fanIn(writeSelectedReg).bready
+  val arfire = io.fanIn(readSelectedReg).arvalid && io.fanIn(readSelectedReg).arready
+  val rfire  = io.fanIn(readSelectedReg).rvalid && io.fanIn(readSelectedReg).rready
+  val rlast  = io.fanIn(readSelectedReg).rlast
+
+  writeState := MuxLookup(writeState, sWriteIdle)(
     Seq(
-      sIdle -> MuxCase(
-        sIdle,
-        Seq(
-          isWriteTransaction -> sWaitBresp,
-          isReadTransaction -> sWaitRresp
-        )
-      ),
-      sWaitBresp -> Mux(bfire, sIdle, sWaitBresp),
-      sWaitRresp -> Mux(rfire, sIdle, sWaitRresp)
+      sWriteIdle -> Mux(write, sWaitBresp, sWriteIdle),
+      sWaitBresp -> Mux(bfire, sWriteIdle, sWaitBresp)
     )
   )
 
-  val transAddr = WireDefault(
-    MuxCase(
-      0.U,
-      Seq(
-        (isIdle && isReadTransaction) -> io.fanIn(selected).araddr,
-        (isIdle && isWriteTransaction) -> io.fanIn(selected).awaddr
-      )
+  readState := MuxLookup(readState, sReadIdle)(
+    Seq(
+      sReadIdle -> Mux(read, sWaitRresp, sReadIdle),
+      sWaitRresp -> Mux(rfire && rlast, sReadIdle, sWaitRresp)
     )
   )
-  val matches     = VecInit(fanOutSeq.map(_(transAddr))).asUInt
-  val fanOutValid = isWaitBresp || isWaitRresp
-  val outSelect   = RegEnable(PriorityEncoder(matches), isIdle)
+
+  val awaddr         = io.fanIn(writeSelected).awaddr
+  val wmatches       = VecInit(fanOutSeq.map(_(awaddr))).asUInt
+  val writeOutSelect = RegEnable(PriorityEncoder(wmatches), isWriteIdle)
+
+  val araddr        = io.fanIn(readSelected).araddr
+  val rmatches      = VecInit(fanOutSeq.map(_(araddr))).asUInt
+  val readOutSelect = RegEnable(PriorityEncoder(rmatches), isReadIdle)
 
   for (i <- 0 until fanInNum) {
     io.fanIn(i) <> AXI4.none
@@ -313,16 +314,47 @@ class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Modu
     AXI4.none <> io.fanOut(i)
   }
 
-  when(fanOutValid) {
-    io.fanIn(selectedReg) <> io.fanOut(outSelect)
+  when(isWaitBresp) {
+    io.fanIn(writeSelectedReg).awready := io.fanOut(writeOutSelect).awready
+    io.fanOut(writeOutSelect).awvalid  := io.fanIn(writeSelectedReg).awvalid
+    io.fanOut(writeOutSelect).awaddr   := io.fanIn(writeSelectedReg).awaddr
+    io.fanOut(writeOutSelect).awid     := io.fanIn(writeSelectedReg).awid
+    io.fanOut(writeOutSelect).awlen    := io.fanIn(writeSelectedReg).awlen
+    io.fanOut(writeOutSelect).awsize   := io.fanIn(writeSelectedReg).awsize
+    io.fanOut(writeOutSelect).awburst  := io.fanIn(writeSelectedReg).awburst
+    io.fanIn(writeSelectedReg).wready  := io.fanOut(writeOutSelect).wready
+    io.fanOut(writeOutSelect).wvalid   := io.fanIn(writeSelectedReg).wvalid
+    io.fanOut(writeOutSelect).wdata    := io.fanIn(writeSelectedReg).wdata
+    io.fanOut(writeOutSelect).wstrb    := io.fanIn(writeSelectedReg).wstrb
+    io.fanOut(writeOutSelect).wlast    := io.fanIn(writeSelectedReg).wlast
+    io.fanOut(writeOutSelect).bready   := io.fanIn(writeSelectedReg).bready
+    io.fanIn(writeSelectedReg).bvalid  := io.fanOut(writeOutSelect).bvalid
+    io.fanIn(writeSelectedReg).bresp   := io.fanOut(writeOutSelect).bresp
+    io.fanIn(writeSelectedReg).bid     := io.fanOut(writeOutSelect).bid
+  }
+
+  when(isWaitRresp) {
+    io.fanIn(readSelectedReg).arready := io.fanOut(readOutSelect).arready
+    io.fanOut(readOutSelect).arvalid  := io.fanIn(readSelectedReg).arvalid
+    io.fanOut(readOutSelect).araddr   := io.fanIn(readSelectedReg).araddr
+    io.fanOut(readOutSelect).arid     := io.fanIn(readSelectedReg).arid
+    io.fanOut(readOutSelect).arlen    := io.fanIn(readSelectedReg).arlen
+    io.fanOut(readOutSelect).arsize   := io.fanIn(readSelectedReg).arsize
+    io.fanOut(readOutSelect).arburst  := io.fanIn(readSelectedReg).arburst
+    io.fanOut(readOutSelect).rready   := io.fanIn(readSelectedReg).rready
+    io.fanIn(readSelectedReg).rvalid  := io.fanOut(readOutSelect).rvalid
+    io.fanIn(readSelectedReg).rresp   := io.fanOut(readOutSelect).rresp
+    io.fanIn(readSelectedReg).rdata   := io.fanOut(readOutSelect).rdata
+    io.fanIn(readSelectedReg).rlast   := io.fanOut(readOutSelect).rlast
+    io.fanIn(readSelectedReg).rid     := io.fanOut(readOutSelect).rid
   }
 }
 
 object AXI4Interconnect {
   def apply(
-    fanIn: Seq[AXI4MasterIO],
+    fanIn:      Seq[AXI4MasterIO],
     fanOutArea: Seq[UInt => Bool],
-    fanOut: Seq[AXI4MasterIO]
+    fanOut:     Seq[AXI4MasterIO]
   ) = {
     val AXI4Interconnect = Module(new AXI4Interconnect(fanIn.length, fanOutArea))
     for (i <- 0 until fanIn.length) {

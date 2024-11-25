@@ -25,7 +25,6 @@ class IFU(
   blockWidth:         Int     = 2,
   associativityWidth: Int     = 0,
   needCache:          UInt => Bool,
-  supportBurst:       UInt => Bool,
   sim:                Boolean = true)
     extends Module {
   val io = IO(new IFUIO(awidth, xlen) {
@@ -35,7 +34,7 @@ class IFU(
   val pc = WireDefault(io.in.bits.nextPc)
 
   val ICache = Module(
-    new ICache(awidth, xlen, totalWidth, blockWidth, associativityWidth, needCache, supportBurst, sim)
+    new ICache(awidth, xlen, totalWidth, blockWidth, associativityWidth, needCache, sim)
   )
   ICache.io.flush := io.flush
 
