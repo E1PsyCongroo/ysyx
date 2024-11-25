@@ -109,52 +109,50 @@ class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   val arfire = io.master.arvalid && io.master.arready
   val rfire  = io.master.rvalid && io.master.rready
 
-  val sSendReq :: sWaitResp :: sSendOut :: Nil = Enum(3)
+  val sSendReq :: sWaitResp :: Nil = Enum(2)
 
   val state      = RegInit(sSendReq)
   val isSendReq  = state === sSendReq
   val isWaitResp = state === sWaitResp
-  val isSendOut  = state === sSendOut
 
   state := MuxLookup(state, sSendReq)(
     Seq(
-      sSendReq -> Mux(io.in.valid && memAccess && (arfire || (awfire && wfire)), sWaitResp, sSendReq),
-      sWaitResp -> Mux(bfire || rfire, sSendOut, sWaitResp),
-      sSendOut -> Mux(io.out.fire, sSendReq, sSendOut)
+      sSendReq -> Mux(memAccess && (arfire || (awfire && wfire)), sWaitResp, sSendReq),
+      sWaitResp -> Mux(io.out.fire, sSendReq, sWaitResp)
     )
   )
 
   assert(!bfire || io.master.bresp === "b00".U(2.W))
   assert(!rfire || io.master.rresp === "b00".U(2.W))
   /* IO bind */
-  io.master.awvalid := isSendReq && wen
+  io.master.awvalid := isSendReq && io.in.valid && wen
   io.master.awaddr  := waddr
   io.master.awid    := 0.U
   io.master.awlen   := 0.U
   io.master.awsize  := size
   io.master.awburst := "b01".U
 
-  io.master.wvalid := isSendReq && wen
+  io.master.wvalid := isSendReq && io.in.valid && wen
   io.master.wdata  := wdata << (waddr(1, 0) << 3.U)
   io.master.wstrb  := wmask
   io.master.wlast  := isSendReq
 
-  io.master.bready := isWaitResp
+  io.master.bready := io.out.ready
 
-  io.master.arvalid := isSendReq && ren
+  io.master.arvalid := isSendReq && io.in.valid && ren
   io.master.araddr  := raddr
   io.master.arid    := 0.U
   io.master.arlen   := 0.U
   io.master.arsize  := size
   io.master.arburst := "b01".U
 
-  io.master.rready := isWaitResp
+  io.master.rready := io.out.ready
 
   io.in.ready               := !io.in.valid
-  io.out.valid              := Mux(memAccess, isSendOut, io.in.valid)
+  io.out.valid              := io.in.valid && Mux(ren, io.master.rvalid, Mux(wen, io.master.bvalid, true.B))
   io.out.bits.wa            := in.wa
   io.out.bits.aluOut        := in.aluOut
-  io.out.bits.memOut        := RegEnable(rdata, rfire)
+  io.out.bits.memOut        := rdata
   io.out.bits.csrOut        := in.csrOut
   io.out.bits.control.regWe := in.control.regWe
   io.out.bits.control.wbSrc := in.control.wbSrc

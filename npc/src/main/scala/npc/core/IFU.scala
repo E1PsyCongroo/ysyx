@@ -33,13 +33,22 @@ class IFU(
     val ICacheTrace = if (sim) Some(new ICacheTrace) else None
   })
 
-  val pc = RegInit(PCReset.U)
-  pc := Mux(io.jump, io.nextPC, Mux(io.out.fire, pc + 4.U, pc))
-
+  val nextPC = RegEnable(io.nextPC, io.jump)
+  val pc     = RegInit(PCReset.U)
+  val skip   = RegInit(false.B)
   val ICache = Module(
     new ICache(awidth, xlen, totalWidth, blockWidth, associativityWidth, needCache, sim)
   )
   ICache.io.flush := io.cacheFlush
+
+  pc := Mux(ICache.io.out.fire, Mux(io.jump, io.nextPC, Mux(skip, nextPC, pc + 4.U)), pc)
+  skip := MuxCase(
+    skip,
+    Seq(
+      ICache.io.out.fire -> false.B,
+      io.jump -> true.B
+    )
+  )
 
   val instruction = WireDefault(ICache.io.out.bits.rdata)
 
@@ -48,7 +57,7 @@ class IFU(
   ICache.io.in.bits.raddr := pc
 
   ICache.io.out.ready     := io.out.ready
-  io.out.valid            := ICache.io.out.valid
+  io.out.valid            := ICache.io.out.valid && !skip
   io.out.bits.pc          := pc
   io.out.bits.instruction := instruction
 

@@ -91,7 +91,8 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
       Mux(BrCond.io.PCASrc && BrCond.io.PCBSrc, pc + imm, Mux(!BrCond.io.PCASrc && BrCond.io.PCBSrc, pc + 4.U, rd1))
     else Mux(BrCond.io.PCASrc && BrCond.io.PCBSrc, pc + imm, rd1)
 
-  val jump = io.in.valid && (BrCond.io.PCASrc || !BrCond.io.PCBSrc || (control.pcSrc === PCSrcFrom.fromCSR))
+  val jump   = io.in.valid && (BrCond.io.PCASrc || !BrCond.io.PCBSrc || (control.pcSrc === PCSrcFrom.fromCSR))
+  val jumped = RegNext(!io.out.fire && jump)
   val nextPC = MuxCase(
     pcCom,
     Seq(
@@ -113,7 +114,7 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   io.out.bits.control.memOp  := control.memOp
   io.RegFileAccess.wa        := in.wa
   io.RegFileAccess.we        := control.regWe && io.in.valid
-  io.jump                    := jump
+  io.jump                    := !jumped && jump
   io.nextPC                  := nextPC
   if (sim) {
     io.out.bits.nextPC.get   := nextPC
