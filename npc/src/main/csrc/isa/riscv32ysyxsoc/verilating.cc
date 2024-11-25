@@ -38,16 +38,11 @@ uint64_t g_nr_cache_hit = 0;
 uint64_t g_cache_access_time = 0;
 uint64_t g_cache_miss_penalty = 0;
 
-enum {
-  RVCPU_IDLE = 0,
-};
-
 static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
   cpu.pc =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU_io_in_bits_r_nextPc;
-  cpu.gpr[0] = 0;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU_io_in_bits_r_nextPC;
   cpu.gpr[1] =
       rvcpu->rootp
           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_1;
@@ -93,9 +88,6 @@ static void rvcpu_sync(void) {
   cpu.gpr[15] =
       rvcpu->rootp
           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_15;
-  cpu.mstatus =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_4_2;
   cpu.mtvec =
       rvcpu->rootp
           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_2_2;
@@ -105,13 +97,10 @@ static void rvcpu_sync(void) {
   cpu.mcause =
       rvcpu->rootp
           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_0_2;
-  cpu.priv = static_cast<decltype(cpu.priv)>(
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__priv);
   /* synchronizing instruction with rvcpu */
   cur_inst =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IDU_io_in_bits_r_instruction;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU_io_in_bits_r_inst;
 }
 
 void rvcpu_init(const char *wave_file, int argc, char **argv) {
@@ -130,6 +119,11 @@ void rvcpu_init(const char *wave_file, int argc, char **argv) {
   nvboard_init();
   rvcpu_reset();
   rvcpu_sync();
+  cpu.pc = rvcpu->rootp
+               ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__pc;
+  cpu.gpr[0] = 0;
+  cpu.mstatus = 0x1800;
+  cpu.priv = static_cast<decltype(cpu.priv)>(0b11);
   /* Exit */
   atexit(rvcpu_exit);
 }
@@ -189,38 +183,20 @@ void rvcpu_single_cycle(void) {
 }
 
 void rvcpu_single_exec(void) {
-  /* Fetch Instruction */
-  while (
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__ICache__DOT__state ==
-      RVCPU_IDLE) {
-    rvcpu_single_cycle();
-  }
-  while (
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__ICache__DOT__state !=
-      RVCPU_IDLE) {
-    rvcpu_single_cycle();
-  }
-  rvcpu_sync();
   g_nr_fetch_inst++;
-  /* Exec Instruction */
-  uint64_t cur_cycle = g_guest_cycle;
   while (
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU__DOT__state ==
-      RVCPU_IDLE) {
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU_io_in_valid_REG ==
+      0) {
     rvcpu_single_cycle();
   }
   while (
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU__DOT__state !=
-      RVCPU_IDLE) {
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU_io_in_valid_REG !=
+      0) {
     rvcpu_single_cycle();
   }
   rvcpu_sync();
-  void decode_inst(uint32_t inst, uint64_t exec_cycle);
-  decode_inst(cur_inst, g_guest_cycle - cur_cycle);
 }
 
 void rvcpu_reset(void) {
@@ -237,12 +213,6 @@ void rvcpu_reset(void) {
   while (
       rvcpu->rootp
           ->ysyxSoCFull__DOT__asic__DOT__cpu_reset_chain__DOT__output_chain__DOT__sync_0) {
-    rvcpu_single_cycle();
-  }
-  while (
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__ICache__DOT__state ==
-      RVCPU_IDLE) {
     rvcpu_single_cycle();
   }
   g_guest_cycle = 0;

@@ -32,10 +32,11 @@ object StageConnect {
       leftOut.ready := rightIn.ready
       rightIn.bits  := RegEnable(leftOut.bits, leftOut.fire)
       if (flush.isEmpty) {
-        rightIn.valid := RegNext(Mux(leftOut.fire, true.B, Mux(rightOut.fire, false.B, rightIn.valid)))
+        rightIn.valid := RegNext(Mux(leftOut.fire, true.B, Mux(rightOut.fire, false.B, rightIn.valid)), false.B)
       } else {
         rightIn.valid := RegNext(
-          Mux(flush.get || rightOut.fire, false.B, Mux(leftOut.fire, true.B, rightIn.valid))
+          Mux(flush.get || rightOut.fire, false.B, Mux(leftOut.fire, true.B, rightIn.valid)),
+          false.B
         )
       }
     } else if (arch == "ooo") {
@@ -57,24 +58,28 @@ class RVCPU(
     Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
       addr
     ) || Dev.SDRAMAddr.in(addr)
-  val IFU = Module(new IFU(awidth, xlen, PCReset, 6, 5, 0, needCache, sim))
-  val IDU = Module(new IDU(xlen, extentionE, sim))
-  val EXU = Module(new EXU(xlen, extentionE, sim))
-  val LSU = Module(new LSU(xlen, extentionE, sim))
-  val WBU = Module(new WBU(xlen, extentionE, sim))
+  val IFU    = Module(new IFU(xlen, PCReset, sim))
+  val ICache = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
+  val IDU    = Module(new IDU(xlen, extentionE, sim))
+  val EXU    = Module(new EXU(xlen, extentionE, sim))
+  val LSU    = Module(new LSU(xlen, extentionE, sim))
+  val WBU    = Module(new WBU(xlen, extentionE, sim))
 
-  StageConnect(IFU.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
+  StageConnect(IFU.io.out, ICache.io.in, ICache.io.out, Some(EXU.io.jump))
+  StageConnect(ICache.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
   StageConnect(IDU.io.out, EXU.io.in, EXU.io.out)
   StageConnect(EXU.io.out, LSU.io.in, LSU.io.out)
   StageConnect(LSU.io.out, WBU.io.in, WBU.io.out)
 
-  IFU.io.jump       := EXU.io.jump
-  IFU.io.nextPC     := EXU.io.nextPC
-  IFU.io.cacheFlush := IDU.io.fence_i
+  IFU.io.jump   := EXU.io.jump
+  IFU.io.nextPC := EXU.io.nextPC
+
+  ICache.io.flush := EXU.io.jump
+  ICache.io.clear := IDU.io.fence_i
 
   IDU.io.flush := EXU.io.jump
   // TODO: 解决IDU指令不需要ra1 ra2访问时误判RAW的情况
-  def conflict(ra1: UInt, ra2: UInt, wa: UInt, we: Bool) = we && wa =/= 0.U && ra1 === wa && ra2 === wa
+  def conflict(ra1: UInt, ra2: UInt, wa: UInt, we: Bool) = we && wa =/= 0.U && (ra1 === wa || ra2 === wa)
   val isRAW = conflict(
     IDU.io.RegFileAccess.ra1,
     IDU.io.RegFileAccess.ra2,
@@ -102,7 +107,7 @@ class RVCPU(
   val CLINT = Module(new CLINT(awidth, xlen, Dev.CLINTAddr))
 
   AXI4Interconnect(
-    Seq(LSU.io.master, IFU.io.master),
+    Seq(LSU.io.master, ICache.io.master),
     Seq(Dev.CLINTAddr.in, !Dev.CLINTAddr.in(_)),
     Seq(CLINT.io, io.master)
   )
@@ -112,10 +117,11 @@ class RVCPU(
     val cycle = RegInit(0.U(64.W))
     cycle := cycle + 1.U
 
-    IFU.io.curCycle.get := cycle
+    ICache.io.curCycle.get := cycle
 
     val InstTracer = Module(new InstTracer)
     InstTracer.io.clock      := clock
+    InstTracer.io.npc        := WBU.io.out.bits.nextPC.get
     InstTracer.io.inst       := WBU.io.out.bits.inst.get
     InstTracer.io.exec_cycle := cycle - WBU.io.out.bits.fetchCycle.get
     InstTracer.io.en         := WBU.io.out.fire
@@ -134,17 +140,17 @@ class RVCPU(
     val needSkipDifftest = devs.map { dev => dev.in(LSU.io.in.bits.aluOut) }.foldLeft(false.B)(_ || _)
     SkipDifftest(clock, LSU.io.out.fire && needSkipDifftest);
 
-    val IFUArfire = IFU.io.master.arvalid && IFU.io.master.arready
-    val IFURfire  = IFU.io.master.rvalid && IFU.io.master.rready
-    val IFUTracer = Module(new Tracer)
-    IFUTracer.io.raddr := RegEnable(IFU.io.master.araddr, IFUArfire)
-    IFUTracer.io.rlen  := RegEnable(1.U << IFU.io.master.arsize, IFUArfire)
-    IFUTracer.io.rdata := IFU.io.master.rdata
-    IFUTracer.io.ren   := IFURfire
-    IFUTracer.io.waddr := DontCare
-    IFUTracer.io.wdata := DontCare
-    IFUTracer.io.wlen  := DontCare
-    IFUTracer.io.wen   := false.B
+    val ICacheArfire = ICache.io.master.arvalid && ICache.io.master.arready
+    val ICacheRfire  = ICache.io.master.rvalid && ICache.io.master.rready
+    val ICacheTracer = Module(new Tracer)
+    ICacheTracer.io.raddr := RegEnable(ICache.io.master.araddr, ICacheArfire)
+    ICacheTracer.io.rlen  := RegEnable(1.U << ICache.io.master.arsize, ICacheArfire)
+    ICacheTracer.io.rdata := ICache.io.master.rdata
+    ICacheTracer.io.ren   := ICacheRfire
+    ICacheTracer.io.waddr := DontCare
+    ICacheTracer.io.wdata := DontCare
+    ICacheTracer.io.wlen  := DontCare
+    ICacheTracer.io.wen   := false.B
 
     val LSUArfire = LSU.io.master.arvalid && LSU.io.master.arready
     val LSURfire  = LSU.io.master.rvalid && LSU.io.master.rready
@@ -168,12 +174,12 @@ class RVCPU(
     TracerDataFetch.io.finish := LSU.io.master.rvalid && LSU.io.master.rready
 
     val CacheTracer = Module(new CacheTracer)
-    CacheTracer.io.cacheNeed         := IFU.io.ICacheTrace.get.need
-    CacheTracer.io.cacheHit          := IFU.io.ICacheTrace.get.hit
-    CacheTracer.io.cacheAccessStart  := IFU.io.ICacheTrace.get.accessStart
-    CacheTracer.io.cacheAccessFinish := IFU.io.ICacheTrace.get.accessFin
-    CacheTracer.io.cacheFetchStart   := IFU.io.ICacheTrace.get.missStart
-    CacheTracer.io.cacheFetchFinish  := IFU.io.ICacheTrace.get.missFin
+    CacheTracer.io.cacheNeed         := ICache.io.trace.get.need
+    CacheTracer.io.cacheHit          := ICache.io.trace.get.hit
+    CacheTracer.io.cacheAccessStart  := ICache.io.trace.get.accessStart
+    CacheTracer.io.cacheAccessFinish := ICache.io.trace.get.accessFin
+    CacheTracer.io.cacheFetchStart   := ICache.io.trace.get.missStart
+    CacheTracer.io.cacheFetchFinish  := ICache.io.trace.get.missFin
   }
 }
 
@@ -191,20 +197,24 @@ class NPC(
   })
 
   val needCache: UInt => Bool = Dev.memoryAddr.in
-  val IFU = Module(new IFU(awidth, xlen, PCReset, 6, 5, 0, needCache, sim))
-  val IDU = Module(new IDU(xlen, extentionE, sim))
-  val EXU = Module(new EXU(xlen, extentionE, sim))
-  val LSU = Module(new LSU(xlen, extentionE, sim))
-  val WBU = Module(new WBU(xlen, extentionE, sim))
+  val IFU    = Module(new IFU(xlen, PCReset, sim))
+  val ICache = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
+  val IDU    = Module(new IDU(xlen, extentionE, sim))
+  val EXU    = Module(new EXU(xlen, extentionE, sim))
+  val LSU    = Module(new LSU(xlen, extentionE, sim))
+  val WBU    = Module(new WBU(xlen, extentionE, sim))
 
-  StageConnect(IFU.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
+  StageConnect(IFU.io.out, ICache.io.in, ICache.io.out, Some(EXU.io.jump))
+  StageConnect(ICache.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
   StageConnect(IDU.io.out, EXU.io.in, EXU.io.out)
   StageConnect(EXU.io.out, LSU.io.in, LSU.io.out)
   StageConnect(LSU.io.out, WBU.io.in, WBU.io.out)
 
-  IFU.io.jump       := EXU.io.jump
-  IFU.io.nextPC     := EXU.io.nextPC
-  IFU.io.cacheFlush := IDU.io.fence_i
+  IFU.io.jump   := EXU.io.jump
+  IFU.io.nextPC := EXU.io.nextPC
+
+  ICache.io.flush := EXU.io.jump
+  ICache.io.clear := IDU.io.fence_i
 
   IDU.io.flush := EXU.io.jump
   // TODO: 解决IDU指令不需要ra1 ra2访问时误判RAW的情况
@@ -238,7 +248,7 @@ class NPC(
   val Uart    = Module(new Uart(awidth, xlen))
 
   AXI4Interconnect(
-    Seq(LSU.io.master, IFU.io.master),
+    Seq(LSU.io.master, ICache.io.master),
     Seq(Dev.mtimeAddr.in, Dev.uartAddr.in, addr => !Dev.mtimeAddr.in(addr) && !Dev.uartAddr.in(addr)),
     Seq(CLINT.io, Uart.io, AXI4Mem.io)
   )
@@ -247,7 +257,7 @@ class NPC(
     val cycle = RegInit(0.U(64.W))
     cycle := cycle + 1.U
 
-    IFU.io.curCycle.get := cycle
+    ICache.io.curCycle.get := cycle
 
     val InstTracer = Module(new InstTracer)
     InstTracer.io.clock      := clock
@@ -271,12 +281,12 @@ class NPC(
     TracerDataFetch.io.finish := LSU.io.master.rvalid && LSU.io.master.rready
 
     val CacheTracer = Module(new CacheTracer)
-    CacheTracer.io.cacheNeed         := IFU.io.ICacheTrace.get.need
-    CacheTracer.io.cacheHit          := IFU.io.ICacheTrace.get.hit
-    CacheTracer.io.cacheAccessStart  := IFU.io.ICacheTrace.get.accessStart
-    CacheTracer.io.cacheAccessFinish := IFU.io.ICacheTrace.get.accessFin
-    CacheTracer.io.cacheFetchStart   := IFU.io.ICacheTrace.get.missStart
-    CacheTracer.io.cacheFetchFinish  := IFU.io.ICacheTrace.get.missFin
+    CacheTracer.io.cacheNeed         := ICache.io.trace.get.need
+    CacheTracer.io.cacheHit          := ICache.io.trace.get.hit
+    CacheTracer.io.cacheAccessStart  := ICache.io.trace.get.accessStart
+    CacheTracer.io.cacheAccessFinish := ICache.io.trace.get.accessFin
+    CacheTracer.io.cacheFetchStart   := ICache.io.trace.get.missStart
+    CacheTracer.io.cacheFetchFinish  := ICache.io.trace.get.missFin
 
     io.nextPC.get := WBU.io.out.bits.nextPC.get
     io.inst.get   := WBU.io.out.bits.inst.get

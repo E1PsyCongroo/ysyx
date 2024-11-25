@@ -2,6 +2,7 @@ import "DPI-C" function void decode_inst(input int unsigned inst, input longint 
 
 module InstTracer (
   input clock,
+  input [31:0] npc,
   input [31:0] inst,
   input [63:0] exec_cycle,
   input en

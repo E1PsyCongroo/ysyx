@@ -8,12 +8,10 @@ import chisel3.util._
 
 import Dev.CLINTAddr
 
-class ICacheIn(awidth: Int) extends Bundle {
-  val raddr = Input(UInt(awidth.W))
-}
-
-class ICacheOut(xlen: Int) extends Bundle {
-  val rdata = Output(UInt(xlen.W))
+class ICacheOut(xlen: Int, sim: Boolean) extends Bundle {
+  val pc          = Output(UInt(xlen.W))
+  val instruction = Output(UInt(32.W))
+  val fetchCycle  = if (sim) Some(Output(UInt(64.W))) else None
 }
 
 class ICacheTrace extends Bundle {
@@ -26,10 +24,11 @@ class ICacheTrace extends Bundle {
 }
 
 class ICacheIO(awidth: Int, xlen: Int, sim: Boolean) extends Bundle {
-  val in     = Flipped(DecoupledIO(new ICacheIn(awidth)))
-  val out    = DecoupledIO(new ICacheOut(xlen))
+  val in     = Flipped(DecoupledIO(new IFUOut(awidth, sim)))
+  val out    = DecoupledIO(new ICacheOut(xlen, sim))
   val trace  = if (sim) Some(new ICacheTrace) else None
   val flush  = Input(Bool())
+  val clear  = Input(Bool())
   val master = new AXI4MasterIO
 }
 
@@ -55,7 +54,9 @@ class ICache(
   val setWidth      = log2Ceil(setNum)
   val tagWidth      = awidth - setWidth - blockWidth
 
-  val io = IO(new ICacheIO(awidth, xlen, sim))
+  val io = IO(new ICacheIO(awidth, xlen, sim) {
+    val curCycle = if (sim) Some(Input(UInt(64.W))) else None
+  })
 
   val cacheBlocksValid = Seq.fill(setNum, associativity)(RegInit(false.B))
   val cacheBlocksTag   = Seq.fill(setNum, associativity)(Reg(UInt(tagWidth.W)))
@@ -65,16 +66,26 @@ class ICache(
   val rfire  = io.master.rvalid && io.master.rready
   val rlast  = io.master.rlast
 
-  val sCheck :: sSetAddr :: sCacheFetch :: sComFetch :: sSendBack :: Nil = Enum(5)
+  val sIdle :: sCheck :: sSetAddr :: sCacheFetch :: sComFetch :: sSendBack :: Nil = Enum(6)
 
-  val state        = RegInit(sCheck)
+  val state        = RegInit(sIdle)
+  val isIdle       = state === sIdle
   val isCheck      = state === sCheck
   val isSetAddr    = state === sSetAddr
   val isCacheFetch = state === sCacheFetch
   val isComFetch   = state === sComFetch
   val isSendBack   = state === sSendBack
 
-  val raddr          = WireDefault(io.in.bits.raddr)
+  val skip = RegInit(false.B)
+  skip := MuxCase(
+    skip,
+    Seq(
+      isSendBack -> false.B,
+      io.flush -> true.B
+    )
+  )
+
+  val raddr          = WireDefault(io.in.bits.pc)
   val offset         = if (offsetWidth != 0) raddr(offsetWidth + wordWidth - 1, wordWidth) else 0.U
   val set            = if (setWidth != 0) raddr(setWidth + blockWidth - 1, blockWidth) else 0.U
   val tag            = raddr(tagWidth + setWidth + blockWidth - 1, setWidth + blockWidth)
@@ -98,7 +109,7 @@ class ICache(
       }
       availableIndex := Mux(isCheck && setIndex.U === set && !cacheBlocksValid(setIndex)(index), index.U, 0.U)
       cacheBlocksValid(setIndex)(index) := Mux(
-        io.flush,
+        io.clear,
         false.B,
         Mux(
           rfire && rlast && need && setIndex.U === set && index.U === availableIndex,
@@ -119,13 +130,14 @@ class ICache(
     }
   }
 
-  state := MuxLookup(state, sCheck)(
+  state := MuxLookup(state, sIdle)(
     Seq(
-      sCheck -> Mux(io.in.fire, Mux(cacheHit, sSendBack, sSetAddr), sCheck),
+      sIdle -> Mux(io.in.valid, sCheck, sIdle),
+      sCheck -> Mux(cacheHit, sSendBack, sSetAddr),
       sSetAddr -> Mux(arfire, Mux(need, sCacheFetch, sComFetch), sSetAddr),
       sCacheFetch -> Mux(rfire && rlast, sSendBack, sCacheFetch),
       sComFetch -> Mux(rfire && rlast, sSendBack, sComFetch),
-      sSendBack -> Mux(io.out.fire, sCheck, sSendBack)
+      sSendBack -> Mux(io.out.fire || skip, sIdle, sSendBack)
     )
   )
 
@@ -155,15 +167,18 @@ class ICache(
 
   io.master.rready := isCacheFetch || isComFetch
 
-  io.in.ready := isCheck
+  io.in.ready := isIdle && !io.in.valid
 
-  io.out.valid      := isSendBack
-  io.out.bits.rdata := Mux(need, cacheData, rdataReg)
+  io.out.valid            := isSendBack && !skip
+  io.out.bits.pc          := raddr
+  io.out.bits.instruction := Mux(need, cacheData, rdataReg)
 
   if (sim) {
+    io.out.bits.fetchCycle.get := io.curCycle.get
+
     io.trace.get.hit         := RegEnable(cacheHit, isCheck)
     io.trace.get.need        := RegEnable(need, isCheck)
-    io.trace.get.accessStart := io.in.valid
+    io.trace.get.accessStart := isIdle && io.in.valid
     io.trace.get.accessFin   := io.out.valid
     io.trace.get.missStart   := io.master.arvalid
     io.trace.get.missFin     := rfire && rlast

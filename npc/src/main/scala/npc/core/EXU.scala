@@ -87,10 +87,17 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   BrCond.io.brType := control.brType
   BrCond.io.less   := ALU.io.less
   BrCond.io.zero   := ALU.io.zero
+  val pcSrc1 = WireDefault(pc + imm)
+  val pcSrc2 = WireDefault(rd1 + imm)
+  val pcSrc3 = WireDefault(pc + 4.U)
   val pcCom =
     if (sim)
-      Mux(BrCond.io.PCASrc && BrCond.io.PCBSrc, pc + imm, Mux(!BrCond.io.PCASrc && BrCond.io.PCBSrc, pc + 4.U, rd1))
-    else Mux(BrCond.io.PCASrc && BrCond.io.PCBSrc, pc + imm, rd1)
+      Mux(
+        BrCond.io.PCASrc && BrCond.io.PCBSrc,
+        pcSrc1,
+        Mux(!BrCond.io.PCASrc && BrCond.io.PCBSrc, pcSrc3, pcSrc2)
+      )
+    else Mux(BrCond.io.PCASrc && BrCond.io.PCBSrc, pcSrc1, pcSrc2)
 
   val jump   = io.in.valid && (BrCond.io.PCASrc || !BrCond.io.PCBSrc || (control.pcSrc === PCSrcFrom.fromCSR))
   val jumped = RegNext(!io.out.fire && jump)

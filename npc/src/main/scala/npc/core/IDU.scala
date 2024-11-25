@@ -33,7 +33,7 @@ class IDUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
 }
 
 class IDUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
-  val in    = Flipped(DecoupledIO(new IFUOut(xlen, sim)))
+  val in    = Flipped(DecoupledIO(new ICacheOut(xlen, sim)))
   val out   = DecoupledIO(new IDUOut(xlen, extentionE, sim))
   val flush = Input(Bool())
   val stall = Input(Bool())
