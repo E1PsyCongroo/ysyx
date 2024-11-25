@@ -26,13 +26,14 @@ class IDUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
     val memOp   = Output(UInt(MemOp.getWidth.W))
   }
 
-  val inst     = if (sim) Some(Output(UInt(32.W))) else None
-  val isEnd    = if (sim) Some(Output(Bool())) else None
-  val exitCode = if (sim) Some(Output(UInt(32.W))) else None
+  val inst       = if (sim) Some(Output(UInt(32.W))) else None
+  val fetchCycle = if (sim) Some(Output(UInt(64.W))) else None
+  val isEnd      = if (sim) Some(Output(Bool())) else None
+  val exitCode   = if (sim) Some(Output(UInt(32.W))) else None
 }
 
 class IDUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
-  val in    = Flipped(DecoupledIO(new IFUOut(xlen)))
+  val in    = Flipped(DecoupledIO(new IFUOut(xlen, sim)))
   val out   = DecoupledIO(new IDUOut(xlen, extentionE, sim))
   val flush = Input(Bool())
   val stall = Input(Bool())
@@ -96,8 +97,9 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
   io.fence_i                  := Control.io.fence_i
 
   if (sim) {
-    io.out.bits.inst.get     := instruction
-    io.out.bits.isEnd.get    := Control.io.isEnd.get
-    io.out.bits.exitCode.get := io.RegFileReturn.rd1
+    io.out.bits.inst.get       := instruction
+    io.out.bits.fetchCycle.get := in.fetchCycle.get
+    io.out.bits.isEnd.get      := Control.io.isEnd.get
+    io.out.bits.exitCode.get   := io.RegFileReturn.rd1
   }
 }

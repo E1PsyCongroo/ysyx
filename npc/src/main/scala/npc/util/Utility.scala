@@ -110,6 +110,16 @@ class TracerDataFetch extends BlackBox with HasBlackBoxResource {
   addResource("/TracerDataFetch.sv")
 }
 
+class InstTracer extends BlackBox with HasBlackBoxResource {
+  val io = IO(new Bundle {
+    val clock      = Input(Clock())
+    val inst       = Input(UInt(32.W))
+    val exec_cycle = Input(UInt(64.W))
+    val en         = Input(Bool())
+  })
+  addResource("/InstTracer.sv")
+}
+
 class CacheCount extends BlackBox with HasBlackBoxResource {
   val io = IO(new Bundle {
     val enable       = Input(Bool())

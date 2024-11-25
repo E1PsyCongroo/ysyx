@@ -109,6 +109,17 @@ class RVCPU(
   io.slave <> AXI4.none
 
   if (sim) {
+    val cycle = RegInit(0.U(64.W))
+    cycle := cycle + 1.U
+
+    IFU.io.curCycle.get := cycle
+
+    val InstTracer = Module(new InstTracer)
+    InstTracer.io.clock      := clock
+    InstTracer.io.inst       := WBU.io.out.bits.inst.get
+    InstTracer.io.exec_cycle := cycle - WBU.io.out.bits.fetchCycle.get
+    InstTracer.io.en         := WBU.io.out.fire
+
     EndControl(clock, WBU.io.out.fire && WBU.io.out.bits.isEnd.get, WBU.io.out.bits.exitCode.get)
 
     val devs = Seq(
@@ -233,6 +244,17 @@ class NPC(
   )
 
   if (sim) {
+    val cycle = RegInit(0.U(64.W))
+    cycle := cycle + 1.U
+
+    IFU.io.curCycle.get := cycle
+
+    val InstTracer = Module(new InstTracer)
+    InstTracer.io.clock      := clock
+    InstTracer.io.inst       := WBU.io.out.bits.inst.get
+    InstTracer.io.exec_cycle := cycle - WBU.io.out.bits.fetchCycle.get
+    InstTracer.io.en         := WBU.io.out.fire
+
     EndControl(clock, WBU.io.out.fire && WBU.io.out.bits.isEnd.get, WBU.io.out.bits.exitCode.get)
 
     val devs = Seq(

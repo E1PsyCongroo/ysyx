@@ -6,13 +6,14 @@ import rvcpu.utility._
 import chisel3._
 import chisel3.util._
 
-class IFUOut(xlen: Int) extends Bundle {
+class IFUOut(xlen: Int, sim: Boolean) extends Bundle {
   val pc          = Output(UInt(xlen.W))
   val instruction = Output(UInt(32.W))
+  val fetchCycle  = if (sim) Some(Output(UInt(64.W))) else None
 }
 
-class IFUIO(awidth: Int, xlen: Int) extends Bundle {
-  val out        = DecoupledIO(new IFUOut(xlen))
+class IFUIO(awidth: Int, xlen: Int, sim: Boolean) extends Bundle {
+  val out        = DecoupledIO(new IFUOut(xlen, sim))
   val jump       = Input(Bool())
   val nextPC     = Input(UInt(xlen.W))
   val cacheFlush = Input(Bool())
@@ -29,8 +30,9 @@ class IFU(
   needCache:          UInt => Bool,
   sim:                Boolean = true)
     extends Module {
-  val io = IO(new IFUIO(awidth, xlen) {
+  val io = IO(new IFUIO(awidth, xlen, sim) {
     val ICacheTrace = if (sim) Some(new ICacheTrace) else None
+    val curCycle    = if (sim) Some(Input(UInt(64.W))) else None
   })
 
   val nextPC = RegEnable(io.nextPC, io.jump)
@@ -65,5 +67,6 @@ class IFU(
 
   if (sim) {
     io.ICacheTrace.get <> ICache.io.trace.get
+    io.out.bits.fetchCycle.get := io.curCycle.get
   }
 }

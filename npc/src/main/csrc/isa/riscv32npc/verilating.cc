@@ -38,7 +38,6 @@ uint64_t g_cache_miss_penalty = 0;
 static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
   cpu.pc = rvcpu->io_nextPC;
-  cpu.gpr[0] = 0;
   cpu.gpr[1] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_1;
   cpu.gpr[2] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_2;
   cpu.gpr[3] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_3;
@@ -54,11 +53,9 @@ static void rvcpu_sync(void) {
   cpu.gpr[13] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_13;
   cpu.gpr[14] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_14;
   cpu.gpr[15] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_15;
-  cpu.mstatus = 0x1800;
   cpu.mtvec = rvcpu->rootp->NPC__DOT__EXU__DOT__CSRControl__DOT__csrs_2_2;
   cpu.mepc = rvcpu->rootp->NPC__DOT__EXU__DOT__CSRControl__DOT__csrs_3_2;
   cpu.mcause = rvcpu->rootp->NPC__DOT__EXU__DOT__CSRControl__DOT__csrs_0_2;
-  cpu.priv = static_cast<decltype(cpu.priv)>(0b11);
   /* synchronizing instruction with rvcpu */
   cur_inst = rvcpu->io_inst;
 }
@@ -78,6 +75,9 @@ void rvcpu_init(const char *wave_file, int argc, char **argv) {
   rvcpu_reset();
   rvcpu_sync();
   cpu.pc = rvcpu->rootp->NPC__DOT__IFU__DOT__pc;
+  cpu.gpr[0] = 0;
+  cpu.mstatus = 0x1800;
+  cpu.priv = static_cast<decltype(cpu.priv)>(0b11);
   /* Exit */
   atexit(rvcpu_exit);
 }
@@ -136,7 +136,6 @@ void rvcpu_single_cycle(void) {
 
 void rvcpu_single_exec(void) {
   g_nr_fetch_inst++;
-  uint64_t cur_cycle = g_guest_cycle;
   while (rvcpu->rootp->NPC__DOT__WBU_io_in_valid_REG == 0) {
     rvcpu_single_cycle();
   }
@@ -144,8 +143,6 @@ void rvcpu_single_exec(void) {
     rvcpu_single_cycle();
   }
   rvcpu_sync();
-  void decode_inst(uint32_t inst, uint64_t exec_cycle);
-  decode_inst(cur_inst, g_guest_cycle - cur_cycle);
 }
 
 void rvcpu_reset(void) {

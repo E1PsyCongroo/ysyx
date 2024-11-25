@@ -19,10 +19,11 @@ class EXUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
     val memOp  = Output(UInt(MemOp.getWidth.W))
   }
 
-  val nextPC   = if (sim) Some(Output(UInt(xlen.W))) else None
-  val inst     = if (sim) Some(Output(UInt(32.W))) else None
-  val isEnd    = if (sim) Some(Output(Bool())) else None
-  val exitCode = if (sim) Some(Output(UInt(32.W))) else None
+  val nextPC     = if (sim) Some(Output(UInt(xlen.W))) else None
+  val inst       = if (sim) Some(Output(UInt(32.W))) else None
+  val fetchCycle = if (sim) Some(Output(UInt(64.W))) else None
+  val isEnd      = if (sim) Some(Output(Bool())) else None
+  val exitCode   = if (sim) Some(Output(UInt(32.W))) else None
 }
 
 class EXUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
@@ -117,9 +118,10 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   io.jump                    := !jumped && jump
   io.nextPC                  := nextPC
   if (sim) {
-    io.out.bits.nextPC.get   := nextPC
-    io.out.bits.inst.get     := in.inst.get
-    io.out.bits.isEnd.get    := in.isEnd.get
-    io.out.bits.exitCode.get := in.exitCode.get
+    io.out.bits.nextPC.get     := nextPC
+    io.out.bits.inst.get       := in.inst.get
+    io.out.bits.fetchCycle.get := in.fetchCycle.get
+    io.out.bits.isEnd.get      := in.isEnd.get
+    io.out.bits.exitCode.get   := in.exitCode.get
   }
 }
