@@ -32,6 +32,21 @@ object RegWeControlField extends DecodeField[Instruction, Bool] {
   }
 }
 
+object WBSrcControlField extends DecodeField[Instruction, UInt] {
+  import WBSrcFrom._
+  import InstructionMap._
+  def name:             String = "Write Back Control Feild"
+  def chiselType:       UInt   = UInt(WBSrcFrom.getWidth.W)
+  override def default: BitPat = fromALU
+  def genTable(op: Instruction): BitPat = {
+    op match {
+      case LB | LBU | LH | LHU | LW                         => fromMem
+      case CSRRW | CSRRWI | CSRRS | CSRRSI | CSRRC | CSRRCI => fromCSR
+      case _                                                => default
+    }
+  }
+}
+
 object ALUASrcControlField extends DecodeField[Instruction, UInt] {
   import InstructionMap._
   import ALUASrcFrom._
@@ -145,7 +160,7 @@ object CSRControlField extends DecodeField[Instruction, UInt] {
   override def default: BitPat = csrNone
   def genTable(op: Instruction): BitPat = {
     op match {
-      case ECALL          => csrEcall
+      case ECALL          => csrExcept
       case MRET           => csrMret
       case CSRRW | CSRRWI => csrRW
       case CSRRS | CSRRSI => csrRS
@@ -230,21 +245,6 @@ object PCSrcControlField extends DecodeField[Instruction, UInt] {
   }
 }
 
-object WBSrcControlField extends DecodeField[Instruction, UInt] {
-  import WBSrcFrom._
-  import InstructionMap._
-  def name:             String = "Write Back Control Feild"
-  def chiselType:       UInt   = UInt(WBSrcFrom.getWidth.W)
-  override def default: BitPat = fromALU
-  def genTable(op: Instruction): BitPat = {
-    op match {
-      case LB | LBU | LH | LHU | LW                         => fromMem
-      case CSRRW | CSRRWI | CSRRS | CSRRSI | CSRRC | CSRRCI => fromCSR
-      case _                                                => default
-    }
-  }
-}
-
 object FENCE_IField extends DecodeField[Instruction, Bool] {
   import InstructionMap._
   def name:             String = "fence_i Feild"
@@ -270,27 +270,35 @@ object EndControlField extends DecodeField[Instruction, Bool] {
   }
 }
 
-class ControlIO(sim: Boolean) extends Bundle {
+class ControlIO(xlen: Int, sim: Boolean) extends Bundle {
   val instruction = Input(UInt(32.W))
-  val immType     = Output(UInt(ImmType.getWidth.W))
-  val regWe       = Output(Bool())
-  val aluASrc     = Output(UInt(ALUASrcFrom.getWidth.W))
-  val aluBSrc     = Output(UInt(ALUBSrcFrom.getWidth.W))
-  val aluCtr      = Output(UInt(ALUOp.getWidth.W))
+
+  val immType = Output(UInt(ImmType.getWidth.W))
+
+  val regWe = Output(Bool())
+  val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
+
+  val aluASrc = Output(UInt(ALUASrcFrom.getWidth.W))
+  val aluBSrc = Output(UInt(ALUBSrcFrom.getWidth.W))
+  val aluCtr  = Output(UInt(ALUOp.getWidth.W))
+
   val csrSrc      = Output(UInt(CSRSrcFrom.getWidth.W))
   val csrCtr      = Output(UInt(CSRCtr.getWidth.W))
-  val brType      = Output(UInt(BrType.getWidth.W))
-  val pcSrc       = Output(UInt(PCSrcFrom.getWidth.W))
-  val wbSrc       = Output(UInt(WBSrcFrom.getWidth.W))
-  val memRen      = Output(Bool())
-  val memWen      = Output(Bool())
-  val memOp       = Output(UInt(MemOp.getWidth.W))
-  val fence_i     = Output(Bool())
-  val isEnd       = if (sim) Some(Output(Bool())) else None
+  val exceptCause = Output(UInt(xlen.W))
+
+  val brType = Output(UInt(BrType.getWidth.W))
+  val pcSrc  = Output(UInt(PCSrcFrom.getWidth.W))
+
+  val memRen = Output(Bool())
+  val memWen = Output(Bool())
+  val memOp  = Output(UInt(MemOp.getWidth.W))
+
+  val fence_i = Output(Bool())
+  val isEnd   = if (sim) Some(Output(Bool())) else None
 }
 
-class Control(sim: Boolean) extends Module {
-  val io = IO(new ControlIO(sim))
+class Control(xlen: Int, sim: Boolean) extends Module {
+  val io = IO(new ControlIO(xlen, sim))
   import InstructionMap._
 
   val possiblePatterns = Seq(
@@ -364,19 +372,27 @@ class Control(sim: Boolean) extends Module {
     )
   )
   val decodeResult = decodeTable.decode(io.instruction)
+
   io.immType := decodeResult(ImmControlField)
-  io.regWe   := decodeResult(RegWeControlField)
+
+  io.regWe := decodeResult(RegWeControlField)
+  io.wbSrc := decodeResult(WBSrcControlField)
+
   io.aluASrc := decodeResult(ALUASrcControlField)
   io.aluBSrc := decodeResult(ALUBSrcControlField)
   io.aluCtr  := decodeResult(ALUControlField)
-  io.csrSrc  := decodeResult(CSRSrcControlField)
-  io.csrCtr  := decodeResult(CSRControlField)
-  io.brType  := decodeResult(BrControlField)
-  io.pcSrc   := decodeResult(PCSrcControlField)
-  io.wbSrc   := decodeResult(WBSrcControlField)
-  io.memRen  := decodeResult(MemRenControlField)
-  io.memWen  := decodeResult(MemWenControlField)
-  io.memOp   := decodeResult(MemOpControlField)
+
+  io.csrSrc      := decodeResult(CSRSrcControlField)
+  io.csrCtr      := decodeResult(CSRControlField)
+  io.exceptCause := 11.U
+
+  io.brType := decodeResult(BrControlField)
+  io.pcSrc  := decodeResult(PCSrcControlField)
+
+  io.memRen := decodeResult(MemRenControlField)
+  io.memWen := decodeResult(MemWenControlField)
+  io.memOp  := decodeResult(MemOpControlField)
+
   io.fence_i := decodeResult(FENCE_IField)
   if (sim) {
     io.isEnd.get := decodeResult(EndControlField)

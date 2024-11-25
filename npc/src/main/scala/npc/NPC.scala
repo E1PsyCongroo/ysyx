@@ -16,19 +16,30 @@ class RVCPUIO(awidth: Int = 32, xlen: Int = 32) extends Bundle {
 object StageConnect {
   var arch = "pipeline"
 
-  def apply[T <: Data](left: DecoupledIO[T], right: DecoupledIO[T]) = {
+  def apply[T <: Data](
+    leftOut:  DecoupledIO[T],
+    rightIn:  DecoupledIO[T],
+    rightOut: DecoupledIO[T],
+    flush:    Option[Bool] = None
+  ) = {
     if (arch == "single") {
-      right.bits  := left.bits
-      left.ready  := true.B
-      right.valid := true.B
+      rightIn.bits  := leftOut.bits
+      leftOut.ready := true.B
+      rightIn.valid := true.B
     } else if (arch == "multi") {
-      right <> left
+      rightIn <> leftOut
     } else if (arch == "pipeline") {
-      left.ready  := right.ready
-      right.bits  := RegEnable(left.bits, left.fire)
-      right.valid := left.valid
+      leftOut.ready := rightIn.ready
+      rightIn.bits  := RegEnable(leftOut.bits, leftOut.fire)
+      if (flush.isEmpty) {
+        rightIn.valid := RegNext(Mux(leftOut.fire, true.B, Mux(rightOut.fire, false.B, rightIn.valid)))
+      } else {
+        rightIn.valid := RegNext(
+          Mux(flush.get || rightOut.fire, false.B, Mux(leftOut.fire, true.B, rightIn.valid))
+        )
+      }
     } else if (arch == "ooo") {
-      right <> Queue(left, 16)
+      rightIn <> Queue(leftOut, 16)
     }
   }
 }
@@ -46,19 +57,37 @@ class RVCPU(
     Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
       addr
     ) || Dev.SDRAMAddr.in(addr)
-  val IFU = Module(new IFU(awidth, xlen, 6, 5, 0, needCache, sim))
+  val IFU = Module(new IFU(awidth, xlen, PCReset, 6, 5, 0, needCache, sim))
   val IDU = Module(new IDU(xlen, extentionE, sim))
-  val EXU = Module(new EXU(xlen, extentionE))
-  val LSU = Module(new LSU(xlen, extentionE))
-  val WBU = Module(new WBU(xlen, extentionE, PCReset))
+  val EXU = Module(new EXU(xlen, extentionE, sim))
+  val LSU = Module(new LSU(xlen, extentionE, sim))
+  val WBU = Module(new WBU(xlen, extentionE, sim))
 
-  StageConnect(IFU.io.out, IDU.io.in)
-  StageConnect(IDU.io.out, EXU.io.in)
-  StageConnect(EXU.io.out, LSU.io.in)
-  StageConnect(LSU.io.out, WBU.io.in)
-  StageConnect(WBU.io.out, IFU.io.in)
+  StageConnect(IFU.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
+  StageConnect(IDU.io.out, EXU.io.in, EXU.io.out)
+  StageConnect(EXU.io.out, LSU.io.in, LSU.io.out)
+  StageConnect(LSU.io.out, WBU.io.in, WBU.io.out)
 
-  IFU.io.flush := IDU.io.fence_i
+  IFU.io.jump       := EXU.io.jump
+  IFU.io.nextPC     := EXU.io.nextPC
+  IFU.io.cacheFlush := IDU.io.fence_i
+
+  // TODO: 解决IDU指令不需要ra1 ra2访问时误判RAW的情况
+  def conflict(ra1: UInt, ra2: UInt, wa: UInt, we: Bool) = we && wa =/= 0.U && ra1 === wa && ra2 === wa
+  val isRAW = conflict(
+    IDU.io.RegFileAccess.ra1,
+    IDU.io.RegFileAccess.ra2,
+    EXU.io.RegFileAccess.wa,
+    EXU.io.RegFileAccess.we
+  ) || conflict(
+    IDU.io.RegFileAccess.ra1,
+    IDU.io.RegFileAccess.ra2,
+    LSU.io.RegFileAccess.wa,
+    LSU.io.RegFileAccess.we
+  ) || conflict(IDU.io.RegFileAccess.ra1, IDU.io.RegFileAccess.ra2, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
+  IDU.io.stall := isRAW
+
+  WBU.io.out.ready := true.B
 
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
   RegFile.io.ra1           := IDU.io.RegFileAccess.ra1
@@ -79,7 +108,7 @@ class RVCPU(
   io.slave <> AXI4.none
 
   if (sim) {
-    EndControl(clock, IDU.io.isEnd.get, IDU.io.exitCode.get)
+    EndControl(clock, WBU.io.out.fire && WBU.io.out.bits.isEnd.get, WBU.io.out.bits.exitCode.get)
 
     val devs = Seq(
       Dev.CLINTAddr,
@@ -90,8 +119,8 @@ class RVCPU(
       Dev.VGAAddr,
       Dev.ChipLinkMEMAddr
     )
-    val needSkipDifftest = devs.map { dev => dev.in(EXU.io.out.bits.aluOut) }.foldLeft(false.B)(_ || _)
-    SkipDifftest(clock, LSU.io.in.fire && needSkipDifftest);
+    val needSkipDifftest = devs.map { dev => dev.in(LSU.io.in.bits.aluOut) }.foldLeft(false.B)(_ || _)
+    SkipDifftest(clock, LSU.io.out.fire && needSkipDifftest);
 
     val IFUArfire = IFU.io.master.arvalid && IFU.io.master.arready
     val IFURfire  = IFU.io.master.rvalid && IFU.io.master.rready
@@ -144,20 +173,43 @@ class NPC(
   sim:        Boolean = true)
     extends Module {
 
-  val needCache:    UInt => Bool = Dev.memoryAddr.in
-  val IFU = Module(new IFU(awidth, xlen, 6, 5, 0, needCache, sim))
+  val io = IO(new Bundle {
+    val nextPC = if (sim) Some(Output(UInt(xlen.W))) else None
+    val inst   = if (sim) Some(Output(UInt(32.W))) else None
+  })
+
+  val needCache: UInt => Bool = Dev.memoryAddr.in
+  val IFU = Module(new IFU(awidth, xlen, PCReset, 6, 5, 0, needCache, sim))
   val IDU = Module(new IDU(xlen, extentionE, sim))
-  val EXU = Module(new EXU(xlen, extentionE))
-  val LSU = Module(new LSU(xlen, extentionE))
-  val WBU = Module(new WBU(xlen, extentionE, PCReset))
+  val EXU = Module(new EXU(xlen, extentionE, sim))
+  val LSU = Module(new LSU(xlen, extentionE, sim))
+  val WBU = Module(new WBU(xlen, extentionE, sim))
 
-  StageConnect(IFU.io.out, IDU.io.in)
-  StageConnect(IDU.io.out, EXU.io.in)
-  StageConnect(EXU.io.out, LSU.io.in)
-  StageConnect(LSU.io.out, WBU.io.in)
-  StageConnect(WBU.io.out, IFU.io.in)
+  StageConnect(IFU.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
+  StageConnect(IDU.io.out, EXU.io.in, EXU.io.out)
+  StageConnect(EXU.io.out, LSU.io.in, LSU.io.out)
+  StageConnect(LSU.io.out, WBU.io.in, WBU.io.out)
 
-  IFU.io.flush := IDU.io.fence_i
+  IFU.io.jump       := EXU.io.jump
+  IFU.io.nextPC     := EXU.io.nextPC
+  IFU.io.cacheFlush := IDU.io.fence_i
+
+  // TODO: 解决IDU指令不需要ra1 ra2访问时误判RAW的情况
+  def conflict(ra1: UInt, ra2: UInt, wa: UInt, we: Bool) = we && wa =/= 0.U && (ra1 === wa || ra2 === wa)
+  val isRAW = conflict(
+    IDU.io.RegFileAccess.ra1,
+    IDU.io.RegFileAccess.ra2,
+    EXU.io.RegFileAccess.wa,
+    EXU.io.RegFileAccess.we
+  ) || conflict(
+    IDU.io.RegFileAccess.ra1,
+    IDU.io.RegFileAccess.ra2,
+    LSU.io.RegFileAccess.wa,
+    LSU.io.RegFileAccess.we
+  ) || conflict(IDU.io.RegFileAccess.ra1, IDU.io.RegFileAccess.ra2, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
+  IDU.io.stall := isRAW
+
+  WBU.io.out.ready := true.B
 
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
   RegFile.io.ra1           := IDU.io.RegFileAccess.ra1
@@ -179,14 +231,14 @@ class NPC(
   )
 
   if (sim) {
-    EndControl(clock, IDU.io.isEnd.get, IDU.io.exitCode.get)
+    EndControl(clock, WBU.io.out.fire && WBU.io.out.bits.isEnd.get, WBU.io.out.bits.exitCode.get)
 
     val devs = Seq(
       Dev.mtimeAddr,
       Dev.uartAddr
     )
-    val needSkipDifftest = devs.map { dev => dev.in(EXU.io.out.bits.aluOut) }.foldLeft(false.B)(_ || _)
-    SkipDifftest(clock, LSU.io.in.fire && needSkipDifftest);
+    val needSkipDifftest = devs.map { dev => dev.in(LSU.io.in.bits.aluOut) }.foldLeft(false.B)(_ || _)
+    SkipDifftest(clock, LSU.io.out.fire && needSkipDifftest)
 
     val TracerDataFetch = Module(new TracerDataFetch)
     TracerDataFetch.io.clock  := clock
@@ -201,5 +253,8 @@ class NPC(
     CacheTracer.io.cacheAccessFinish := IFU.io.ICacheTrace.get.accessFin
     CacheTracer.io.cacheFetchStart   := IFU.io.ICacheTrace.get.missStart
     CacheTracer.io.cacheFetchFinish  := IFU.io.ICacheTrace.get.missFin
+
+    io.nextPC.get := WBU.io.out.bits.nextPC.get
+    io.inst.get   := WBU.io.out.bits.inst.get
   }
 }

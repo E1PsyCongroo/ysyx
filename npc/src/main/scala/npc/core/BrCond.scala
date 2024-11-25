@@ -32,5 +32,5 @@ class BrCond extends Module {
       brGe -> isGe
     ).map { case (key, data) => (io.brType === key, data) }
   )
-  io.PCBSrc := Mux(io.brType === brJr, false.B, true.B)
+  io.PCBSrc := io.brType =/= brJr
 }

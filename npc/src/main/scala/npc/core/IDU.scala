@@ -3,13 +3,14 @@ package rvcpu.core
 import chisel3._
 import chisel3.util._
 
-class IDUOut(xlen: Int, extentionE: Boolean) extends Bundle {
-  val pc  = Output(UInt(xlen.W))
-  val rs1 = Output(UInt(if (extentionE) 4.W else 5.W))
-  val rd1 = Output(UInt(xlen.W))
-  val rd2 = Output(UInt(xlen.W))
-  val wa  = Output(UInt(if (extentionE) 4.W else 5.W))
-  val imm = Output(UInt(xlen.W))
+class IDUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
+  val pc          = Output(UInt(xlen.W))
+  val rs1         = Output(UInt(if (extentionE) 4.W else 5.W))
+  val rd1         = Output(UInt(xlen.W))
+  val rd2         = Output(UInt(xlen.W))
+  val wa          = Output(UInt(if (extentionE) 4.W else 5.W))
+  val imm         = Output(UInt(xlen.W))
+  val exceptCause = Output(UInt(xlen.W))
   val control = new Bundle {
     val regWe   = Output(Bool())
     val aluASrc = Output(UInt(ALUASrcFrom.getWidth.W))
@@ -24,11 +25,16 @@ class IDUOut(xlen: Int, extentionE: Boolean) extends Bundle {
     val memWen  = Output(Bool())
     val memOp   = Output(UInt(MemOp.getWidth.W))
   }
+
+  val inst     = if (sim) Some(Output(UInt(32.W))) else None
+  val isEnd    = if (sim) Some(Output(Bool())) else None
+  val exitCode = if (sim) Some(Output(UInt(32.W))) else None
 }
 
 class IDUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
-  val in  = Flipped(DecoupledIO(new IFUOut(xlen)))
-  val out = DecoupledIO(new IDUOut(xlen, extentionE))
+  val in    = Flipped(DecoupledIO(new IFUOut(xlen)))
+  val out   = DecoupledIO(new IDUOut(xlen, extentionE, sim))
+  val stall = Input(Bool())
   val RegFileAccess = new Bundle {
     val ra1 = Output(UInt(if (extentionE) 4.W else 5.W))
     val ra2 = Output(UInt(if (extentionE) 4.W else 5.W))
@@ -37,9 +43,7 @@ class IDUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
     val rd1 = Input(UInt(xlen.W))
     val rd2 = Input(UInt(xlen.W))
   }
-  val fence_i  = Output(Bool())
-  val isEnd    = if (sim) Some(Output(Bool())) else None
-  val exitCode = if (sim) Some(Output(UInt(32.W))) else None
+  val fence_i = Output(Bool())
 }
 
 class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) extends Module {
@@ -47,21 +51,8 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
 
   val in = WireDefault(io.in.bits)
 
-  val sIdle :: sDecode :: Nil = Enum(2)
-
-  val state    = RegInit(sIdle)
-  val isIdle   = state === sIdle
-  val isDecode = state === sDecode
-
-  state := MuxLookup(state, sIdle)(
-    Seq(
-      sIdle -> Mux(io.in.fire, sDecode, sIdle),
-      sDecode -> Mux(io.out.fire, sIdle, sDecode)
-    )
-  )
-
   val ImmGen  = Module(new ImmGen(xlen))
-  val Control = Module(new Control(sim))
+  val Control = Module(new Control(xlen, sim))
 
   val instruction = in.instruction
   val rs1         = instruction(19, 15)
@@ -80,15 +71,17 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
 
   Control.io.instruction := instruction
 
-  io.in.ready                 := isIdle
-  io.out.valid                := isDecode
+  io.in.ready                 := !io.in.valid
+  io.out.valid                := io.in.valid && !io.stall
   io.out.bits.pc              := in.pc
   io.out.bits.rd1             := io.RegFileReturn.rd1
   io.out.bits.rd2             := io.RegFileReturn.rd2
   io.out.bits.wa              := rd
   io.out.bits.imm             := ImmGen.io.imm
   io.out.bits.rs1             := rs1
+  io.out.bits.exceptCause     := Control.io.exceptCause
   io.out.bits.control.regWe   := Control.io.regWe
+  io.out.bits.control.wbSrc   := Control.io.wbSrc
   io.out.bits.control.aluASrc := Control.io.aluASrc
   io.out.bits.control.aluBSrc := Control.io.aluBSrc
   io.out.bits.control.aluCtr  := Control.io.aluCtr
@@ -96,14 +89,14 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
   io.out.bits.control.csrCtr  := Control.io.csrCtr
   io.out.bits.control.brType  := Control.io.brType
   io.out.bits.control.pcSrc   := Control.io.pcSrc
-  io.out.bits.control.wbSrc   := Control.io.wbSrc
   io.out.bits.control.memRen  := Control.io.memRen
   io.out.bits.control.memWen  := Control.io.memWen
   io.out.bits.control.memOp   := Control.io.memOp
   io.fence_i                  := Control.io.fence_i
 
   if (sim) {
-    io.isEnd.get    := Control.io.isEnd.get
-    io.exitCode.get := io.RegFileReturn.rd1
+    io.out.bits.inst.get     := instruction
+    io.out.bits.isEnd.get    := Control.io.isEnd.get
+    io.out.bits.exitCode.get := io.RegFileReturn.rd1
   }
 }

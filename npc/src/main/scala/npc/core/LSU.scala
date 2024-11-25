@@ -40,27 +40,34 @@ object SizeFeild extends DecodeField[MemControlPattern, UInt] {
   }
 }
 
-class LSUOut(xlen: Int, extentionE: Boolean) extends Bundle {
+class LSUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
   val wa     = Output(UInt(if (extentionE) 4.W else 5.W))
-  val pcCom  = Output(UInt(xlen.W))
   val aluOut = Output(UInt(xlen.W))
   val memOut = Output(UInt(xlen.W))
   val csrOut = Output(UInt(xlen.W))
   val control = new Bundle {
     val regWe = Bool()
-    val pcSrc = Output(UInt(PCSrcFrom.getWidth.W))
     val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
+  }
+
+  val nextPC   = if (sim) Some(Output(UInt(xlen.W))) else None
+  val inst     = if (sim) Some(Output(UInt(32.W))) else None
+  val isEnd    = if (sim) Some(Output(Bool())) else None
+  val exitCode = if (sim) Some(Output(UInt(32.W))) else None
+}
+
+class LSUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
+  val in     = Flipped(DecoupledIO(new EXUOut(xlen, extentionE, sim)))
+  val out    = DecoupledIO(new LSUOut(xlen, extentionE, sim))
+  val master = new AXI4MasterIO
+  val RegFileAccess = new Bundle {
+    val wa = Output(UInt(if (extentionE) 4.W else 5.W))
+    val we = Output(Bool())
   }
 }
 
-class LSUIO(xlen: Int, extentionE: Boolean) extends Bundle {
-  val in     = Flipped(DecoupledIO(new EXUOut(xlen, extentionE)))
-  val out    = DecoupledIO(new LSUOut(xlen, extentionE))
-  val master = new AXI4MasterIO
-}
-
-class LSU(xlen: Int, extentionE: Boolean) extends Module {
-  val io = IO(new LSUIO(xlen, extentionE))
+class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
+  val io = IO(new LSUIO(xlen, extentionE, sim))
 
   val in        = WireDefault(io.in.bits)
   val wen       = in.control.memWen
@@ -102,24 +109,18 @@ class LSU(xlen: Int, extentionE: Boolean) extends Module {
   val arfire = io.master.arvalid && io.master.arready
   val rfire  = io.master.rvalid && io.master.rready
 
-  val sIdle :: sSendReq :: sWaitResp :: sSendOut :: Nil = Enum(4)
+  val sSendReq :: sWaitResp :: sSendOut :: Nil = Enum(3)
 
-  val state      = RegInit(sIdle)
-  val isIdle     = state === sIdle
+  val state      = RegInit(sSendReq)
   val isSendReq  = state === sSendReq
   val isWaitResp = state === sWaitResp
   val isSendOut  = state === sSendOut
 
-  state := MuxLookup(state, sIdle)(
+  state := MuxLookup(state, sSendReq)(
     Seq(
-      sIdle -> Mux(io.in.fire, sSendReq, sIdle),
-      sSendReq -> Mux(
-        memAccess,
-        Mux(arfire || (awfire && wfire), sWaitResp, sSendReq),
-        Mux(io.out.fire, sIdle, sSendOut)
-      ),
+      sSendReq -> Mux(io.in.valid && memAccess && (arfire || (awfire && wfire)), sWaitResp, sSendReq),
       sWaitResp -> Mux(bfire || rfire, sSendOut, sWaitResp),
-      sSendOut -> Mux(io.out.fire, sIdle, sSendOut)
+      sSendOut -> Mux(io.out.fire, sSendReq, sSendOut)
     )
   )
 
@@ -149,14 +150,20 @@ class LSU(xlen: Int, extentionE: Boolean) extends Module {
 
   io.master.rready := isWaitResp
 
-  io.in.ready               := isIdle
-  io.out.valid              := isSendOut || (isSendReq && !memAccess)
+  io.in.ready               := !io.in.valid
+  io.out.valid              := Mux(memAccess, isSendOut, io.in.valid)
   io.out.bits.wa            := in.wa
-  io.out.bits.pcCom         := in.pcCom
   io.out.bits.aluOut        := in.aluOut
   io.out.bits.memOut        := RegEnable(rdata, rfire)
   io.out.bits.csrOut        := in.csrOut
   io.out.bits.control.regWe := in.control.regWe
-  io.out.bits.control.pcSrc := in.control.pcSrc
   io.out.bits.control.wbSrc := in.control.wbSrc
+  io.RegFileAccess.wa       := in.wa
+  io.RegFileAccess.we       := in.control.regWe && io.in.valid
+  if (sim) {
+    io.out.bits.nextPC.get   := in.nextPC.get
+    io.out.bits.inst.get     := in.inst.get
+    io.out.bits.isEnd.get    := in.isEnd.get
+    io.out.bits.exitCode.get := in.exitCode.get
+  }
 }

@@ -3,13 +3,16 @@ package rvcpu.core
 import chisel3._
 import chisel3.util._
 
-class WBUOut(xlen: Int) extends Bundle {
-  val nextPc = Output(UInt(xlen.W))
+class WBUOut(xlen: Int, sim: Boolean) extends Bundle {
+  val nextPC   = if (sim) Some(Output(UInt(xlen.W))) else None
+  val inst     = if (sim) Some(Output(UInt(32.W))) else None
+  val isEnd    = if (sim) Some(Output(Bool())) else None
+  val exitCode = if (sim) Some(Output(UInt(32.W))) else None
 }
 
-class WBUIO(xlen: Int, extentionE: Boolean) extends Bundle {
-  val in  = Flipped(DecoupledIO(new LSUOut(xlen, extentionE)))
-  val out = DecoupledIO(new WBUOut(xlen))
+class WBUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
+  val in  = Flipped(DecoupledIO(new LSUOut(xlen, extentionE, sim)))
+  val out = DecoupledIO(new WBUOut(xlen, sim))
   val RegFileAccess = new Bundle {
     val wa = Output(UInt(if (extentionE) 4.W else 5.W))
     val we = Output(Bool())
@@ -17,39 +20,15 @@ class WBUIO(xlen: Int, extentionE: Boolean) extends Bundle {
   }
 }
 
-class WBU(xlen: Int, extentionE: Boolean, PCReset: BigInt) extends Module {
-  val io = IO(new WBUIO(xlen, extentionE))
+class WBU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
+  val io = IO(new WBUIO(xlen, extentionE, sim))
 
   val in      = WireDefault(io.in.bits)
   val wa      = in.wa
-  val pcCom   = in.pcCom
   val aluOut  = in.aluOut
   val memOut  = in.memOut
   val csrOut  = in.csrOut
   val control = in.control
-
-  val sIdle :: sWriteBack :: sReset :: Nil = Enum(3)
-
-  val state       = RegInit(sReset)
-  val isIdle      = state === sIdle
-  val isWriteBack = state === sWriteBack
-  val isReset     = state === sReset
-
-  state := MuxLookup(state, sIdle)(
-    Seq(
-      sIdle -> Mux(io.in.fire, sWriteBack, sIdle),
-      sWriteBack -> Mux(io.out.fire, sIdle, sWriteBack),
-      sReset -> Mux(io.out.fire, sIdle, sReset)
-    )
-  )
-
-  val pcSrc = MuxCase(
-    pcCom,
-    Seq(
-      PCSrcFrom.fromCom -> pcCom,
-      PCSrcFrom.fromCSR -> csrOut
-    ).map { case (key, data) => (key === control.pcSrc, data) }
-  )
 
   val wbSrc = MuxCase(
     aluOut,
@@ -60,10 +39,15 @@ class WBU(xlen: Int, extentionE: Boolean, PCReset: BigInt) extends Module {
     ).map { case (key, data) => (control.wbSrc === key, data) }
   )
 
-  io.in.ready         := isIdle
-  io.out.valid        := isWriteBack || isReset
-  io.out.bits.nextPc  := Mux(isReset, PCReset.U, pcSrc)
+  io.in.ready         := !io.in.valid
+  io.out.valid        := io.in.valid
   io.RegFileAccess.wa := wa
-  io.RegFileAccess.we := control.regWe && isWriteBack
+  io.RegFileAccess.we := control.regWe && io.in.valid
   io.RegFileAccess.wd := wbSrc
+  if (sim) {
+    io.out.bits.nextPC.get   := in.nextPC.get
+    io.out.bits.inst.get     := in.inst.get
+    io.out.bits.isEnd.get    := in.isEnd.get
+    io.out.bits.exitCode.get := in.exitCode.get
+  }
 }

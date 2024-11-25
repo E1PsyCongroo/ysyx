@@ -65,10 +65,9 @@ class ICache(
   val rfire  = io.master.rvalid && io.master.rready
   val rlast  = io.master.rlast
 
-  val sIdle :: sCheck :: sSetAddr :: sCacheFetch :: sComFetch :: sSendBack :: Nil = Enum(6)
+  val sCheck :: sSetAddr :: sCacheFetch :: sComFetch :: sSendBack :: Nil = Enum(5)
 
-  val state        = RegInit(sIdle)
-  val isIdle       = state === sIdle
+  val state        = RegInit(sCheck)
   val isCheck      = state === sCheck
   val isSetAddr    = state === sSetAddr
   val isCacheFetch = state === sCacheFetch
@@ -87,7 +86,7 @@ class ICache(
 
   val readCount     = RegInit(0.U((offsetWidth + 1).W))
   val nextReadCount = readCount + 1.U
-  readCount := Mux(isIdle, 0.U, Mux(rfire, nextReadCount, readCount))
+  readCount := Mux(isCheck, 0.U, Mux(rfire, nextReadCount, readCount))
 
   cacheData := DontCare
   for (setIndex <- 0 until setNum) {
@@ -120,14 +119,13 @@ class ICache(
     }
   }
 
-  state := MuxLookup(state, sIdle)(
+  state := MuxLookup(state, sCheck)(
     Seq(
-      sIdle -> Mux(io.in.fire, sCheck, sIdle),
-      sCheck -> Mux(cacheHit, sSendBack, sSetAddr),
+      sCheck -> Mux(io.in.fire, Mux(cacheHit, sSendBack, sSetAddr), sCheck),
       sSetAddr -> Mux(arfire, Mux(need, sCacheFetch, sComFetch), sSetAddr),
       sCacheFetch -> Mux(rfire && rlast, sSendBack, sCacheFetch),
       sComFetch -> Mux(rfire && rlast, sSendBack, sComFetch),
-      sSendBack -> Mux(io.out.fire, sIdle, sSendBack)
+      sSendBack -> Mux(io.out.fire, sCheck, sSendBack)
     )
   )
 
@@ -157,7 +155,7 @@ class ICache(
 
   io.master.rready := isCacheFetch || isComFetch
 
-  io.in.ready := isIdle
+  io.in.ready := isCheck
 
   io.out.valid      := isSendBack
   io.out.bits.rdata := Mux(need, cacheData, rdataReg)
