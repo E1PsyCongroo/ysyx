@@ -78,7 +78,6 @@ class RVCPU(
   ICache.io.clear := IDU.io.fence_i
 
   IDU.io.flush := EXU.io.jump
-  // TODO: 解决IDU指令不需要ra1 ra2访问时误判RAW的情况
   def conflict(ra1: UInt, ra2: UInt, wa: UInt, we: Bool) = we && wa =/= 0.U && (ra1 === wa || ra2 === wa)
   val isRAW = conflict(
     IDU.io.RegFileAccess.ra1,
@@ -217,7 +216,6 @@ class NPC(
   ICache.io.clear := IDU.io.fence_i
 
   IDU.io.flush := EXU.io.jump
-  // TODO: 解决IDU指令不需要ra1 ra2访问时误判RAW的情况
   def conflict(ra1: UInt, ra2: UInt, wa: UInt, we: Bool) = we && wa =/= 0.U && (ra1 === wa || ra2 === wa)
   val isRAW = conflict(
     IDU.io.RegFileAccess.ra1,

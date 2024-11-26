@@ -5,6 +5,7 @@ import chisel3.util._
 
 class IDUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
   val pc          = Output(UInt(xlen.W))
+  val rd1PlusImm  = Output(UInt(xlen.W))
   val rs1         = Output(UInt(if (extentionE) 4.W else 5.W))
   val rd1         = Output(UInt(xlen.W))
   val rd2         = Output(UInt(xlen.W))
@@ -62,11 +63,11 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
   val rd          = instruction(11, 7)
 
   if (sim) {
-    io.RegFileAccess.ra1 := Mux(Control.io.isEnd.get, 10.U, rs1)
+    io.RegFileAccess.ra1 := Mux(Control.io.isEnd.get, 10.U, rs1) & Fill(5, Control.io.needRd1)
   } else {
-    io.RegFileAccess.ra1 := rs1
+    io.RegFileAccess.ra1 := rs1 & Fill(5, Control.io.needRd1)
   }
-  io.RegFileAccess.ra2 := rs2
+  io.RegFileAccess.ra2 := rs2 & Fill(5, Control.io.needRd2)
 
   ImmGen.io.instruction := instruction
   ImmGen.io.immType     := Control.io.immType
@@ -76,6 +77,7 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
   io.in.ready                 := !io.in.valid
   io.out.valid                := io.in.valid && !io.flush && !io.stall
   io.out.bits.pc              := in.pc
+  io.out.bits.rd1PlusImm      := io.RegFileReturn.rd1 + ImmGen.io.imm
   io.out.bits.rd1             := io.RegFileReturn.rd1
   io.out.bits.rd2             := io.RegFileReturn.rd2
   io.out.bits.wa              := rd

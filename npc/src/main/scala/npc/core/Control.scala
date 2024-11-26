@@ -5,13 +5,44 @@ import chisel3.util._
 import chisel3.util.experimental.decode._
 
 import Instruction._
-import java.util.Base64.Decoder
 
 object ImmControlField extends DecodeField[Instruction, UInt] {
   def name = "Imm Control Field"
   def chiselType: UInt = UInt(ImmType.getWidth.W)
   def genTable(op: Instruction): BitPat = {
     immTypeMap.getOrElse(instrTypeMap(op.opcode), dc)
+  }
+}
+
+object needRd1ControlField extends DecodeField[Instruction, Bool] {
+  import InstructionType._
+  import InstructionMap._
+  def name = "Reg Need Rd1 Control Field"
+  def chiselType: Bool = Bool()
+  def genTable(op: Instruction): BitPat = {
+    instrTypeMap(op.opcode) match {
+      case RType | SType | BType => BitPat.Y(1)
+      case UType | JType         => BitPat.N(1)
+      case IType =>
+        op match {
+          case CSRRWI | CSRRSI | CSRRCI | ECALL | EBREAK => BitPat.N(1)
+          case _                                         => BitPat.Y(1)
+        }
+      case _ => dc
+    }
+  }
+}
+
+object needRd2ControlField extends DecodeField[Instruction, Bool] {
+  import InstructionType._
+  def name = "Reg Need Rd2 Control Field"
+  def chiselType: Bool = Bool()
+  def genTable(op: Instruction): BitPat = {
+    instrTypeMap(op.opcode) match {
+      case RType | SType | BType => BitPat.Y(1)
+      case IType | UType | JType => BitPat.N(1)
+      case _                     => dc
+    }
   }
 }
 
@@ -275,8 +306,10 @@ class ControlIO(xlen: Int, sim: Boolean) extends Bundle {
 
   val immType = Output(UInt(ImmType.getWidth.W))
 
-  val regWe = Output(Bool())
-  val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
+  val needRd1 = Output(Bool())
+  val needRd2 = Output(Bool())
+  val regWe   = Output(Bool())
+  val wbSrc   = Output(UInt(WBSrcFrom.getWidth.W))
 
   val aluASrc = Output(UInt(ALUASrcFrom.getWidth.W))
   val aluBSrc = Output(UInt(ALUBSrcFrom.getWidth.W))
@@ -355,7 +388,10 @@ class Control(xlen: Int, sim: Boolean) extends Module {
     possiblePatterns,
     Seq(
       ImmControlField,
+      needRd1ControlField,
+      needRd2ControlField,
       RegWeControlField,
+      WBSrcControlField,
       ALUASrcControlField,
       ALUBSrcControlField,
       ALUControlField,
@@ -366,7 +402,6 @@ class Control(xlen: Int, sim: Boolean) extends Module {
       MemWenControlField,
       MemOpControlField,
       PCSrcControlField,
-      WBSrcControlField,
       FENCE_IField,
       EndControlField
     )
@@ -375,8 +410,10 @@ class Control(xlen: Int, sim: Boolean) extends Module {
 
   io.immType := decodeResult(ImmControlField)
 
-  io.regWe := decodeResult(RegWeControlField)
-  io.wbSrc := decodeResult(WBSrcControlField)
+  io.needRd1 := decodeResult(needRd1ControlField)
+  io.needRd2 := decodeResult(needRd2ControlField)
+  io.regWe   := decodeResult(RegWeControlField)
+  io.wbSrc   := decodeResult(WBSrcControlField)
 
   io.aluASrc := decodeResult(ALUASrcControlField)
   io.aluBSrc := decodeResult(ALUBSrcControlField)

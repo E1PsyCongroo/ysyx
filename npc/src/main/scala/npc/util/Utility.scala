@@ -2,7 +2,6 @@ package rvcpu.utility
 
 import chisel3._
 import chisel3.util._
-import coursier.core.shaded.geny.Generator.End
 
 class Adder(width: Int) extends Module {
   val io = IO(new Bundle {
@@ -23,6 +22,17 @@ class Adder(width: Int) extends Module {
   io.carry    := result(width).asBool
   io.zero     := ~(io.result.asUInt.orR)
   io.overflow := (tA(width - 1) === tnoCin(width - 1)) && (result(width - 1) =/= tA(width - 1))
+}
+
+object Adder {
+  def apply(ina: UInt, inb: UInt, addSub: Bool) = {
+    require(ina.getWidth == inb.getWidth)
+    val adder = Module(new Adder(ina.getWidth))
+    adder.io.ina    := ina.asSInt
+    adder.io.inb    := inb.asSInt
+    adder.io.addSub := addSub
+    adder.io.result.asUInt
+  }
 }
 
 class BarrelShift(w: Int) extends Module {

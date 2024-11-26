@@ -1,0 +1,92 @@
+make[1]: Entering directory '/home/focused_xy/ysyx/am-kernels/benchmarks/microbench'
+# Building microbench-run [riscv32e-ysyxsoc]
+make[2]: Entering directory '/home/focused_xy/ysyx/abstract-machine/am'
+# Building am-archive [riscv32e-ysyxsoc]
++ CC src/riscv/ysyxsoc/trm.c
++ AR -> build/am-riscv32e-ysyxsoc.a
+make[2]: Leaving directory '/home/focused_xy/ysyx/abstract-machine/am'
+make[2]: Entering directory '/home/focused_xy/ysyx/abstract-machine/klib'
+# Building klib-archive [riscv32e-ysyxsoc]
+make[2]: Leaving directory '/home/focused_xy/ysyx/abstract-machine/klib'
++ LD -> build/microbench-riscv32e-ysyxsoc.elf
+# Creating image [riscv32e-ysyxsoc]
++ OBJCOPY -> build/microbench-riscv32e-ysyxsoc.bin
+make -C /home/focused_xy/ysyx/npc run ARGS="-b -l /home/focused_xy/ysyx/am-kernels/benchmarks/microbench/build/npc-log.txt" IMG=/home/focused_xy/ysyx/am-kernels/benchmarks/microbench/build/microbench-riscv32e-ysyxsoc.bin ELF=/home/focused_xy/ysyx/am-kernels/benchmarks/microbench/build/microbench-riscv32e-ysyxsoc.elf
+make[2]: Entering directory '/home/focused_xy/ysyx/npc'
+make[3]: Entering directory '/home/focused_xy/ysyx'
+make[3]: Leaving directory '/home/focused_xy/ysyx'
+make[3]: Entering directory '/home/focused_xy/ysyx'
+make[3]: Leaving directory '/home/focused_xy/ysyx'
+/home/focused_xy/ysyx/npc/build/riscv32ysyxsoc-interpreter -b -l /home/focused_xy/ysyx/am-kernels/benchmarks/microbench/build/npc-log.txt --elf=/home/focused_xy/ysyx/am-kernels/benchmarks/microbench/build/microbench-riscv32e-ysyxsoc.elf  /home/focused_xy/ysyx/am-kernels/benchmarks/microbench/build/microbench-riscv32e-ysyxsoc.bin
+[1;34m[src/main/csrc/utils/log.c:15 init_log] Log is written to /home/focused_xy/ysyx/am-kernels/benchmarks/microbench/build/npc-log.txt[0m
+[1;34m[src/main/csrc/memory/paddr.c:37 init_mem] physical memory area [0x00000000, 0x00000000][0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/dev.c:132 init_isa_dev] CLINT area [0x02000000, 0x0200ffff][0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/dev.c:132 init_isa_dev] SRAM area [0x0f000000, 0x0fffffff][0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/dev.c:132 init_isa_dev] UART16550 area [0x10000000, 0x10000fff][0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/dev.c:132 init_isa_dev] SPI area [0x10001000, 0x10001fff][0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/dev.c:132 init_isa_dev] GPIO area [0x10002000, 0x1000200f][0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/dev.c:132 init_isa_dev] PS2 area [0x10002000, 0x1000200f][0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/dev.c:132 init_isa_dev] MROM area [0x20000000, 0x20000fff][0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/dev.c:132 init_isa_dev] VGA area [0x21000000, 0x211fffff][0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/dev.c:132 init_isa_dev] FLASH area [0x30000000, 0x30ffffff][0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/dev.c:132 init_isa_dev] PSRAM area [0x80000000, 0x803fffff][0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/dev.c:132 init_isa_dev] SDRAM area [0xa0000000, 0xa7ffffff][0m
+[1;34m[src/main/csrc/monitor/monitor.c:52 load_img] The image is /home/focused_xy/ysyx/am-kernels/benchmarks/microbench/build/microbench-riscv32e-ysyxsoc.bin, size = 37744[0m
+[1;34m[src/main/csrc/monitor/monitor.c:16 welcome] Trace: [1;31mOFF[0m[0m
+[1;34m[src/main/csrc/monitor/monitor.c:22 welcome] Build time: 23:27:49, Nov 25 2024[0m
+Welcome to [1;33m[1;41mriscv32[0m-NPC!
+For help, type "help"
+boot
+bootend
+ysyx-00000000
+======= Running MicroBench [input *train*] =======
+[qsort] Quick sort: * Passed.
+  min time: 76865.663 ms [0]
+[queen] Queen placement: * Passed.
+  min time: 145518.244 ms [0]
+[bf] Brainf**k interpreter: * Passed.
+  min time: 219728.928 ms [0]
+[fib] Fibonacci number: * Passed.
+  min time: 1100601.983 ms [0]
+[sieve] Eratosthenes sieve: * Passed.
+  min time: 67769.096 ms [0]
+[15pz] A* 15-puzzle search: * Passed.
+  min time: 120578.997 ms [0]
+[dinic] Dinic's maxflow algorithm: * Passed.
+  min time: 93390.463 ms [0]
+[lzip] Lzip compression: * Passed.
+  min time: 113703.783 ms [0]
+[ssort] Suffix sort: * Passed.
+  min time: 141539.071 ms [0]
+[md5] MD5 digest: * Passed.
+  min time: 260902.390 ms [0]
+==================================================
+MicroBench PASS
+Scored time: 2340598.618 ms
+Total  time: 2776628.066 ms
+[1;34m[src/main/csrc/cpu/cpu-exec.c:156 cpu_exec] npc: [1;32mHIT GOOD TRAP[0m at pc = 0xa0005688[0m
+[1;34m[src/main/csrc/cpu/cpu-exec.c:112 statistic] host time spent = 8,079,455,242 us[0m
+[1;34m[src/main/csrc/cpu/cpu-exec.c:113 statistic] total guest instructions = 196,236,563[0m
+[1;34m[src/main/csrc/cpu/cpu-exec.c:115 statistic] simulation frequency = 24,288 inst/s[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:139 rvcpu_exit] total guest cycles = 2,832,067,782[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:140 rvcpu_exit] total fetch instructions = 196,236,563[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:141 rvcpu_exit] CPI(cycle per instruction) = 14.431907[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:143 rvcpu_exit] IPC(instruction per cycle) = 0.069291[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:145 rvcpu_exit] total cache access = 199,364,515[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:146 rvcpu_exit] total cache hit = 186,600,512[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:147 rvcpu_exit] cache hit ratio = 93.597656%[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:149 rvcpu_exit] average cache access time = 3.415041[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:151 rvcpu_exit] average cache miss penalty = 100.002427[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:153 rvcpu_exit] cache AMAT = 9.817541[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:155 rvcpu_exit] total fetch data = 15,954,569[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:156 rvcpu_exit] average cycle of fetch data = 36.314566[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:159 rvcpu_exit] instructions for JMP type (total = 4,070,900, average exec cycle = 13.026464)[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:159 rvcpu_exit] instructions for BRANCH type (total = 52,759,169, average exec cycle = 7.824075)[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:159 rvcpu_exit] instructions for LOAD type (total = 15,954,569, average exec cycle = 53.939874)[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:159 rvcpu_exit] instructions for STORE type (total = 7,241,076, average exec cycle = 55.822663)[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:159 rvcpu_exit] instructions for AL type (total = 116,210,846, average exec cycle = 8.739205)[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:159 rvcpu_exit] instructions for ECALL type (total = 1, average exec cycle = 4.000000)[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:159 rvcpu_exit] instructions for CSR type (total = 2, average exec cycle = 17.500000)[0m
+[1;34m[src/main/csrc/isa/riscv32ysyxsoc/verilating.cc:159 rvcpu_exit] instructions for FENCE_I type (total = 0, average exec cycle = 0.000000)[0m
+make[2]: Leaving directory '/home/focused_xy/ysyx/npc'
+make[1]: Leaving directory '/home/focused_xy/ysyx/am-kernels/benchmarks/microbench'
