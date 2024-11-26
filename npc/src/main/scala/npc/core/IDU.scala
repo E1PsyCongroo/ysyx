@@ -5,8 +5,7 @@ import chisel3.util._
 
 class IDUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
   val pc          = Output(UInt(xlen.W))
-  val rd1PlusImm  = Output(UInt(xlen.W))
-  val rs1         = Output(UInt(if (extentionE) 4.W else 5.W))
+  val ra1         = Output(UInt(if (extentionE) 4.W else 5.W))
   val rd1         = Output(UInt(xlen.W))
   val rd2         = Output(UInt(xlen.W))
   val wa          = Output(UInt(if (extentionE) 4.W else 5.W))
@@ -14,6 +13,7 @@ class IDUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
   val exceptCause = Output(UInt(xlen.W))
   val control = new Bundle {
     val regWe   = Output(Bool())
+    val wbSrc   = Output(UInt(WBSrcFrom.getWidth.W))
     val aluASrc = Output(UInt(ALUASrcFrom.getWidth.W))
     val aluBSrc = Output(UInt(ALUBSrcFrom.getWidth.W))
     val aluCtr  = Output(UInt(ALUOp.getWidth.W))
@@ -21,7 +21,6 @@ class IDUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
     val csrCtr  = Output(UInt(CSRCtr.getWidth.W))
     val brType  = Output(UInt(BrType.getWidth.W))
     val pcSrc   = Output(UInt(PCSrcFrom.getWidth.W))
-    val wbSrc   = Output(UInt(WBSrcFrom.getWidth.W))
     val memRen  = Output(Bool())
     val memWen  = Output(Bool())
     val memOp   = Output(UInt(MemOp.getWidth.W))
@@ -58,31 +57,36 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
   val Control = Module(new Control(xlen, sim))
 
   val instruction = in.instruction
-  val rs1         = instruction(19, 15)
-  val rs2         = instruction(24, 20)
-  val rd          = instruction(11, 7)
+  val ra1         = instruction(19, 15)
+  val ra2         = instruction(24, 20)
+  val wa          = instruction(11, 7)
+  val pc          = in.pc
+  val imm         = ImmGen.io.imm
+  val rd1         = io.RegFileReturn.rd1
+  val rd2         = io.RegFileReturn.rd2
 
   if (sim) {
-    io.RegFileAccess.ra1 := Mux(Control.io.isEnd.get, 10.U, rs1) & Fill(5, Control.io.needRd1)
+    io.RegFileAccess.ra1 := Mux(Control.io.isEnd.get, 10.U, ra1) & Fill(5, Control.io.needRd1)
   } else {
-    io.RegFileAccess.ra1 := rs1 & Fill(5, Control.io.needRd1)
+    io.RegFileAccess.ra1 := ra1 & Fill(5, Control.io.needRd1)
   }
-  io.RegFileAccess.ra2 := rs2 & Fill(5, Control.io.needRd2)
+  io.RegFileAccess.ra2 := ra2 & Fill(5, Control.io.needRd2)
 
   ImmGen.io.instruction := instruction
   ImmGen.io.immType     := Control.io.immType
 
   Control.io.instruction := instruction
 
+  val ifenced = RegNext(!io.out.fire && Control.io.fence_i)
+
   io.in.ready                 := !io.in.valid
   io.out.valid                := io.in.valid && !io.flush && !io.stall
-  io.out.bits.pc              := in.pc
-  io.out.bits.rd1PlusImm      := io.RegFileReturn.rd1 + ImmGen.io.imm
-  io.out.bits.rd1             := io.RegFileReturn.rd1
-  io.out.bits.rd2             := io.RegFileReturn.rd2
-  io.out.bits.wa              := rd
-  io.out.bits.imm             := ImmGen.io.imm
-  io.out.bits.rs1             := rs1
+  io.out.bits.pc              := pc
+  io.out.bits.rd1             := rd1
+  io.out.bits.rd2             := rd2
+  io.out.bits.wa              := wa
+  io.out.bits.imm             := imm
+  io.out.bits.ra1             := ra1
   io.out.bits.exceptCause     := Control.io.exceptCause
   io.out.bits.control.regWe   := Control.io.regWe
   io.out.bits.control.wbSrc   := Control.io.wbSrc
@@ -96,7 +100,7 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
   io.out.bits.control.memRen  := Control.io.memRen
   io.out.bits.control.memWen  := Control.io.memWen
   io.out.bits.control.memOp   := Control.io.memOp
-  io.fence_i                  := Control.io.fence_i
+  io.fence_i                  := Control.io.fence_i && !ifenced
 
   if (sim) {
     io.out.bits.inst.get       := instruction

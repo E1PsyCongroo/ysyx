@@ -259,6 +259,7 @@ class NPC(
 
     val InstTracer = Module(new InstTracer)
     InstTracer.io.clock      := clock
+    InstTracer.io.npc        := WBU.io.out.bits.nextPC.get
     InstTracer.io.inst       := WBU.io.out.bits.inst.get
     InstTracer.io.exec_cycle := cycle - WBU.io.out.bits.fetchCycle.get
     InstTracer.io.en         := WBU.io.out.fire

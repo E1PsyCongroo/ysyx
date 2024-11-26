@@ -66,14 +66,12 @@ class ICache(
   val rfire  = io.master.rvalid && io.master.rready
   val rlast  = io.master.rlast
 
-  val sIdle :: sCheck :: sSetAddr :: sCacheFetch :: sComFetch :: sSendBack :: Nil = Enum(6)
+  val sCheck :: sSetAddr :: sWaitResp :: sSendBack :: Nil = Enum(4)
 
-  val state        = RegInit(sIdle)
-  val isIdle       = state === sIdle
+  val state        = RegInit(sCheck)
   val isCheck      = state === sCheck
   val isSetAddr    = state === sSetAddr
-  val isCacheFetch = state === sCacheFetch
-  val isComFetch   = state === sComFetch
+  val isWaitResp   = state === sWaitResp
   val isSendBack   = state === sSendBack
 
   val skip = RegInit(false.B)
@@ -130,14 +128,12 @@ class ICache(
     }
   }
 
-  state := MuxLookup(state, sIdle)(
+  state := MuxLookup(state, sCheck)(
     Seq(
-      sIdle -> Mux(io.in.valid, sCheck, sIdle),
-      sCheck -> Mux(cacheHit, sSendBack, sSetAddr),
-      sSetAddr -> Mux(arfire, Mux(need, sCacheFetch, sComFetch), sSetAddr),
-      sCacheFetch -> Mux(rfire && rlast, sSendBack, sCacheFetch),
-      sComFetch -> Mux(rfire && rlast, sSendBack, sComFetch),
-      sSendBack -> Mux(io.out.fire || skip, sIdle, sSendBack)
+      sCheck -> Mux(io.in.valid, Mux(cacheHit, sSendBack, sSetAddr), sCheck),
+      sSetAddr -> Mux(arfire, sWaitResp, sSetAddr),
+      sWaitResp -> Mux(rfire && rlast, sSendBack, sWaitResp),
+      sSendBack -> Mux(io.out.fire || skip, sCheck, sSendBack)
     )
   )
 
@@ -165,9 +161,9 @@ class ICache(
   io.master.arsize  := "b010".U
   io.master.arburst := "b01".U
 
-  io.master.rready := isCacheFetch || isComFetch
+  io.master.rready := isWaitResp
 
-  io.in.ready := isIdle && !io.in.valid
+  io.in.ready := isCheck && !io.in.valid
 
   io.out.valid            := isSendBack && !skip
   io.out.bits.pc          := raddr
@@ -178,7 +174,7 @@ class ICache(
 
     io.trace.get.hit         := RegEnable(cacheHit, isCheck)
     io.trace.get.need        := RegEnable(need, isCheck)
-    io.trace.get.accessStart := isIdle && io.in.valid
+    io.trace.get.accessStart := isCheck && io.in.valid
     io.trace.get.accessFin   := io.out.valid
     io.trace.get.missStart   := io.master.arvalid
     io.trace.get.missFin     := rfire && rlast

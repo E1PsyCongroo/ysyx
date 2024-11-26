@@ -43,7 +43,7 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   val in      = WireDefault(io.in.bits)
   val pc      = in.pc
   val imm     = in.imm
-  val uimm    = in.rs1.pad(32)
+  val uimm    = in.ra1.pad(xlen)
   val rd1     = in.rd1
   val rd2     = in.rd2
   val control = in.control
@@ -53,14 +53,14 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   val BrCond     = Module(new BrCond)
 
   val aluASrc = MuxCase(
-    pc,
+    DontCare,
     Seq(
       ALUASrcFrom.fromPc -> pc,
       ALUASrcFrom.fromRs1 -> rd1
     ).map { case (key, data) => (control.aluASrc === key, data) }
   )
   val aluBSrc = MuxCase(
-    4.U,
+    DontCare,
     Seq(
       ALUBSrcFrom.from4 -> 4.U,
       ALUBSrcFrom.fromRs2 -> rd2,
@@ -72,7 +72,7 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   ALU.io.aluCtr := control.aluCtr
 
   val csrSrc = MuxCase(
-    rd1,
+    DontCare,
     Seq(
       CSRSrcFrom.fromRs1 -> rd1,
       CSRSrcFrom.fromUimm -> uimm
@@ -87,21 +87,11 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   BrCond.io.brType := control.brType
   BrCond.io.less   := ALU.io.less
   BrCond.io.zero   := ALU.io.zero
-  val pcSrc1 = WireDefault(pc + imm)
-  val pcSrc2 = WireDefault(in.rd1PlusImm)
-  val pcCom =
-    if (sim) {
-      val pcSrc3 = WireDefault(pc + 4.U)
-      Mux(
-        BrCond.io.PCASrc && BrCond.io.PCBSrc,
-        pcSrc1,
-        Mux(!BrCond.io.PCASrc && BrCond.io.PCBSrc, pcSrc3, pcSrc2)
-      )
-    }
-    else Mux(BrCond.io.PCASrc && BrCond.io.PCBSrc, pcSrc1, pcSrc2)
 
-  val jump   = io.in.valid && (BrCond.io.PCASrc || !BrCond.io.PCBSrc || (control.pcSrc === PCSrcFrom.fromCSR))
+  val jump   = io.in.valid && (BrCond.io.jump || (control.pcSrc === PCSrcFrom.fromCSR))
   val jumped = RegNext(!io.out.fire && jump)
+  val npc    = Mux(control.brType === BrType.brJr, rd1 + imm, pc + imm)
+  val pcCom  = if (sim) Mux(!jump, pc + 4.U, npc) else npc
   val nextPC = MuxCase(
     pcCom,
     Seq(

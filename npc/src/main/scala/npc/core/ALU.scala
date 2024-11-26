@@ -105,6 +105,7 @@ class ALUIO(xlen: Int = 32) extends Bundle {
 class ALU(xlen: Int = 32) extends Module {
   val io = IO(new ALUIO(xlen))
 
+  // ALUControl可以放到IDU阶段
   val aluControl  = Module(new ALUControl)
   val adder       = Module(new Adder(xlen))
   val barrelShift = Module(new BarrelShift(xlen))
@@ -134,7 +135,7 @@ class ALU(xlen: Int = 32) extends Module {
   val orOut    = io.inA | io.inB
   val andOut   = io.inA & io.inB
   val aluOut = MuxCase(
-    adderOut,
+    DontCare,
     Seq(
       selectAdder -> adderOut,
       selectShift1 -> shiftOut,

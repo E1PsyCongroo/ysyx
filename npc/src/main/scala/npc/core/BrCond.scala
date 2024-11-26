@@ -9,8 +9,7 @@ class BrCondIO extends Bundle {
   val brType = Input(UInt(BrType.getWidth.W))
   val less   = Input(Bool())
   val zero   = Input(Bool())
-  val PCASrc = Output(Bool())
-  val PCBSrc = Output(Bool())
+  val jump   = Output(Bool())
 }
 
 class BrCond extends Module {
@@ -21,7 +20,7 @@ class BrCond extends Module {
   val isLt = io.less
   val isGe = !io.less
 
-  io.PCASrc := MuxCase(
+  io.jump := MuxCase(
     false.B,
     Seq(
       brJ -> true.B,
@@ -32,5 +31,4 @@ class BrCond extends Module {
       brGe -> isGe
     ).map { case (key, data) => (io.brType === key, data) }
   )
-  io.PCBSrc := io.brType =/= brJr
 }

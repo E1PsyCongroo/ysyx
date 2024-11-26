@@ -9,83 +9,82 @@ import chisel3.util._
 class CLINT(awidth: Int = 32, xlen: Int = 32, area: Area = Dev.CLINTAddr) extends Module {
   val io    = IO(Flipped(new AXI4MasterIO))
   val mtime = RegInit(0.U(64.W))
+  mtime := mtime + 1.U
 
   val awfire = io.awvalid && io.awready
   val wfire  = io.wvalid && io.wready
   val bfire  = io.bvalid && io.bready
   val arfire = io.arvalid && io.arready
   val rfire  = io.rvalid && io.rready
-  assert(!(arfire && (awfire || wfire)))
+  val rlast  = io.rlast
 
-  val sIdle :: sWrite :: sRead :: Nil = Enum(3)
+  val sWriteIdle :: sSendBresp :: Nil = Enum(2)
+  val sReadIdle :: sSendRresp :: Nil  = Enum(2)
 
-  val state       = RegInit(sIdle)
-  val isIdle      = state === sIdle
-  val isWrite     = state === sWrite
-  val isRead      = state === sRead
+  val writeState  = RegInit(sWriteIdle)
+  val isWriteIdle = writeState === sWriteIdle
+  val isSendBresp = writeState === sSendBresp
 
-  state := MuxLookup(state, sIdle)(
+  val readState   = RegInit(sReadIdle)
+  val isReadIdle  = readState === sReadIdle
+  val isSendRresp = readState === sSendRresp
+
+  writeState := MuxLookup(writeState, sWriteIdle)(
     Seq(
-      sIdle -> MuxCase(
-        sIdle,
-        Seq(
-          arfire -> sRead,
-          (awfire && wfire) -> sWrite,
-        )
-      ),
-      sWrite -> Mux(bfire, sIdle, sWrite),
-      sRead -> Mux(rfire, sIdle, sRead)
+      sWriteIdle -> Mux(awfire && wfire, sSendBresp, sWriteIdle),
+      sSendBresp -> Mux(bfire, sWriteIdle, sSendBresp)
     )
   )
 
+  readState := MuxLookup(readState, sReadIdle)(
+    Seq(
+      sReadIdle -> Mux(arfire, sSendRresp, sReadIdle),
+      sSendRresp -> Mux(rfire && rlast, sReadIdle, sSendRresp)
+    )
+  )
   /* Write address channel */
-  val awready          = WireDefault(isIdle)
-  val writeAddr        = io.awaddr
-  val alignedWriteAddr = writeAddr(awidth - 1, 2) ## Fill(2, "b0".U)
+  val awready   = isWriteIdle
+  val writeAddr = io.awaddr
 
   /* Write data channel */
-  val wready    = WireDefault(isIdle)
+  val wready    = isWriteIdle
   val writeData = io.wdata
   val writeMask = io.wstrb
 
   /* Write response channel */
-  val bvalid    = WireDefault(isWrite)
-  val writeLow  = alignedWriteAddr === area.start
-  val writeHigh = alignedWriteAddr === (area.start + 4.U)
-  mtime := MuxCase(
-    mtime + 1.U,
-    Seq(
-      (isWrite && writeLow) -> (mtime(63, 32) ## writeData),
-      (isWrite && writeHigh) -> (writeData ## mtime(31, 0))
-    )
-  )
+  val bvalid = isSendBresp
+  // val writeLow  = writeAddr === area.start
+  // val writeHigh = writeAddr === (area.start + 4.U)
+  // mtime := MuxCase(
+  //   mtime + 1.U,
+  //   Seq(
+  //     (isWrite && writeLow) -> (mtime(63, 32) ## writeData),
+  //     (isWrite && writeHigh) -> (writeData ## mtime(31, 0))
+  //   )
+  // )
+  // val waddrValid = writeLow || writeHigh
 
-  val waddrValid = writeLow || writeHigh
-  val bresp = WireDefault(
-    Mux(isWrite && !waddrValid, TransactionResponse.decerr.asUInt, TransactionResponse.okey.asUInt)
-  )
+  val bresp = TransactionResponse.slverr.asUInt
 
   /* Read address channel */
-  val arready         = WireDefault(isIdle)
-  val readAddr        = io.araddr
+  val arready         = isReadIdle
+  val readAddr        = RegEnable(io.araddr, arfire)
   val alignedReadAddr = readAddr(awidth - 1, 2) ## Fill(2, "b0".U)
 
   /* Read data channel */
-  val rvalid   = WireDefault(isRead)
+  val rvalid   = isSendRresp
   val rdata    = Wire(UInt(xlen.W))
   val readLow  = alignedReadAddr === area.start
   val readHigh = alignedReadAddr === (area.start + 4.U)
   rdata := MuxCase(
     DontCare,
     Seq(
-      (isRead && readLow) -> mtime(31, 0),
-      (isRead && readHigh) -> mtime(63, 32)
+      (isSendRresp && readLow) -> mtime(31, 0),
+      (isSendRresp && readHigh) -> mtime(63, 32)
     )
   )
   val raddrValid = readLow || readHigh
-  val rresp = WireDefault(
-    Mux(isRead && !raddrValid, TransactionResponse.decerr.asUInt, TransactionResponse.okey.asUInt)
-  )
+  val rresp      = Mux(raddrValid, TransactionResponse.okey.asUInt, TransactionResponse.decerr.asUInt)
 
   /* io.bind */
   io.awready := awready
