@@ -11,6 +11,7 @@ extern "C" {
 #include <cpu/cpu.h>
 #include <cpu/decode.h>
 #include <isa.h>
+#include <memory/paddr.h>
 }
 
 extern "C" {
@@ -18,7 +19,7 @@ extern "C" {
 static VNPC *rvcpu = nullptr;
 static VerilatedContext *contextp = nullptr;
 static VerilatedFstC *tfp = nullptr;
-static uint32_t cur_inst;
+uint32_t cur_inst;
 
 uint64_t g_guest_cycle = 0;
 uint64_t g_nr_fetch_inst = 0;
@@ -69,7 +70,7 @@ void rvcpu_init(const char *wave_file, int argc, char **argv) {
     Log("Wave is written to %s", wave_file);
   }
   rvcpu_reset();
-  cpu.pc = rvcpu->rootp->NPC__DOT__IFU__DOT__pc;
+  cpu.pc = RESET_VECTOR;
   cpu.gpr[0] = 0;
   cpu.mstatus = 0x1800;
   cpu.priv = static_cast<decltype(cpu.priv)>(0b11);

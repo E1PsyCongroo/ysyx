@@ -1,3 +1,4 @@
+#include "memory/paddr.h"
 #include <VysyxSoCFull.h>
 #include <VysyxSoCFull__Dpi.h>
 #include <VysyxSoCFull___024root.h>
@@ -12,6 +13,7 @@ extern "C" {
 #include <cpu/cpu.h>
 #include <cpu/decode.h>
 #include <isa.h>
+#include <memory/paddr.h>
 }
 
 void nvboard_bind_all_pins(VysyxSoCFull *top);
@@ -111,8 +113,7 @@ void rvcpu_init(const char *wave_file, int argc, char **argv) {
   nvboard_bind_all_pins(rvcpu);
   nvboard_init();
   rvcpu_reset();
-  cpu.pc = rvcpu->rootp
-               ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__pc;
+  cpu.pc = RESET_VECTOR;
   cpu.gpr[0] = 0;
   cpu.mstatus = 0x1800;
   cpu.priv = static_cast<decltype(cpu.priv)>(0b11);

@@ -139,39 +139,15 @@ object ImmType {
   val immJ     = BitPat("b100")
 }
 
-object ALUOp {
-  def getWidth = 4
-  val aluAdd   = BitPat("b0000")
-  val aluSub   = BitPat("b1000")
-  val aluSll   = BitPat("b?001")
-  val aluSlt   = BitPat("b0010")
-  val aluSltu  = BitPat("b1010")
-  val aluBout  = BitPat("b?011")
-  val aluXor   = BitPat("b?100")
-  val aluSrl   = BitPat("b0101")
-  val aluSra   = BitPat("b1101")
-  val aluOr    = BitPat("b?110")
-  val aluAnd   = BitPat("b?111")
-}
-
-object BrType {
-  def getWidth = 3
-  val brNone   = BitPat("b000")
-  val brJ      = BitPat("b001")
-  val brJr     = BitPat("b010")
-  val brEq     = BitPat("b100")
-  val brNe     = BitPat("b101")
-  val brLt     = BitPat("b110")
-  val brGe     = BitPat("b111")
-}
-
-object MemOp {
-  def getWidth = 3
-  val memB     = BitPat("b000")
-  val memH     = BitPat("b001")
-  val memW     = BitPat("b010")
-  val memBu    = BitPat("b100")
-  val memHu    = BitPat("b101")
+object ALUOutSel {
+  def getWidth    = 3
+  val selectAdder = BitPat("b000")
+  val selectShift = BitPat("b?01")
+  val selectSlt   = BitPat("b010")
+  val selectB     = BitPat("b011")
+  val selectXor   = BitPat("b100")
+  val selectOr    = BitPat("b110")
+  val selectAnd   = BitPat("b111")
 }
 
 object ALUASrcFrom {
@@ -187,6 +163,36 @@ object ALUBSrcFrom {
   val from4    = BitPat("b10")
 }
 
+object BrType {
+  def getWidth = 3
+  val brNone   = BitPat("b000")
+  val brJ      = BitPat("b001")
+  val brEq     = BitPat("b100")
+  val brNe     = BitPat("b101")
+  val brLt     = BitPat("b110")
+  val brGe     = BitPat("b111")
+}
+
+object JumpASrcFrom {
+  def getWidth = 1
+  val fromPc   = BitPat("b0")
+  val fromRs1  = BitPat("b1")
+}
+
+object JumpBSrcFrom {
+  def getWidth = 1
+  val fromRs2  = BitPat("b0")
+  val fromImm  = BitPat("b1")
+}
+
+object MemOp {
+  def getWidth = 3
+  val memB     = BitPat("b000")
+  val memH     = BitPat("b001")
+  val memW     = BitPat("b010")
+  val memBu    = BitPat("b100")
+  val memHu    = BitPat("b101")
+}
 object CSRSrcFrom {
   def getWidth = 1
   val fromRs1  = BitPat("b0")

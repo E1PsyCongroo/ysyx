@@ -21,10 +21,10 @@ class BrCond extends Module {
   val isGe = !io.less
 
   io.jump := MuxCase(
-    false.B,
+    DontCare,
     Seq(
+      brNone -> false.B,
       brJ -> true.B,
-      brJr -> true.B,
       brEq -> isEq,
       brNe -> isNe,
       brLt -> isLt,

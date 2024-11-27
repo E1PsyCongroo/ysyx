@@ -113,59 +113,57 @@ object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
   }
 }
 
-object ALUControlField extends DecodeField[Instruction, UInt] {
+class ALUControlOutput extends Bundle {
+  val aluSel     = Output(UInt(ALUOutSel.getWidth.W))
+  val isArith    = Output(Bool())
+  val isLeft     = Output(Bool())
+  val isUnsigned = Output(Bool())
+  val isSub      = Output(Bool())
+}
+
+object ALUControlField extends DecodeField[Instruction, ALUControlOutput] {
   def name = "ALU Control Field"
-  def chiselType: UInt = UInt(ALUOp.getWidth.W)
+  def chiselType: ALUControlOutput = new ALUControlOutput
   def genTable(op: Instruction): BitPat = {
     import InstructionMap._
     import InstructionType._
-    import ALUOp._
-    instrTypeMap(op.opcode) match {
-      case RType =>
-        op match {
-          case ADD  => aluAdd
-          case SUB  => aluSub
-          case SLL  => aluSll
-          case SLT  => aluSlt
-          case SLTU => aluSltu
-          case XOR  => aluXor
-          case SRL  => aluSrl
-          case SRA  => aluSra
-          case OR   => aluOr
-          case AND  => aluAnd
-          case _    => dc
-        }
-      case IType =>
-        op match {
-          case JALR                     => aluAdd
-          case LB | LH | LW | LBU | LHU => aluAdd
-          case ADDI                     => aluAdd
-          case SLLI                     => aluSll
-          case SLTI                     => aluSlt
-          case SLTIU                    => aluSltu
-          case XORI                     => aluXor
-          case SRLI                     => aluSrl
-          case SRAI                     => aluSra
-          case ORI                      => aluOr
-          case ANDI                     => aluAnd
-          case _                        => dc
-        }
-      case SType => aluAdd
-      case BType =>
-        op match {
-          case BEQ | BNE   => aluSub
-          case BLT | BGE   => aluSlt
-          case BLTU | BGEU => aluSltu
-          case _           => dc
-        }
-      case UType =>
-        op match {
-          case LUI   => aluBout
-          case AUIPC => aluAdd
-          case _     => dc
-        }
-      case JType => aluAdd
+    import ALUOutSel._
+    val aluSel = op match {
+      case ADD | ADDI | SUB | JAL | JALR | AUIPC            => selectAdder
+      case LB | LH | LW | LBU | LHU                         => selectAdder
+      case SH | SB | SW                                     => selectAdder
+      case SLL | SLLI | SRL | SRLI | SRA | SRAI             => selectShift
+      case SLT | SLTU | BEQ | BNE | BLT | BGE | BLTU | BGEU => selectSlt
+      case LUI                                              => selectB
+      case XOR | XORI                                       => selectXor
+      case OR | ORI                                         => selectOr
+      case AND | ANDI                                       => selectAnd
+      case _                                                => BitPat.dontCare(ALUOutSel.getWidth)
     }
+    val isArith = op match {
+      case SRL | SRLI => BitPat.N(1)
+      case SRA | SRAI => BitPat.Y(1)
+      case _          => BitPat.dontCare(1)
+    }
+    val isLeft = op match {
+      case SRL | SRLI | SRA | SRAI => BitPat.N(1)
+      case SLL | SLLI              => BitPat.Y(1)
+      case _                       => BitPat.dontCare(1)
+    }
+    val isUnsigned = op match {
+      case SLT | SLTI | BLT | BGE     => BitPat.N(1)
+      case SLTU | SLTIU | BLTU | BGEU => BitPat.Y(1)
+      case _                          => BitPat.dontCare(1)
+    }
+    val isSub = op match {
+      case ADD | ADDI | JAL | JALR             => BitPat.N(1)
+      case LB | LH | LW | LBU | LHU            => BitPat.N(1)
+      case SB | SH | SW                        => BitPat.N(1)
+      case SUB | SLT | SLTI | SLTU | SLTIU     => BitPat.Y(1)
+      case BEQ | BNE | BLT | BLTU | BGE | BGEU => BitPat.Y(1)
+      case _                                   => BitPat.dontCare(1)
+    }
+    aluSel ## isArith ## isLeft ## isUnsigned ## isSub
   }
 }
 
@@ -201,6 +199,44 @@ object CSRControlField extends DecodeField[Instruction, UInt] {
   }
 }
 
+object JumpASrcControlField extends DecodeField[Instruction, UInt] {
+  import InstructionMap._
+  import InstructionType._
+  import JumpASrcFrom._
+  def name:       String = "Jump ASrc Control Field"
+  def chiselType: UInt   = UInt(JumpASrcFrom.getWidth.W)
+  def genTable(op: Instruction): BitPat = {
+    instrTypeMap(op.opcode) match {
+      case BType | JType => fromPc
+      case _ =>
+        op match {
+          case JALR                                             => fromRs1
+          case CSRRW | CSRRWI | CSRRS | CSRRSI | CSRRC | CSRRCI => fromPc
+          case _                                                => dc
+        }
+    }
+  }
+}
+
+object JumpBSrcControlField extends DecodeField[Instruction, UInt] {
+  import InstructionMap._
+  import InstructionType._
+  import JumpBSrcFrom._
+  def name:       String = "Jump BSrc Control Field"
+  def chiselType: UInt   = UInt(JumpBSrcFrom.getWidth.W)
+  def genTable(op: Instruction): BitPat = {
+    instrTypeMap(op.opcode) match {
+      case BType | JType => fromImm
+      case _ =>
+        op match {
+          case SB | SH | SW => fromRs2
+          case JALR         => fromImm
+          case _            => dc
+        }
+    }
+  }
+}
+
 object BrControlField extends DecodeField[Instruction, UInt] {
   import BrType._
   import InstructionMap._
@@ -210,13 +246,25 @@ object BrControlField extends DecodeField[Instruction, UInt] {
   override def default: BitPat = brNone
   def genTable(op: Instruction): BitPat = {
     op match {
-      case JAL        => brJ
-      case JALR       => brJr
+      case JAL | JALR => brJ
       case BEQ        => brEq
       case BNE        => brNe
       case BLT | BLTU => brLt
       case BGE | BGEU => brGe
       case _          => default
+    }
+  }
+}
+
+object PCSrcControlField extends DecodeField[Instruction, UInt] {
+  import InstructionMap._
+  import PCSrcFrom._
+  def name:       String = "PC Select Control Feild"
+  def chiselType: UInt   = UInt(PCSrcFrom.getWidth.W)
+  def genTable(op: Instruction): BitPat = {
+    op match {
+      case ECALL | MRET => fromCSR
+      case _            => fromCom
     }
   }
 }
@@ -263,19 +311,6 @@ object MemOpControlField extends DecodeField[Instruction, UInt] {
   }
 }
 
-object PCSrcControlField extends DecodeField[Instruction, UInt] {
-  import InstructionMap._
-  import PCSrcFrom._
-  def name:       String = "PC Select Control Feild"
-  def chiselType: UInt   = UInt(PCSrcFrom.getWidth.W)
-  def genTable(op: Instruction): BitPat = {
-    op match {
-      case ECALL | MRET => fromCSR
-      case _            => fromCom
-    }
-  }
-}
-
 object FENCE_IField extends DecodeField[Instruction, Bool] {
   import InstructionMap._
   def name:             String = "fence_i Feild"
@@ -311,16 +346,22 @@ class ControlIO(xlen: Int, sim: Boolean) extends Bundle {
   val regWe   = Output(Bool())
   val wbSrc   = Output(UInt(WBSrcFrom.getWidth.W))
 
-  val aluASrc = Output(UInt(ALUASrcFrom.getWidth.W))
-  val aluBSrc = Output(UInt(ALUBSrcFrom.getWidth.W))
-  val aluCtr  = Output(UInt(ALUOp.getWidth.W))
+  val aluASrc    = Output(UInt(ALUASrcFrom.getWidth.W))
+  val aluBSrc    = Output(UInt(ALUBSrcFrom.getWidth.W))
+  val aluSel     = Output(UInt(ALUOutSel.getWidth.W))
+  val isArith    = Output(Bool())
+  val isLeft     = Output(Bool())
+  val isUnsigned = Output(Bool())
+  val isSub      = Output(Bool())
 
   val csrSrc      = Output(UInt(CSRSrcFrom.getWidth.W))
   val csrCtr      = Output(UInt(CSRCtr.getWidth.W))
   val exceptCause = Output(UInt(xlen.W))
 
-  val brType = Output(UInt(BrType.getWidth.W))
-  val pcSrc  = Output(UInt(PCSrcFrom.getWidth.W))
+  val jumpASrc = Output(UInt(JumpASrcFrom.getWidth.W))
+  val jumpBSrc = Output(UInt(JumpBSrcFrom.getWidth.W))
+  val brType   = Output(UInt(BrType.getWidth.W))
+  val pcSrc    = Output(UInt(PCSrcFrom.getWidth.W))
 
   val memRen = Output(Bool())
   val memWen = Output(Bool())
@@ -397,11 +438,13 @@ class Control(xlen: Int, sim: Boolean) extends Module {
       ALUControlField,
       CSRSrcControlField,
       CSRControlField,
+      JumpASrcControlField,
+      JumpBSrcControlField,
       BrControlField,
+      PCSrcControlField,
       MemRenControlField,
       MemWenControlField,
       MemOpControlField,
-      PCSrcControlField,
       FENCE_IField,
       EndControlField
     )
@@ -417,14 +460,21 @@ class Control(xlen: Int, sim: Boolean) extends Module {
 
   io.aluASrc := decodeResult(ALUASrcControlField)
   io.aluBSrc := decodeResult(ALUBSrcControlField)
-  io.aluCtr  := decodeResult(ALUControlField)
+  val aluCtr = decodeResult(ALUControlField)
+  io.aluSel     := aluCtr.aluSel
+  io.isArith    := aluCtr.isArith
+  io.isLeft     := aluCtr.isLeft
+  io.isUnsigned := aluCtr.isUnsigned
+  io.isSub      := aluCtr.isSub
 
   io.csrSrc      := decodeResult(CSRSrcControlField)
   io.csrCtr      := decodeResult(CSRControlField)
   io.exceptCause := 11.U
 
-  io.brType := decodeResult(BrControlField)
-  io.pcSrc  := decodeResult(PCSrcControlField)
+  io.jumpASrc := decodeResult(JumpASrcControlField)
+  io.jumpBSrc := decodeResult(JumpBSrcControlField)
+  io.brType   := decodeResult(BrControlField)
+  io.pcSrc    := decodeResult(PCSrcControlField)
 
   io.memRen := decodeResult(MemRenControlField)
   io.memWen := decodeResult(MemWenControlField)

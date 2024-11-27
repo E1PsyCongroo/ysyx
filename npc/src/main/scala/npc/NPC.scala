@@ -26,12 +26,9 @@ object StageConnect {
       leftOut.ready := rightIn.ready
       rightIn.bits  := RegEnable(leftOut.bits, leftOut.fire)
       if (flush.isEmpty) {
-        rightIn.valid := RegNext(Mux(leftOut.fire, true.B, Mux(rightOut.fire, false.B, rightIn.valid)), false.B)
+        rightIn.valid := RegNext(leftOut.fire || (!rightOut.fire && rightIn.valid), false.B)
       } else {
-        rightIn.valid := !flush.get && RegNext(
-          Mux(leftOut.fire, true.B, Mux(rightOut.fire, false.B, rightIn.valid)),
-          false.B
-        )
+        rightIn.valid := RegNext(!flush.get && (leftOut.fire || (!rightOut.fire && rightIn.valid)), false.B)
       }
     } else if (arch == "ooo") {
       rightIn <> Queue(leftOut, 16)
@@ -46,11 +43,6 @@ class NPC(
   PCReset:    BigInt  = BigInt("80000000", 16),
   sim:        Boolean = true)
     extends Module {
-
-  val io = IO(new Bundle {
-    val nextPC = if (sim) Some(Output(UInt(xlen.W))) else None
-    val inst   = if (sim) Some(Output(UInt(32.W))) else None
-  })
 
   val needCache: UInt => Bool = Dev.memoryAddr.in
   val IFU     = Module(new IFU(xlen, PCReset, sim))
@@ -100,8 +92,8 @@ class NPC(
   val isLSUForward = MuxCase(
     false.B,
     Seq(
-      WBSrcFrom.fromALU -> true.B,
-      WBSrcFrom.fromCSR -> true.B,
+      WBSrcFrom.fromALU -> LSU.io.in.valid,
+      WBSrcFrom.fromCSR -> LSU.io.in.valid,
       WBSrcFrom.fromMem -> LSU.io.out.valid
     ).map { case (key, data) => (LSU.io.in.bits.control.wbSrc === key, data) }
   )
@@ -115,7 +107,7 @@ class NPC(
   )
   val isWBURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
   val isWBURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
-  val isWBUForward   = WBU.io.out.valid
+  val isWBUForward   = WBU.io.in.valid
   val WBUForwardData = WBU.io.RegFileAccess.wd
   IDU.io.RegFileReturn.rd1 := MuxCase(
     RegFile.io.rd1,
@@ -133,7 +125,7 @@ class NPC(
       (isWBURa2RAW && isWBUForward) -> WBUForwardData
     )
   )
-  IDU.io.stall := ((isEXURa1RAW || isEXURa2RAW) && !isEXUForward) || ((isLSURa1RAW || isLSURa2RAW) && !isLSUForward) || ((isWBURa1RAW || isWBURa2RAW) && !isWBUForward)
+  IDU.io.stall := ((isEXURa1RAW || isEXURa2RAW) && !isEXUForward) || ((isLSURa1RAW || isLSURa2RAW) && !isLSUForward) || ((isWBURa1RAW || isWBURa2RAW) && !isWBUForward) || EXU.io.jump
 
   WBU.io.out.ready := true.B
   RegFile.io.wa    := WBU.io.RegFileAccess.wa
@@ -177,12 +169,9 @@ class NPC(
     val CacheTracer = Module(new CacheTracer)
     CacheTracer.io.cacheNeed         := ICache.io.trace.get.need
     CacheTracer.io.cacheHit          := ICache.io.trace.get.hit
-    CacheTracer.io.cacheAccessStart  := ICache.io.trace.get.accessStart
-    CacheTracer.io.cacheAccessFinish := ICache.io.trace.get.accessFin
-    CacheTracer.io.cacheFetchStart   := ICache.io.trace.get.missStart
-    CacheTracer.io.cacheFetchFinish  := ICache.io.trace.get.missFin
-
-    io.nextPC.get := RegNext(WBU.io.out.bits.nextPC.get)
-    io.inst.get   := RegNext(WBU.io.out.bits.inst.get)
+    CacheTracer.io.cacheAccessStart  := IFU.io.out.fire
+    CacheTracer.io.cacheAccessFinish := ICache.io.out.fire
+    CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
+    CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rlast && ICache.io.master.rready
   }
 }

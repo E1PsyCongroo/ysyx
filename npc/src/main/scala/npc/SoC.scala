@@ -71,8 +71,8 @@ class RVCPU(
   val isLSUForward = MuxCase(
     false.B,
     Seq(
-      WBSrcFrom.fromALU -> true.B,
-      WBSrcFrom.fromCSR -> true.B,
+      WBSrcFrom.fromALU -> LSU.io.in.valid,
+      WBSrcFrom.fromCSR -> LSU.io.in.valid,
       WBSrcFrom.fromMem -> LSU.io.out.valid
     ).map { case (key, data) => (LSU.io.in.bits.control.wbSrc === key, data) }
   )
@@ -86,7 +86,7 @@ class RVCPU(
   )
   val isWBURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
   val isWBURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
-  val isWBUForward   = WBU.io.out.valid
+  val isWBUForward   = WBU.io.in.valid
   val WBUForwardData = WBU.io.RegFileAccess.wd
   IDU.io.RegFileReturn.rd1 := MuxCase(
     RegFile.io.rd1,
@@ -104,7 +104,7 @@ class RVCPU(
       (isWBURa2RAW && isWBUForward) -> WBUForwardData
     )
   )
-  IDU.io.stall := ((isEXURa1RAW || isEXURa2RAW) && !isEXUForward) || ((isLSURa1RAW || isLSURa2RAW) && !isLSUForward) || ((isWBURa1RAW || isWBURa2RAW) && !isWBUForward)
+  IDU.io.stall := ((isEXURa1RAW || isEXURa2RAW) && !isEXUForward) || ((isLSURa1RAW || isLSURa2RAW) && !isLSUForward) || ((isWBURa1RAW || isWBURa2RAW) && !isWBUForward) || EXU.io.jump
 
   WBU.io.out.ready := true.B
   RegFile.io.wa    := WBU.io.RegFileAccess.wa
@@ -181,9 +181,9 @@ class RVCPU(
     val CacheTracer = Module(new CacheTracer)
     CacheTracer.io.cacheNeed         := ICache.io.trace.get.need
     CacheTracer.io.cacheHit          := ICache.io.trace.get.hit
-    CacheTracer.io.cacheAccessStart  := ICache.io.trace.get.accessStart
-    CacheTracer.io.cacheAccessFinish := ICache.io.trace.get.accessFin
-    CacheTracer.io.cacheFetchStart   := ICache.io.trace.get.missStart
-    CacheTracer.io.cacheFetchFinish  := ICache.io.trace.get.missFin
+    CacheTracer.io.cacheAccessStart  := IFU.io.out.fire
+    CacheTracer.io.cacheAccessFinish := ICache.io.out.fire
+    CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
+    CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rlast && ICache.io.master.rready
   }
 }

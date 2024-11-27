@@ -40,49 +40,38 @@ class EXUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
 class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   val io = IO(new EXUIO(xlen, extentionE, sim))
 
-  val in      = WireDefault(io.in.bits)
-  val pc      = in.pc
-  val imm     = in.imm
-  val uimm    = in.ra1.pad(xlen)
-  val rd1     = in.rd1
-  val rd2     = in.rd2
-  val control = in.control
+  val in       = WireDefault(io.in.bits)
+  val aluASrc  = in.aluASrc
+  val aluBSrc  = in.aluBSrc
+  val jumpASrc = in.jumpASrc
+  val jumpBSrc = in.jumpBSrc
+  val uimm     = in.ra1.pad(xlen)
+  val control  = in.control
 
   val ALU        = Module(new ALU(xlen))
   val CSRControl = Module(new CSRControl(xlen))
   val BrCond     = Module(new BrCond)
 
-  val aluASrc = MuxCase(
-    DontCare,
-    Seq(
-      ALUASrcFrom.fromPc -> pc,
-      ALUASrcFrom.fromRs1 -> rd1
-    ).map { case (key, data) => (control.aluASrc === key, data) }
-  )
-  val aluBSrc = MuxCase(
-    DontCare,
-    Seq(
-      ALUBSrcFrom.from4 -> 4.U,
-      ALUBSrcFrom.fromRs2 -> rd2,
-      ALUBSrcFrom.fromImm -> imm
-    ).map { case (key, data) => (control.aluBSrc === key, data) }
-  )
-  ALU.io.inA    := aluASrc
-  ALU.io.inB    := aluBSrc
-  ALU.io.aluCtr := control.aluCtr
+  ALU.io.inA        := aluASrc
+  ALU.io.inB        := aluBSrc
+  ALU.io.aluSel     := control.aluSel
+  ALU.io.isArith    := control.isArith
+  ALU.io.isLeft     := control.isLeft
+  ALU.io.isUnsigned := control.isUnsigned
+  ALU.io.isSub      := control.isSub
 
   val csrSrc = MuxCase(
     DontCare,
     Seq(
-      CSRSrcFrom.fromRs1 -> rd1,
+      CSRSrcFrom.fromRs1 -> aluASrc,
       CSRSrcFrom.fromUimm -> uimm
     ).map { case (key, data) => (key === control.csrSrc, data) }
   )
-  CSRControl.io.csrAddr := imm
+  CSRControl.io.csrAddr := aluBSrc
   CSRControl.io.csrIn   := csrSrc
   CSRControl.io.csrCtr  := Mux(io.in.valid, control.csrCtr, CSRCtr.csrNone.value.U)
   CSRControl.io.cause   := in.exceptCause
-  CSRControl.io.pc      := pc
+  CSRControl.io.pc      := jumpASrc
 
   BrCond.io.brType := control.brType
   BrCond.io.less   := ALU.io.less
@@ -90,8 +79,8 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
 
   val jump   = io.in.valid && (BrCond.io.jump || (control.pcSrc === PCSrcFrom.fromCSR))
   val jumped = RegNext(!io.out.fire && jump)
-  val npc    = Mux(control.brType === BrType.brJr, rd1 + imm, pc + imm)
-  val pcCom  = if (sim) Mux(!jump, pc + 4.U, npc) else npc
+  val npc    = jumpASrc + jumpBSrc
+  val pcCom  = if (sim) Mux(!jump, in.pc.get + 4.U, npc) else npc
   val nextPC = MuxCase(
     pcCom,
     Seq(
@@ -105,7 +94,7 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   io.out.bits.wa             := in.wa
   io.out.bits.aluOut         := ALU.io.aluOut
   io.out.bits.csrOut         := CSRControl.io.csrOut
-  io.out.bits.wdata          := rd2
+  io.out.bits.wdata          := jumpBSrc
   io.out.bits.control.regWe  := control.regWe
   io.out.bits.control.wbSrc  := control.wbSrc
   io.out.bits.control.memRen := control.memRen

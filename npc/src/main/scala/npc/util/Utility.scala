@@ -133,6 +133,7 @@ class InstTracer extends BlackBox with HasBlackBoxResource {
 
 class CacheCount extends BlackBox with HasBlackBoxResource {
   val io = IO(new Bundle {
+    val clock        = Input(Clock())
     val enable       = Input(Bool())
     val hit          = Input(UInt(32.W))
     val access_cycle = Input(UInt(32.W))
@@ -167,6 +168,7 @@ class CacheTracer extends Module {
   accessCount := MuxCase(
     0.U,
     Seq(
+      io.cacheAccessFinish -> 0.U,
       access -> (accessCount + 1.U)
     )
   )
@@ -187,6 +189,7 @@ class CacheTracer extends Module {
   )
 
   val cacheTracer = Module(new CacheCount)
+  cacheTracer.io.clock        := clock
   cacheTracer.io.enable       := io.cacheAccessFinish && io.cacheNeed
   cacheTracer.io.hit          := io.cacheHit
   cacheTracer.io.access_cycle := accessCount - missPenaltyCount + 1.U

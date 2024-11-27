@@ -17,10 +17,6 @@ class ICacheOut(xlen: Int, sim: Boolean) extends Bundle {
 class ICacheTrace extends Bundle {
   val need        = Output(Bool())
   val hit         = Output(Bool())
-  val accessStart = Output(Bool())
-  val accessFin   = Output(Bool())
-  val missStart   = Output(Bool())
-  val missFin     = Output(Bool())
 }
 
 class ICacheIO(awidth: Int, xlen: Int, sim: Boolean) extends Bundle {
@@ -153,20 +149,16 @@ class ICache(
 
   io.master.rready := isWaitResp
 
-  io.in.ready := (isCheck || isSend) && !io.in.valid || io.out.fire
+  io.in.ready := ((isCheck || isSend) && !io.in.valid) || io.out.fire
 
-  io.out.valid            := io.in.valid && Mux(isCheck, cacheHit, isSend)
+  io.out.valid            := io.in.valid && (cacheHit || isSend)
   io.out.bits.pc          := raddr
   io.out.bits.instruction := Mux(need, cacheData, rdataReg)
 
   if (sim) {
     io.out.bits.fetchCycle.get := io.curCycle.get
 
-    io.trace.get.hit         := RegEnable(cacheHit, isCheck)
-    io.trace.get.need        := RegEnable(need, isCheck)
-    io.trace.get.accessStart := isCheck && io.in.valid
-    io.trace.get.accessFin   := io.out.valid
-    io.trace.get.missStart   := io.master.arvalid
-    io.trace.get.missFin     := rfire && rlast
+    io.trace.get.hit         := Mux(isCheck, cacheHit, false.B)
+    io.trace.get.need        := need
   }
 }
