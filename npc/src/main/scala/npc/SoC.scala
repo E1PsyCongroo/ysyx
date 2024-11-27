@@ -7,52 +7,25 @@ import rvcpu.utility._
 import chisel3._
 import chisel3.util._
 
-object StageConnect {
-  var arch = "pipeline"
-
-  def apply[T <: Data](
-    leftOut:  DecoupledIO[T],
-    rightIn:  DecoupledIO[T],
-    rightOut: DecoupledIO[T],
-    flush:    Option[Bool] = None
-  ) = {
-    if (arch == "single") {
-      rightIn.bits  := leftOut.bits
-      leftOut.ready := true.B
-      rightIn.valid := true.B
-    } else if (arch == "multi") {
-      rightIn <> leftOut
-    } else if (arch == "pipeline") {
-      leftOut.ready := rightIn.ready
-      rightIn.bits  := RegEnable(leftOut.bits, leftOut.fire)
-      if (flush.isEmpty) {
-        rightIn.valid := RegNext(Mux(leftOut.fire, true.B, Mux(rightOut.fire, false.B, rightIn.valid)), false.B)
-      } else {
-        rightIn.valid := !flush.get && RegNext(
-          Mux(leftOut.fire, true.B, Mux(rightOut.fire, false.B, rightIn.valid)),
-          false.B
-        )
-      }
-    } else if (arch == "ooo") {
-      rightIn <> Queue(leftOut, 16)
-    }
-  }
+class RVCPUIO(awidth: Int = 32, xlen: Int = 32) extends Bundle {
+  val interrupt = Input(Bool())
+  val master    = new AXI4MasterIO
+  val slave     = Flipped(new AXI4MasterIO)
 }
 
-class NPC(
+class RVCPU(
   awidth:     Int     = 32,
   xlen:       Int     = 32,
   extentionE: Boolean = true,
-  PCReset:    BigInt  = BigInt("80000000", 16),
+  PCReset:    BigInt  = BigInt("30000000", 16),
   sim:        Boolean = true)
     extends Module {
+  val io = IO(new RVCPUIO(xlen))
 
-  val io = IO(new Bundle {
-    val nextPC = if (sim) Some(Output(UInt(xlen.W))) else None
-    val inst   = if (sim) Some(Output(UInt(32.W))) else None
-  })
-
-  val needCache: UInt => Bool = Dev.memoryAddr.in
+  val needCache: UInt => Bool = addr =>
+    Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
+      addr
+    ) || Dev.SDRAMAddr.in(addr)
   val IFU     = Module(new IFU(xlen, PCReset, sim))
   val ICache  = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
   val IDU     = Module(new IDU(xlen, extentionE, sim))
@@ -60,9 +33,7 @@ class NPC(
   val LSU     = Module(new LSU(xlen, extentionE, sim))
   val WBU     = Module(new WBU(xlen, extentionE, sim))
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
-  val AXI4Mem = Module(new AXI4Mem(awidth, xlen))
-  val CLINT   = Module(new CLINT(awidth, xlen, Dev.mtimeAddr))
-  val Uart    = Module(new Uart(awidth, xlen))
+  val CLINT   = Module(new CLINT(awidth, xlen, Dev.CLINTAddr))
 
   StageConnect(IFU.io.out, ICache.io.in, ICache.io.out, Some(EXU.io.jump))
   StageConnect(ICache.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
@@ -142,9 +113,10 @@ class NPC(
 
   AXI4Interconnect(
     Seq(LSU.io.master, ICache.io.master),
-    Seq(Dev.mtimeAddr.in, Dev.uartAddr.in, addr => !Dev.mtimeAddr.in(addr) && !Dev.uartAddr.in(addr)),
-    Seq(CLINT.io, Uart.io, AXI4Mem.io)
+    Seq(Dev.CLINTAddr.in, !Dev.CLINTAddr.in(_)),
+    Seq(CLINT.io, io.master)
   )
+  io.slave <> AXI4.none
 
   if (sim) {
     val cycle = RegInit(0.U(64.W))
@@ -162,11 +134,43 @@ class NPC(
     EndControl(clock, WBU.io.out.fire && WBU.io.out.bits.isEnd.get, WBU.io.out.bits.exitCode.get)
 
     val devs = Seq(
-      Dev.mtimeAddr,
-      Dev.uartAddr
+      Dev.CLINTAddr,
+      Dev.UART16550Addr,
+      Dev.SPIMasterAddr,
+      Dev.GPIOAddr,
+      Dev.PS2Addr,
+      Dev.VGAAddr,
+      Dev.ChipLinkMEMAddr
     )
     val needSkipDifftest = devs.map { dev => dev.in(WBU.io.in.bits.aluOut) }.foldLeft(false.B)(_ || _)
     SkipDifftest(clock, WBU.io.out.fire && WBU.io.out.bits.memAccess.get && needSkipDifftest)
+
+    val ICacheArfire = ICache.io.master.arvalid && ICache.io.master.arready
+    val ICacheRfire  = ICache.io.master.rvalid && ICache.io.master.rready
+    val ICacheTracer = Module(new Tracer)
+    ICacheTracer.io.raddr := RegEnable(ICache.io.master.araddr, ICacheArfire)
+    ICacheTracer.io.rlen  := RegEnable(1.U << ICache.io.master.arsize, ICacheArfire)
+    ICacheTracer.io.rdata := ICache.io.master.rdata
+    ICacheTracer.io.ren   := ICacheRfire
+    ICacheTracer.io.waddr := DontCare
+    ICacheTracer.io.wdata := DontCare
+    ICacheTracer.io.wlen  := DontCare
+    ICacheTracer.io.wen   := false.B
+
+    val LSUArfire = LSU.io.master.arvalid && LSU.io.master.arready
+    val LSURfire  = LSU.io.master.rvalid && LSU.io.master.rready
+    val LSUAwfire = LSU.io.master.awvalid && LSU.io.master.awready
+    val LSUWfire  = LSU.io.master.wvalid && LSU.io.master.wready
+    val LSUBfire  = LSU.io.master.bvalid && LSU.io.master.bready
+    val LSUTracer = Module(new Tracer)
+    LSUTracer.io.raddr := RegEnable(LSU.io.master.araddr, LSUArfire)
+    LSUTracer.io.rlen  := RegEnable(1.U << LSU.io.master.arsize, LSUArfire)
+    LSUTracer.io.rdata := LSU.io.master.rdata
+    LSUTracer.io.ren   := LSURfire
+    LSUTracer.io.waddr := RegEnable(LSU.io.master.awaddr, LSUAwfire)
+    LSUTracer.io.wdata := RegEnable(LSU.io.master.wdata, LSUWfire)
+    LSUTracer.io.wlen  := RegEnable(1.U << LSU.io.master.awsize, LSUAwfire)
+    LSUTracer.io.wen   := LSUBfire
 
     val TracerDataFetch = Module(new TracerDataFetch)
     TracerDataFetch.io.clock  := clock
@@ -181,8 +185,5 @@ class NPC(
     CacheTracer.io.cacheAccessFinish := ICache.io.trace.get.accessFin
     CacheTracer.io.cacheFetchStart   := ICache.io.trace.get.missStart
     CacheTracer.io.cacheFetchFinish  := ICache.io.trace.get.missFin
-
-    io.nextPC.get := RegNext(WBU.io.out.bits.nextPC.get)
-    io.inst.get   := RegNext(WBU.io.out.bits.inst.get)
   }
 }

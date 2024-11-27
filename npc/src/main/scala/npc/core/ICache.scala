@@ -66,22 +66,13 @@ class ICache(
   val rfire  = io.master.rvalid && io.master.rready
   val rlast  = io.master.rlast
 
-  val sCheck :: sSetAddr :: sWaitResp :: sSendBack :: Nil = Enum(4)
+  val sCheck :: sSetAddr :: sWaitResp :: sSend :: Nil = Enum(4)
 
-  val state        = RegInit(sCheck)
-  val isCheck      = state === sCheck
-  val isSetAddr    = state === sSetAddr
-  val isWaitResp   = state === sWaitResp
-  val isSendBack   = state === sSendBack
-
-  val skip = RegInit(false.B)
-  skip := MuxCase(
-    skip,
-    Seq(
-      isSendBack -> false.B,
-      io.flush -> true.B
-    )
-  )
+  val state      = RegInit(sCheck)
+  val isCheck    = state === sCheck
+  val isSetAddr  = state === sSetAddr
+  val isWaitResp = state === sWaitResp
+  val isSend     = state === sSend
 
   val raddr          = WireDefault(io.in.bits.pc)
   val offset         = if (offsetWidth != 0) raddr(offsetWidth + wordWidth - 1, wordWidth) else 0.U
@@ -91,10 +82,9 @@ class ICache(
   val cacheHit       = WireDefault(false.B)
   val cacheData      = Wire(UInt(xlen.W))
   val availableIndex = Reg(UInt(associativityWidth.W))
+  val readCount      = RegInit(0.U((offsetWidth + 1).W))
   val rdataReg       = RegEnable(io.master.rdata, rfire && rlast)
-
-  val readCount     = RegInit(0.U((offsetWidth + 1).W))
-  val nextReadCount = readCount + 1.U
+  val nextReadCount  = readCount + 1.U
   readCount := Mux(isCheck, 0.U, Mux(rfire, nextReadCount, readCount))
 
   cacheData := DontCare
@@ -130,10 +120,10 @@ class ICache(
 
   state := MuxLookup(state, sCheck)(
     Seq(
-      sCheck -> Mux(io.in.valid, Mux(cacheHit, sSendBack, sSetAddr), sCheck),
+      sCheck -> Mux(io.in.valid && !cacheHit, sSetAddr, sCheck),
       sSetAddr -> Mux(arfire, sWaitResp, sSetAddr),
-      sWaitResp -> Mux(rfire && rlast, sSendBack, sWaitResp),
-      sSendBack -> Mux(io.out.fire || skip, sCheck, sSendBack)
+      sWaitResp -> Mux(rfire && rlast, sSend, sWaitResp),
+      sSend -> Mux(io.out.fire, sCheck, Mux(io.in.valid, sSend, sCheck))
     )
   )
 
@@ -163,9 +153,9 @@ class ICache(
 
   io.master.rready := isWaitResp
 
-  io.in.ready := isCheck && !io.in.valid
+  io.in.ready := (isCheck || isSend) && !io.in.valid || io.out.fire
 
-  io.out.valid            := isSendBack && !skip
+  io.out.valid            := io.in.valid && Mux(isCheck, cacheHit, isSend)
   io.out.bits.pc          := raddr
   io.out.bits.instruction := Mux(need, cacheData, rdataReg)
 

@@ -100,7 +100,7 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
     ).map { case (key, data) => (key === control.pcSrc, data) }
   )
 
-  io.in.ready                := !io.in.valid
+  io.in.ready                := !io.in.valid || io.out.fire
   io.out.valid               := io.in.valid
   io.out.bits.wa             := in.wa
   io.out.bits.aluOut         := ALU.io.aluOut
@@ -114,8 +114,8 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   io.RegFileAccess.wa        := in.wa
   io.RegFileAccess.we        := control.regWe && io.in.valid
 
-  io.jump                    := !jumped && jump
-  io.nextPC                  := nextPC
+  io.jump   := !jumped && jump
+  io.nextPC := nextPC
 
   if (sim) {
     io.out.bits.nextPC.get     := nextPC

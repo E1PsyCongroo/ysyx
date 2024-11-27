@@ -30,6 +30,8 @@ typedef struct {
   uint64_t total_exec_cycle;
 } InstStatistic;
 
+extern uint32_t cur_inst;
+
 extern uint64_t g_guest_cycle;
 extern uint64_t g_nr_fetch_inst;
 

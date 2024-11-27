@@ -11,13 +11,14 @@ import mill.bsp._
 object NPC extends SbtModule with ScalafmtModule { m =>
   val useChisel3 = false
   override def millSourcePath = os.pwd / "src"
-  override def scalaVersion = if (useChisel3) "2.13.10" else "2.13.14"
+  override def scalaVersion = if (useChisel3) "2.13.10" else "2.13.15"
   override def scalacOptions = Seq(
     "-language:reflectiveCalls",
     "-deprecation",
     "-feature",
     "-Xcheckinit"
   )
+  override def mainClass = Some("ysyxsoc")
   override def sources = T.sources {
     super.sources() ++ Seq(PathRef(millSourcePath / "main"))
   }
@@ -26,11 +27,11 @@ object NPC extends SbtModule with ScalafmtModule { m =>
   }
   override def ivyDeps = Agg(
     if (useChisel3) ivy"edu.berkeley.cs::chisel3:3.6.0" else
-    ivy"org.chipsalliance::chisel:6.4.0"
+    ivy"org.chipsalliance::chisel:6.6.0"
   )
   override def scalacPluginIvyDeps = Agg(
     if (useChisel3) ivy"edu.berkeley.cs:::chisel3-plugin:3.6.0" else
-    ivy"org.chipsalliance:::chisel-plugin:6.4.0"
+    ivy"org.chipsalliance:::chisel-plugin:6.6.0"
   )
   object test extends SbtModuleTests with TestModule.ScalaTest with ScalafmtModule {
     override def sources = T.sources {

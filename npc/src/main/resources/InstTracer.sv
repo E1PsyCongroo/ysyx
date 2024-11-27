@@ -1,4 +1,5 @@
 import "DPI-C" function void decode_inst(input int unsigned inst, input longint exec_cycle);
+import "DPI-C" function void sync_rvcpu(input int unsigned npc, input int unsigned inst);
 
 module InstTracer (
   input clock,
@@ -8,7 +9,10 @@ module InstTracer (
   input en
 );
 always @(posedge clock) begin
-  if (en) decode_inst(inst, exec_cycle);
+  if (en) begin
+    decode_inst(inst, exec_cycle);
+    sync_rvcpu(npc, inst);
+  end
 end
 
 endmodule //InstTracer

@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
-[*] Mon Nov 25 15:06:52 2024
+[*] Wed Nov 27 06:46:52 2024
 [*]
 [dumpfile] "/home/focused_xy/cs/ysyx/npc/build/npc-wave.fst"
-[dumpfile_mtime] "Mon Nov 25 15:03:36 2024"
-[dumpfile_size] 924711
+[dumpfile_mtime] "Wed Nov 27 06:46:44 2024"
+[dumpfile_size] 361904
 [savefile] "/home/focused_xy/cs/ysyx/npc/wave/gtkwave.gtkw"
-[timestart] 60966
-[size] 2560 1330
+[timestart] 20149
+[size] 2880 1510
 [pos] -1 -1
-*-5.100000 61056 23136186 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-4.500000 20360 23136186 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.ysyxSoCFull.
 [treeopen] TOP.ysyxSoCFull.asic.
@@ -27,7 +27,7 @@
 [sst_width] 381
 [signals_width] 514
 [sst_expanded] 1
-[sst_vpaned_height] 529
+[sst_vpaned_height] 611
 @28
 TOP.clock
 @200
@@ -44,7 +44,6 @@ TOP.ysyxSoCFull.asic.cpu.cpu.IFU.pc[31:0]
 @200
 -Cache
 @28
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.state[2:0]
 TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_in_valid
 TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_out_valid
 @22
@@ -87,11 +86,15 @@ TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rready
 -WBU
 @28
 TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_in_valid
+@29
 TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_out_valid
 @22
 TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_RegFileAccess_wa[3:0]
 @28
 TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_RegFileAccess_we
+@22
+TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_out_bits_nextPC[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_out_bits_inst[31:0]
 @200
 -Dev
 @28

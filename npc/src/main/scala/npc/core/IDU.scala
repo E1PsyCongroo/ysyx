@@ -35,7 +35,6 @@ class IDUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
 class IDUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
   val in    = Flipped(DecoupledIO(new ICacheOut(xlen, sim)))
   val out   = DecoupledIO(new IDUOut(xlen, extentionE, sim))
-  val flush = Input(Bool())
   val stall = Input(Bool())
   val RegFileAccess = new Bundle {
     val ra1 = Output(UInt(if (extentionE) 4.W else 5.W))
@@ -79,8 +78,8 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
 
   val ifenced = RegNext(!io.out.fire && Control.io.fence_i)
 
-  io.in.ready                 := !io.in.valid
-  io.out.valid                := io.in.valid && !io.stall && !io.flush
+  io.in.ready                 := !io.in.valid || io.out.fire
+  io.out.valid                := io.in.valid && !io.stall
   io.out.bits.pc              := pc
   io.out.bits.rd1             := rd1
   io.out.bits.rd2             := rd2

@@ -27,6 +27,6 @@ class IFU(
   pc := Mux(io.jump, io.nextPC, Mux(io.out.fire, pc + 4.U, pc))
 
   /* IO bind */
-  io.out.valid   := true.B
+  io.out.valid   := !io.jump
   io.out.bits.pc := pc
 }

@@ -21,7 +21,8 @@ extern "C" {
 static VysyxSoCFull *rvcpu = nullptr;
 static VerilatedContext *contextp = nullptr;
 static VerilatedFstC *tfp = nullptr;
-static uint32_t cur_inst;
+
+uint32_t cur_inst;
 
 uint64_t g_guest_cycle = 0;
 uint64_t g_nr_fetch_inst = 0;
@@ -40,9 +41,6 @@ uint64_t g_cache_miss_penalty = 0;
 
 static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
-  cpu.pc =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU_io_in_bits_r_nextPC;
   cpu.gpr[1] =
       rvcpu->rootp
           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_1;
@@ -97,10 +95,6 @@ static void rvcpu_sync(void) {
   cpu.mcause =
       rvcpu->rootp
           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_0_2;
-  /* synchronizing instruction with rvcpu */
-  cur_inst =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU_io_in_bits_r_inst;
 }
 
 void rvcpu_init(const char *wave_file, int argc, char **argv) {
@@ -114,16 +108,15 @@ void rvcpu_init(const char *wave_file, int argc, char **argv) {
     tfp->open(wave_file);
     Log("Wave is written to %s", wave_file);
   }
-  rvcpu->clock = 1;
   nvboard_bind_all_pins(rvcpu);
   nvboard_init();
   rvcpu_reset();
-  rvcpu_sync();
   cpu.pc = rvcpu->rootp
                ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__IFU__DOT__pc;
   cpu.gpr[0] = 0;
   cpu.mstatus = 0x1800;
   cpu.priv = static_cast<decltype(cpu.priv)>(0b11);
+  rvcpu_sync();
   /* Exit */
   atexit(rvcpu_exit);
 }
@@ -185,15 +178,12 @@ void rvcpu_single_cycle(void) {
 void rvcpu_single_exec(void) {
   g_nr_fetch_inst++;
   while (
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU_io_in_valid_REG ==
-      0) {
+      !rvcpu->rootp
+           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU_io_in_valid_REG) {
     rvcpu_single_cycle();
   }
-  while (
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU_io_in_valid_REG !=
-      0) {
+  if (rvcpu->rootp
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU_io_in_valid_REG) {
     rvcpu_single_cycle();
   }
   rvcpu_sync();

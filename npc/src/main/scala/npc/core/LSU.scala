@@ -50,11 +50,12 @@ class LSUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
     val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
   }
 
-  val nextPC   = if (sim) Some(Output(UInt(xlen.W))) else None
-  val inst     = if (sim) Some(Output(UInt(32.W))) else None
+  val nextPC     = if (sim) Some(Output(UInt(xlen.W))) else None
+  val inst       = if (sim) Some(Output(UInt(32.W))) else None
+  val memAccess  = if (sim) Some(Output(Bool())) else None
   val fetchCycle = if (sim) Some(Output(UInt(64.W))) else None
-  val isEnd    = if (sim) Some(Output(Bool())) else None
-  val exitCode = if (sim) Some(Output(UInt(32.W))) else None
+  val isEnd      = if (sim) Some(Output(Bool())) else None
+  val exitCode   = if (sim) Some(Output(UInt(32.W))) else None
 }
 
 class LSUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
@@ -149,7 +150,7 @@ class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
 
   io.master.rready := io.out.ready
 
-  io.in.ready               := !io.in.valid
+  io.in.ready               := !io.in.valid || io.out.fire
   io.out.valid              := io.in.valid && Mux(ren, io.master.rvalid, Mux(wen, io.master.bvalid, true.B))
   io.out.bits.wa            := in.wa
   io.out.bits.aluOut        := in.aluOut
@@ -162,6 +163,7 @@ class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   if (sim) {
     io.out.bits.nextPC.get     := in.nextPC.get
     io.out.bits.inst.get       := in.inst.get
+    io.out.bits.memAccess.get  := memAccess
     io.out.bits.fetchCycle.get := in.fetchCycle.get
     io.out.bits.isEnd.get      := in.isEnd.get
     io.out.bits.exitCode.get   := in.exitCode.get

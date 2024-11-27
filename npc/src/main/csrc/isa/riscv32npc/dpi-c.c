@@ -46,6 +46,11 @@ void count_cache_hit(int hit, uint32_t access_cycle, uint32_t miss_penalty) {
   }
 }
 
+void sync_rvcpu(uint32_t npc, uint32_t inst) {
+  cpu.pc = npc;
+  cur_inst = inst;
+}
+
 void decode_inst(uint32_t inst, uint64_t exec_cycle) {
 #define INSTPAT_INST(s) (inst)
 #define INSTPAT_MATCH(s, type, ... /* execute body */)                         \
