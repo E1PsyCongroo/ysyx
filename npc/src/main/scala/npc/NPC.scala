@@ -58,12 +58,14 @@ class RVCPU(
     Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
       addr
     ) || Dev.SDRAMAddr.in(addr)
-  val IFU    = Module(new IFU(xlen, PCReset, sim))
-  val ICache = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
-  val IDU    = Module(new IDU(xlen, extentionE, sim))
-  val EXU    = Module(new EXU(xlen, extentionE, sim))
-  val LSU    = Module(new LSU(xlen, extentionE, sim))
-  val WBU    = Module(new WBU(xlen, extentionE, sim))
+  val IFU     = Module(new IFU(xlen, PCReset, sim))
+  val ICache  = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
+  val IDU     = Module(new IDU(xlen, extentionE, sim))
+  val EXU     = Module(new EXU(xlen, extentionE, sim))
+  val LSU     = Module(new LSU(xlen, extentionE, sim))
+  val WBU     = Module(new WBU(xlen, extentionE, sim))
+  val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
+  val CLINT   = Module(new CLINT(awidth, xlen, Dev.CLINTAddr))
 
   StageConnect(IFU.io.out, ICache.io.in, ICache.io.out, Some(EXU.io.jump))
   StageConnect(ICache.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
@@ -77,33 +79,70 @@ class RVCPU(
   ICache.io.flush := EXU.io.jump
   ICache.io.clear := IDU.io.fence_i
 
+  RegFile.io.ra1 := IDU.io.RegFileAccess.ra1
+  RegFile.io.ra2 := IDU.io.RegFileAccess.ra2
+  def conflict(ra: UInt, wa: UInt, we: Bool) = we && wa =/= 0.U && ra === wa
+  val isEXURa1RAW = conflict(IDU.io.RegFileAccess.ra1, EXU.io.RegFileAccess.wa, EXU.io.RegFileAccess.we)
+  val isEXURa2RAW = conflict(IDU.io.RegFileAccess.ra2, EXU.io.RegFileAccess.wa, EXU.io.RegFileAccess.we)
+  val isEXUForward = MuxCase(
+    false.B,
+    Seq(
+      WBSrcFrom.fromALU -> EXU.io.out.valid,
+      WBSrcFrom.fromCSR -> EXU.io.out.valid
+    ).map { case (key, data) => (EXU.io.in.bits.control.wbSrc === key, data) }
+  )
+  val EXUForwardData = MuxCase(
+    DontCare,
+    Seq(
+      WBSrcFrom.fromALU -> EXU.io.out.bits.aluOut,
+      WBSrcFrom.fromCSR -> EXU.io.out.bits.csrOut
+    ).map { case (key, data) => (EXU.io.in.bits.control.wbSrc === key, data) }
+  )
+  val isLSURa1RAW = conflict(IDU.io.RegFileAccess.ra1, LSU.io.RegFileAccess.wa, LSU.io.RegFileAccess.we)
+  val isLSURa2RAW = conflict(IDU.io.RegFileAccess.ra2, LSU.io.RegFileAccess.wa, LSU.io.RegFileAccess.we)
+  val isLSUForward = MuxCase(
+    false.B,
+    Seq(
+      WBSrcFrom.fromALU -> true.B,
+      WBSrcFrom.fromCSR -> true.B,
+      WBSrcFrom.fromMem -> LSU.io.out.valid
+    ).map { case (key, data) => (LSU.io.in.bits.control.wbSrc === key, data) }
+  )
+  val LSUForwardData = MuxCase(
+    DontCare,
+    Seq(
+      WBSrcFrom.fromALU -> LSU.io.in.bits.aluOut,
+      WBSrcFrom.fromCSR -> LSU.io.in.bits.csrOut,
+      WBSrcFrom.fromMem -> LSU.io.out.bits.memOut
+    ).map { case (key, data) => (LSU.io.in.bits.control.wbSrc === key, data) }
+  )
+  val isWBURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
+  val isWBURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
+  val isWBUForward   = WBU.io.out.valid
+  val WBUForwardData = WBU.io.RegFileAccess.wd
+  IDU.io.RegFileReturn.rd1 := MuxCase(
+    RegFile.io.rd1,
+    Seq(
+      (isEXURa1RAW && isEXUForward) -> EXUForwardData,
+      (isLSURa1RAW && isLSUForward) -> LSUForwardData,
+      (isWBURa1RAW && isWBUForward) -> WBUForwardData
+    )
+  )
+  IDU.io.RegFileReturn.rd2 := MuxCase(
+    RegFile.io.rd2,
+    Seq(
+      (isEXURa2RAW && isEXUForward) -> EXUForwardData,
+      (isLSURa2RAW && isLSUForward) -> LSUForwardData,
+      (isWBURa2RAW && isWBUForward) -> WBUForwardData
+    )
+  )
   IDU.io.flush := EXU.io.jump
-  def conflict(ra1: UInt, ra2: UInt, wa: UInt, we: Bool) = we && wa =/= 0.U && (ra1 === wa || ra2 === wa)
-  val isRAW = conflict(
-    IDU.io.RegFileAccess.ra1,
-    IDU.io.RegFileAccess.ra2,
-    EXU.io.RegFileAccess.wa,
-    EXU.io.RegFileAccess.we
-  ) || conflict(
-    IDU.io.RegFileAccess.ra1,
-    IDU.io.RegFileAccess.ra2,
-    LSU.io.RegFileAccess.wa,
-    LSU.io.RegFileAccess.we
-  ) || conflict(IDU.io.RegFileAccess.ra1, IDU.io.RegFileAccess.ra2, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
-  IDU.io.stall := isRAW
+  IDU.io.stall := ((isEXURa1RAW || isEXURa2RAW) && !isEXUForward) || ((isLSURa1RAW || isLSURa2RAW) && !isLSUForward) || ((isWBURa1RAW || isWBURa2RAW) && !isWBUForward)
 
   WBU.io.out.ready := true.B
-
-  val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
-  RegFile.io.ra1           := IDU.io.RegFileAccess.ra1
-  RegFile.io.ra2           := IDU.io.RegFileAccess.ra2
-  IDU.io.RegFileReturn.rd1 := RegFile.io.rd1
-  IDU.io.RegFileReturn.rd2 := RegFile.io.rd2
-  RegFile.io.wa            := WBU.io.RegFileAccess.wa
-  RegFile.io.we            := WBU.io.RegFileAccess.we
-  RegFile.io.wd            := WBU.io.RegFileAccess.wd
-
-  val CLINT = Module(new CLINT(awidth, xlen, Dev.CLINTAddr))
+  RegFile.io.wa    := WBU.io.RegFileAccess.wa
+  RegFile.io.we    := WBU.io.RegFileAccess.we
+  RegFile.io.wd    := WBU.io.RegFileAccess.wd
 
   AXI4Interconnect(
     Seq(LSU.io.master, ICache.io.master),
@@ -196,12 +235,16 @@ class NPC(
   })
 
   val needCache: UInt => Bool = Dev.memoryAddr.in
-  val IFU    = Module(new IFU(xlen, PCReset, sim))
-  val ICache = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
-  val IDU    = Module(new IDU(xlen, extentionE, sim))
-  val EXU    = Module(new EXU(xlen, extentionE, sim))
-  val LSU    = Module(new LSU(xlen, extentionE, sim))
-  val WBU    = Module(new WBU(xlen, extentionE, sim))
+  val IFU     = Module(new IFU(xlen, PCReset, sim))
+  val ICache  = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
+  val IDU     = Module(new IDU(xlen, extentionE, sim))
+  val EXU     = Module(new EXU(xlen, extentionE, sim))
+  val LSU     = Module(new LSU(xlen, extentionE, sim))
+  val WBU     = Module(new WBU(xlen, extentionE, sim))
+  val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
+  val AXI4Mem = Module(new AXI4Mem(awidth, xlen))
+  val CLINT   = Module(new CLINT(awidth, xlen, Dev.mtimeAddr))
+  val Uart    = Module(new Uart(awidth, xlen))
 
   StageConnect(IFU.io.out, ICache.io.in, ICache.io.out, Some(EXU.io.jump))
   StageConnect(ICache.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
@@ -215,35 +258,70 @@ class NPC(
   ICache.io.flush := EXU.io.jump
   ICache.io.clear := IDU.io.fence_i
 
+  RegFile.io.ra1 := IDU.io.RegFileAccess.ra1
+  RegFile.io.ra2 := IDU.io.RegFileAccess.ra2
+  def conflict(ra: UInt, wa: UInt, we: Bool) = we && wa =/= 0.U && ra === wa
+  val isEXURa1RAW = conflict(IDU.io.RegFileAccess.ra1, EXU.io.RegFileAccess.wa, EXU.io.RegFileAccess.we)
+  val isEXURa2RAW = conflict(IDU.io.RegFileAccess.ra2, EXU.io.RegFileAccess.wa, EXU.io.RegFileAccess.we)
+  val isEXUForward = MuxCase(
+    false.B,
+    Seq(
+      WBSrcFrom.fromALU -> EXU.io.out.valid,
+      WBSrcFrom.fromCSR -> EXU.io.out.valid
+    ).map { case (key, data) => (EXU.io.in.bits.control.wbSrc === key, data) }
+  )
+  val EXUForwardData = MuxCase(
+    DontCare,
+    Seq(
+      WBSrcFrom.fromALU -> EXU.io.out.bits.aluOut,
+      WBSrcFrom.fromCSR -> EXU.io.out.bits.csrOut
+    ).map { case (key, data) => (EXU.io.in.bits.control.wbSrc === key, data) }
+  )
+  val isLSURa1RAW = conflict(IDU.io.RegFileAccess.ra1, LSU.io.RegFileAccess.wa, LSU.io.RegFileAccess.we)
+  val isLSURa2RAW = conflict(IDU.io.RegFileAccess.ra2, LSU.io.RegFileAccess.wa, LSU.io.RegFileAccess.we)
+  val isLSUForward = MuxCase(
+    false.B,
+    Seq(
+      WBSrcFrom.fromALU -> true.B,
+      WBSrcFrom.fromCSR -> true.B,
+      WBSrcFrom.fromMem -> LSU.io.out.valid
+    ).map { case (key, data) => (LSU.io.in.bits.control.wbSrc === key, data) }
+  )
+  val LSUForwardData = MuxCase(
+    DontCare,
+    Seq(
+      WBSrcFrom.fromALU -> LSU.io.in.bits.aluOut,
+      WBSrcFrom.fromCSR -> LSU.io.in.bits.csrOut,
+      WBSrcFrom.fromMem -> LSU.io.out.bits.memOut
+    ).map { case (key, data) => (LSU.io.in.bits.control.wbSrc === key, data) }
+  )
+  val isWBURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
+  val isWBURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
+  val isWBUForward   = WBU.io.out.valid
+  val WBUForwardData = WBU.io.RegFileAccess.wd
+  IDU.io.RegFileReturn.rd1 := MuxCase(
+    RegFile.io.rd1,
+    Seq(
+      (isEXURa1RAW && isEXUForward) -> EXUForwardData,
+      (isLSURa1RAW && isLSUForward) -> LSUForwardData,
+      (isWBURa1RAW && isWBUForward) -> WBUForwardData
+    )
+  )
+  IDU.io.RegFileReturn.rd2 := MuxCase(
+    RegFile.io.rd2,
+    Seq(
+      (isEXURa2RAW && isEXUForward) -> EXUForwardData,
+      (isLSURa2RAW && isLSUForward) -> LSUForwardData,
+      (isWBURa2RAW && isWBUForward) -> WBUForwardData
+    )
+  )
   IDU.io.flush := EXU.io.jump
-  def conflict(ra1: UInt, ra2: UInt, wa: UInt, we: Bool) = we && wa =/= 0.U && (ra1 === wa || ra2 === wa)
-  val isRAW = conflict(
-    IDU.io.RegFileAccess.ra1,
-    IDU.io.RegFileAccess.ra2,
-    EXU.io.RegFileAccess.wa,
-    EXU.io.RegFileAccess.we
-  ) || conflict(
-    IDU.io.RegFileAccess.ra1,
-    IDU.io.RegFileAccess.ra2,
-    LSU.io.RegFileAccess.wa,
-    LSU.io.RegFileAccess.we
-  ) || conflict(IDU.io.RegFileAccess.ra1, IDU.io.RegFileAccess.ra2, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
-  IDU.io.stall := isRAW
+  IDU.io.stall := ((isEXURa1RAW || isEXURa2RAW) && !isEXUForward) || ((isLSURa1RAW || isLSURa2RAW) && !isLSUForward) || ((isWBURa1RAW || isWBURa2RAW) && !isWBUForward)
 
   WBU.io.out.ready := true.B
-
-  val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
-  RegFile.io.ra1           := IDU.io.RegFileAccess.ra1
-  RegFile.io.ra2           := IDU.io.RegFileAccess.ra2
-  IDU.io.RegFileReturn.rd1 := RegFile.io.rd1
-  IDU.io.RegFileReturn.rd2 := RegFile.io.rd2
-  RegFile.io.wa            := WBU.io.RegFileAccess.wa
-  RegFile.io.we            := WBU.io.RegFileAccess.we
-  RegFile.io.wd            := WBU.io.RegFileAccess.wd
-
-  val AXI4Mem = Module(new AXI4Mem(awidth, xlen))
-  val CLINT   = Module(new CLINT(awidth, xlen, Dev.mtimeAddr))
-  val Uart    = Module(new Uart(awidth, xlen))
+  RegFile.io.wa    := WBU.io.RegFileAccess.wa
+  RegFile.io.we    := WBU.io.RegFileAccess.we
+  RegFile.io.wd    := WBU.io.RegFileAccess.wd
 
   AXI4Interconnect(
     Seq(LSU.io.master, ICache.io.master),

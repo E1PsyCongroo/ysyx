@@ -113,8 +113,10 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   io.out.bits.control.memOp  := control.memOp
   io.RegFileAccess.wa        := in.wa
   io.RegFileAccess.we        := control.regWe && io.in.valid
+
   io.jump                    := !jumped && jump
   io.nextPC                  := nextPC
+
   if (sim) {
     io.out.bits.nextPC.get     := nextPC
     io.out.bits.inst.get       := in.inst.get
