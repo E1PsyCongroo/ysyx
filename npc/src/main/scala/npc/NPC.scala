@@ -45,7 +45,7 @@ class NPC(
     extends Module {
 
   val needCache: UInt => Bool = Dev.memoryAddr.in
-  val IFU     = Module(new IFU(xlen, PCReset, sim))
+  val IFU     = Module(new IFU(xlen, PCReset))
   val ICache  = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
   val IDU     = Module(new IDU(xlen, extentionE, sim))
   val EXU     = Module(new EXU(xlen, extentionE, sim))
@@ -107,8 +107,8 @@ class NPC(
 
   AXI4Interconnect(
     Seq(LSU.io.master, ICache.io.master),
+    Seq(CLINT.io, Uart.io, AXI4Mem.io),
     Seq(Dev.mtimeAddr.in, Dev.uartAddr.in, addr => !Dev.mtimeAddr.in(addr) && !Dev.uartAddr.in(addr)),
-    Seq(CLINT.io, Uart.io, AXI4Mem.io)
   )
 
   if (sim) {

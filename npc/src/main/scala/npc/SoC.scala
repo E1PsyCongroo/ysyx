@@ -26,14 +26,14 @@ class RVCPU(
     Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
       addr
     ) || Dev.SDRAMAddr.in(addr)
-  val IFU     = Module(new IFU(xlen, PCReset, sim))
+  val IFU     = Module(new IFU(xlen, PCReset))
   val ICache  = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
   val IDU     = Module(new IDU(xlen, extentionE, sim))
   val EXU     = Module(new EXU(xlen, extentionE, sim))
   val LSU     = Module(new LSU(xlen, extentionE, sim))
   val WBU     = Module(new WBU(xlen, extentionE, sim))
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
-  val CLINT   = Module(new CLINT(awidth, xlen, Dev.CLINTAddr))
+  val CLINT   = Module(new CLINT(awidth, xlen, Dev.mtimeAddr))
 
   StageConnect(IFU.io.out, ICache.io.in, ICache.io.out, Some(EXU.io.jump))
   StageConnect(ICache.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
@@ -86,8 +86,8 @@ class RVCPU(
 
   AXI4Interconnect(
     Seq(LSU.io.master, ICache.io.master),
-    Seq(Dev.CLINTAddr.in, !Dev.CLINTAddr.in(_)),
-    Seq(CLINT.io, io.master)
+    Seq(CLINT.io, io.master),
+    Seq(Dev.CLINTAddr.in, !Dev.CLINTAddr.in(_))
   )
   io.slave <> AXI4.none
 

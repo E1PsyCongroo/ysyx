@@ -3,6 +3,7 @@ package rvcpu.core
 import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
+import java.lang.module.ModuleDescriptor.Requires
 
 object CSR {
   object PrivMode {
@@ -57,73 +58,71 @@ class CSRMstatus extends Bundle {
   val wpri3 = UInt(1.W)
 }
 
-class CSRControlIO(xlen: Int) extends Bundle {
-  val csrCtr  = Input(UInt(CSRCtr.getWidth.W))
-  val csrAddr = Input(UInt(CSRAddress.getWidth.W))
-  val csrIn   = Input(UInt(xlen.W))
-  val csrOut  = Output(UInt(xlen.W))
-  /* Excpetion */
-  val pc    = Input(UInt(xlen.W))
-}
+object CSRControl {
+  def apply(xlen: Int, csrCtr: UInt, csrAddr: UInt, csrIn: UInt, pc: UInt): UInt = {
+    require(csrCtr.getWidth == CSRCtr.getWidth)
+    require(csrAddr.getWidth == CSRAddress.getWidth)
+    require(xlen >= 32)
+    val out = Wire(UInt(xlen.W))
 
-class CSRControl(xlen: Int) extends Module {
-  require(xlen >= 32)
-  val io = IO(new CSRControlIO(xlen))
-  // 机器只支持 M 模式
-  val priv = WireDefault(PrivMode.M_Mode.value.U(PrivMode.getWidth.W))
+    // 机器只支持 M 模式
+    val priv = WireDefault(PrivMode.M_Mode.value.U(PrivMode.getWidth.W))
+    val csrs = CSRRegs
+      .map(csr =>
+        (
+          csr,
+          csr match {
+            // 机器不支持中断，仅支持 M 模式
+            case CSRAddress.mstatus   => WireDefault(0x1800.U(xlen.W))
+            case CSRAddress.mvendorid => WireDefault(0x79737978.U(xlen.W))
+            case CSRAddress.marchid   => WireDefault(0x0.U(xlen.W))
+            // 仅支持 ECALL 异常
+            case CSRAddress.mcause => WireDefault(0x11.U(xlen.W))
+            case _                 => Reg(UInt(xlen.W))
+          }
+        )
+      )
+      .toMap
 
-  val csrs = CSRRegs
-    .map(csr =>
-      (
-        csr,
-        csr match {
-          // 机器不支持中断，仅支持 M 模式
-          case CSRAddress.mstatus   => WireDefault(0x1800.U(xlen.W))
-          case CSRAddress.mvendorid => WireDefault(0x79737978.U(xlen.W))
-          case CSRAddress.marchid   => WireDefault(0x0.U(xlen.W))
-          // 仅支持 ECALL 异常
-          case CSRAddress.mcause    => WireDefault(0x11.U(xlen.W))
-          case _                    => Reg(UInt(xlen.W))
-        }
+    val csrRead = WireDefault(MuxLookup(csrAddr, 0.U)(csrs.toSeq.map {
+      case (addr, csr) => (addr.value.asUInt, csr)
+    }))
+
+    val csrSet   = WireDefault(csrRead | csrIn)
+    val csrClear = WireDefault(csrRead & (~csrIn))
+    val csrWrite = WireDefault(
+      MuxCase(
+        csrRead,
+        Seq(
+          CSRCtr.csrNone -> csrRead,
+          CSRCtr.csrRW -> csrIn,
+          CSRCtr.csrRS -> csrSet,
+          CSRCtr.csrRC -> csrClear
+        ).map { case (key, data) => (key === csrCtr, data) }
       )
     )
-    .toMap
 
-  val csrRead = WireDefault(MuxLookup(io.csrAddr, 0.U)(csrs.toSeq.map { case (addr, csr) => (addr.value.asUInt, csr) }))
+    val mepc = csrs(CSRAddress.mepc)
+    mepc := Mux(csrCtr === CSRCtr.csrExcept, pc, Mux(csrAddr === CSRAddress.mepc, csrWrite, mepc))
 
-  val csrSet   = WireDefault(csrRead | io.csrIn)
-  val csrClear = WireDefault(csrRead & (~io.csrIn))
-  val csrWrite = WireDefault(
-    MuxCase(
+    val commonCsrs = Seq(
+      CSRAddress.mtvec
+    )
+    for (commCsr <- commonCsrs) {
+      csrs(commCsr) := Mux(csrAddr === commCsr, csrWrite, csrs(commCsr))
+    }
+
+    val mcause     = csrs(CSRAddress.mcause)
+    val mtvec      = csrs(CSRAddress.mtvec)
+    val exceptAddr = Mux(mtvec(0), mtvec + (mcause << 2.U), mtvec)
+    out := MuxCase(
       csrRead,
       Seq(
-        CSRCtr.csrNone -> csrRead,
-        CSRCtr.csrRW -> io.csrIn,
-        CSRCtr.csrRS -> csrSet,
-        CSRCtr.csrRC -> csrClear
-      ).map { case (key, data) => (key === io.csrCtr, data) }
+        CSRCtr.csrNone -> 0.U,
+        CSRCtr.csrExcept -> exceptAddr,
+        CSRCtr.csrMret -> csrs(CSRAddress.mepc)
+      ).map { case (key, data) => (key === csrCtr, data) }
     )
-  )
-
-  val mepc = csrs(CSRAddress.mepc)
-  mepc := Mux(io.csrCtr === CSRCtr.csrExcept, io.pc, Mux(io.csrAddr === CSRAddress.mepc, csrWrite, mepc))
-
-  val commonCsrs = Seq(
-    CSRAddress.mtvec
-  )
-  for (commCsr <- commonCsrs) {
-    csrs(commCsr) := Mux(io.csrAddr === commCsr, csrWrite, csrs(commCsr))
+    out
   }
-
-  val mcause     = csrs(CSRAddress.mcause)
-  val mtvec      = csrs(CSRAddress.mtvec)
-  val exceptAddr = Mux(mtvec(0), mtvec + (mcause << 2.U), mtvec)
-  io.csrOut := MuxCase(
-    csrRead,
-    Seq(
-      CSRCtr.csrNone -> 0.U,
-      CSRCtr.csrExcept -> exceptAddr,
-      CSRCtr.csrMret -> csrs(CSRAddress.mepc)
-    ).map { case (key, data) => (key === io.csrCtr, data) }
-  )
 }

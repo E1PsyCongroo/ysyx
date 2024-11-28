@@ -6,8 +6,6 @@ import rvcpu.dev._
 import chisel3._
 import chisel3.util._
 
-import Dev.CLINTAddr
-
 class ICacheOut(xlen: Int, sim: Boolean) extends Bundle {
   val pc          = Output(UInt(xlen.W))
   val instruction = Output(UInt(32.W))
@@ -20,7 +18,7 @@ class ICacheTrace extends Bundle {
 }
 
 class ICacheIO(awidth: Int, xlen: Int, sim: Boolean) extends Bundle {
-  val in     = Flipped(DecoupledIO(new IFUOut(awidth, sim)))
+  val in     = Flipped(DecoupledIO(new IFUOut(awidth)))
   val out    = DecoupledIO(new ICacheOut(xlen, sim))
   val trace  = if (sim) Some(new ICacheTrace) else None
   val clear  = Input(Bool())
@@ -122,7 +120,6 @@ class ICache(
     )
   )
 
-  assert(!rfire || io.master.rresp === "b00".U(2.W))
   /* IO bind */
   io.master.awvalid := false.B
   io.master.awaddr  := DontCare
@@ -155,6 +152,7 @@ class ICache(
   io.out.bits.instruction := Mux(need, cacheData, rdataReg)
 
   if (sim) {
+  assert(!rfire || io.master.rresp === TransactionResponse.okey.asUInt)
     io.out.bits.fetchCycle.get := io.curCycle.get
 
     io.trace.get.hit         := Mux(isCheck, cacheHit, false.B)

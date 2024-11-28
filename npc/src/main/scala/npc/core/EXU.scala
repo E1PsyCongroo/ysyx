@@ -47,35 +47,20 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   val uimm     = in.ra1.pad(xlen)
   val control  = in.control
 
-  val ALU        = Module(new ALU(xlen))
-  val CSRControl = Module(new CSRControl(xlen))
-  val BrCond     = Module(new BrCond)
-
-  ALU.io.inA        := aluASrc
-  ALU.io.inB        := aluBSrc
-  ALU.io.aluSel     := control.aluSel
-  ALU.io.isArith    := control.isArith
-  ALU.io.isLeft     := control.isLeft
-  ALU.io.isUnsigned := control.isUnsigned
-  ALU.io.isSub      := control.isSub
-
-  val csrSrc = MuxCase(
+  val aluOut = ALU(control.aluSel, control.isArith, control.isLeft, control.isUnsigned, control.isSub, aluASrc, aluBSrc)
+  val csrSrc = Wire(UInt(xlen.W))
+  csrSrc := MuxCase(
     DontCare,
     Seq(
       CSRSrcFrom.fromRs1 -> aluASrc,
       CSRSrcFrom.fromUimm -> uimm
     ).map { case (key, data) => (key === control.csrSrc, data) }
   )
-  CSRControl.io.csrAddr := aluBSrc
-  CSRControl.io.csrIn   := csrSrc
-  CSRControl.io.csrCtr  := Mux(io.in.valid, control.csrCtr, CSRCtr.csrNone.value.U)
-  CSRControl.io.pc      := jumpASrc
+  val csrCtr = Mux(io.in.valid, control.csrCtr, CSRCtr.csrNone.value.U)
+  val csrOut = CSRControl(xlen, csrCtr, aluBSrc(11, 0), csrSrc, jumpASrc)
 
-  BrCond.io.brType := control.brType
-  BrCond.io.less   := ALU.io.less
-  BrCond.io.zero   := ALU.io.zero
-
-  val jump   = io.in.valid && (BrCond.io.jump || (control.pcSrc === PCSrcFrom.fromCSR))
+  val brJump = BrCond(control.brType, aluOut.less, aluOut.zero)
+  val jump   = io.in.valid && (brJump || (control.pcSrc === PCSrcFrom.fromCSR))
   val jumped = RegNext(!io.out.fire && jump)
   val npc    = jumpASrc + jumpBSrc
   val pcCom  = if (sim) Mux(!jump, in.pc.get + 4.U, npc) else npc
@@ -83,14 +68,14 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
     pcCom,
     Seq(
       PCSrcFrom.fromCom -> pcCom,
-      PCSrcFrom.fromCSR -> CSRControl.io.csrOut
+      PCSrcFrom.fromCSR -> csrOut
     ).map { case (key, data) => (key === control.pcSrc, data) }
   )
 
   io.in.ready                := !io.in.valid || io.out.fire
   io.out.valid               := io.in.valid
   io.out.bits.wa             := in.wa
-  io.out.bits.alu_csr_Out    := Mux(control.wbSrc(1), CSRControl.io.csrOut, ALU.io.aluOut)
+  io.out.bits.alu_csr_Out    := Mux(control.wbSrc(1), csrOut, aluOut.out)
   io.out.bits.wdata          := jumpBSrc
   io.out.bits.control.regWe  := control.regWe(0)
   io.out.bits.control.wbSrc  := control.wbSrc

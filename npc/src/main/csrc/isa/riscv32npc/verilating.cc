@@ -53,8 +53,8 @@ static void rvcpu_sync(void) {
   cpu.gpr[13] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_13;
   cpu.gpr[14] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_14;
   cpu.gpr[15] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_15;
-  cpu.mtvec = rvcpu->rootp->NPC__DOT__EXU__DOT__CSRControl__DOT__csrs_2_2;
-  cpu.mepc = rvcpu->rootp->NPC__DOT__EXU__DOT__CSRControl__DOT__csrs_3_2;
+  cpu.mtvec = rvcpu->rootp->NPC__DOT__EXU__DOT__csrOut_csrs_2_2;
+  cpu.mepc = rvcpu->rootp->NPC__DOT__EXU__DOT__csrOut_csrs_3_2;
 }
 
 void rvcpu_init(const char *wave_file, int argc, char **argv) {

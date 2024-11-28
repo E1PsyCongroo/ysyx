@@ -122,8 +122,6 @@ class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
     )
   )
 
-  assert(!bfire || io.master.bresp === "b00".U(2.W))
-  assert(!rfire || io.master.rresp === "b00".U(2.W))
   /* IO bind */
   io.master.awvalid := isSendReq && io.in.valid && wen
   io.master.awaddr  := waddr
@@ -155,7 +153,10 @@ class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   io.out.bits.control.regWe := in.control.regWe
   io.RegFileAccess.wa       := in.wa
   io.RegFileAccess.we       := in.control.regWe && io.in.valid
+
   if (sim) {
+    assert(!bfire || io.master.bresp === TransactionResponse.okey.asUInt)
+    assert(!rfire || io.master.rresp === TransactionResponse.okey.asUInt)
     io.out.bits.nextPC.get     := in.nextPC.get
     io.out.bits.inst.get       := in.inst.get
     io.out.bits.memAddr.get    := in.alu_csr_Out

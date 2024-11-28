@@ -90,10 +90,10 @@ static void rvcpu_sync(void) {
           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_15;
   cpu.mtvec =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_2_2;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__csrOut_csrs_2_2;
   cpu.mepc =
       rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__CSRControl__DOT__csrs_3_2;
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__csrOut_csrs_3_2;
 }
 
 void rvcpu_init(const char *wave_file, int argc, char **argv) {

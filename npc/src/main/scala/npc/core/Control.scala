@@ -336,9 +336,7 @@ object EndControlField extends DecodeField[Instruction, Bool] {
   }
 }
 
-class ControlIO(xlen: Int, sim: Boolean) extends Bundle {
-  val instruction = Input(UInt(32.W))
-
+class ControlOut(xlen: Int, sim: Boolean) extends Bundle {
   val immType = Output(UInt(ImmType.getWidth.W))
 
   val needRd1 = Output(Bool())
@@ -354,8 +352,8 @@ class ControlIO(xlen: Int, sim: Boolean) extends Bundle {
   val isUnsigned = Output(Bool())
   val isSub      = Output(Bool())
 
-  val csrSrc      = Output(UInt(CSRSrcFrom.getWidth.W))
-  val csrCtr      = Output(UInt(CSRCtr.getWidth.W))
+  val csrSrc = Output(UInt(CSRSrcFrom.getWidth.W))
+  val csrCtr = Output(UInt(CSRCtr.getWidth.W))
 
   val jumpASrc = Output(UInt(JumpASrcFrom.getWidth.W))
   val jumpBSrc = Output(UInt(JumpBSrcFrom.getWidth.W))
@@ -370,116 +368,120 @@ class ControlIO(xlen: Int, sim: Boolean) extends Bundle {
   val isEnd   = if (sim) Some(Output(Bool())) else None
 }
 
-class Control(xlen: Int, sim: Boolean) extends Module {
-  val io = IO(new ControlIO(xlen, sim))
-  import InstructionMap._
+object Control {
+  def apply(instruct: UInt, xlen: Int, sim: Boolean): ControlOut = {
+    require(instruct.getWidth == 32)
+    val out = Wire(new ControlOut(xlen, sim))
 
-  val possiblePatterns = Seq(
-    LUI,
-    AUIPC,
-    JAL,
-    JALR,
-    BEQ,
-    BNE,
-    BLT,
-    BGE,
-    BLTU,
-    BGEU,
-    LB,
-    LH,
-    LW,
-    LBU,
-    LHU,
-    SB,
-    SH,
-    SW,
-    ADDI,
-    SLTI,
-    SLTIU,
-    XORI,
-    ORI,
-    ANDI,
-    SLLI,
-    SRLI,
-    SRAI,
-    ADD,
-    SUB,
-    SLL,
-    SLT,
-    SLTU,
-    XOR,
-    SRL,
-    SRA,
-    OR,
-    AND,
-    FENCE,
-    ECALL,
-    EBREAK,
-    FENCE_I,
-    CSRRW,
-    CSRRS,
-    CSRRC,
-    CSRRWI,
-    CSRRSI,
-    CSRRCI,
-    MRET
-  )
-  val decodeTable = new DecodeTable(
-    possiblePatterns,
-    Seq(
-      ImmControlField,
-      needRd1ControlField,
-      needRd2ControlField,
-      RegWeControlField,
-      WBSrcControlField,
-      ALUASrcControlField,
-      ALUBSrcControlField,
-      ALUControlField,
-      CSRSrcControlField,
-      CSRControlField,
-      JumpASrcControlField,
-      JumpBSrcControlField,
-      BrControlField,
-      PCSrcControlField,
-      MemRenControlField,
-      MemWenControlField,
-      MemOpControlField,
-      FENCE_IField,
-      EndControlField
+    import InstructionMap._
+    val possiblePatterns = Seq(
+      LUI,
+      AUIPC,
+      JAL,
+      JALR,
+      BEQ,
+      BNE,
+      BLT,
+      BGE,
+      BLTU,
+      BGEU,
+      LB,
+      LH,
+      LW,
+      LBU,
+      LHU,
+      SB,
+      SH,
+      SW,
+      ADDI,
+      SLTI,
+      SLTIU,
+      XORI,
+      ORI,
+      ANDI,
+      SLLI,
+      SRLI,
+      SRAI,
+      ADD,
+      SUB,
+      SLL,
+      SLT,
+      SLTU,
+      XOR,
+      SRL,
+      SRA,
+      OR,
+      AND,
+      FENCE,
+      ECALL,
+      EBREAK,
+      FENCE_I,
+      CSRRW,
+      CSRRS,
+      CSRRC,
+      CSRRWI,
+      CSRRSI,
+      CSRRCI,
+      MRET
     )
-  )
-  val decodeResult = decodeTable.decode(io.instruction)
+    val decodeTable = new DecodeTable(
+      possiblePatterns,
+      Seq(
+        ImmControlField,
+        needRd1ControlField,
+        needRd2ControlField,
+        RegWeControlField,
+        WBSrcControlField,
+        ALUASrcControlField,
+        ALUBSrcControlField,
+        ALUControlField,
+        CSRSrcControlField,
+        CSRControlField,
+        JumpASrcControlField,
+        JumpBSrcControlField,
+        BrControlField,
+        PCSrcControlField,
+        MemRenControlField,
+        MemWenControlField,
+        MemOpControlField,
+        FENCE_IField,
+        EndControlField
+      )
+    )
+    val decodeResult = decodeTable.decode(instruct)
 
-  io.immType := decodeResult(ImmControlField)
+    out.immType := decodeResult(ImmControlField)
 
-  io.needRd1 := decodeResult(needRd1ControlField)
-  io.needRd2 := decodeResult(needRd2ControlField)
-  io.regWe   := decodeResult(RegWeControlField)
-  io.wbSrc   := decodeResult(WBSrcControlField)
+    out.needRd1 := decodeResult(needRd1ControlField)
+    out.needRd2 := decodeResult(needRd2ControlField)
+    out.regWe   := decodeResult(RegWeControlField)
+    out.wbSrc   := decodeResult(WBSrcControlField)
 
-  io.aluASrc := decodeResult(ALUASrcControlField)
-  io.aluBSrc := decodeResult(ALUBSrcControlField)
-  val aluCtr = decodeResult(ALUControlField)
-  io.aluSel     := aluCtr.aluSel
-  io.isArith    := aluCtr.isArith
-  io.isLeft     := aluCtr.isLeft
-  io.isUnsigned := aluCtr.isUnsigned
-  io.isSub      := aluCtr.isSub
+    val aluCtr = decodeResult(ALUControlField)
+    out.aluASrc    := decodeResult(ALUASrcControlField)
+    out.aluBSrc    := decodeResult(ALUBSrcControlField)
+    out.aluSel     := aluCtr.aluSel
+    out.isArith    := aluCtr.isArith
+    out.isLeft     := aluCtr.isLeft
+    out.isUnsigned := aluCtr.isUnsigned
+    out.isSub      := aluCtr.isSub
 
-  io.csrSrc      := decodeResult(CSRSrcControlField)
-  io.csrCtr      := decodeResult(CSRControlField)
+    out.csrSrc := decodeResult(CSRSrcControlField)
+    out.csrCtr := decodeResult(CSRControlField)
 
-  io.jumpASrc := decodeResult(JumpASrcControlField)
-  io.jumpBSrc := decodeResult(JumpBSrcControlField)
-  io.brType   := decodeResult(BrControlField)
-  io.pcSrc    := decodeResult(PCSrcControlField)
+    out.jumpASrc := decodeResult(JumpASrcControlField)
+    out.jumpBSrc := decodeResult(JumpBSrcControlField)
+    out.brType   := decodeResult(BrControlField)
+    out.pcSrc    := decodeResult(PCSrcControlField)
 
-  io.memRen := decodeResult(MemRenControlField)
-  io.memWen := decodeResult(MemWenControlField)
-  io.memOp  := decodeResult(MemOpControlField)
+    out.memRen := decodeResult(MemRenControlField)
+    out.memWen := decodeResult(MemWenControlField)
+    out.memOp  := decodeResult(MemOpControlField)
 
-  io.fence_i := decodeResult(FENCE_IField)
-  if (sim) {
-    io.isEnd.get := decodeResult(EndControlField)
+    out.fence_i := decodeResult(FENCE_IField)
+    if (sim) {
+      out.isEnd.get := decodeResult(EndControlField)
+    }
+    out
   }
 }

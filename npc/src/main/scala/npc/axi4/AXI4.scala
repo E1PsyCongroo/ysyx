@@ -350,18 +350,148 @@ class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Modu
   }
 }
 
+// object AXI4Interconnect {
+//   def apply(
+//     fanIn:      Seq[AXI4MasterIO],
+//     fanOut:     Seq[AXI4MasterIO],
+//     fanOutArea: Seq[UInt => Bool]
+//   ) = {
+//     val AXI4Interconnect = Module(new AXI4Interconnect(fanIn.length, fanOutArea))
+//     for (i <- 0 until fanIn.length) {
+//       AXI4Interconnect.io.fanIn(i) <> fanIn(i)
+//     }
+//     for (i <- 0 until fanOut.length) {
+//       AXI4Interconnect.io.fanOut(i) <> fanOut(i)
+//     }
+//   }
+// }
+
 object AXI4Interconnect {
   def apply(
     fanIn:      Seq[AXI4MasterIO],
-    fanOutArea: Seq[UInt => Bool],
-    fanOut:     Seq[AXI4MasterIO]
+    fanOut:     Seq[AXI4MasterIO],
+    fanOutArea: Seq[UInt => Bool]
   ) = {
-    val AXI4Interconnect = Module(new AXI4Interconnect(fanIn.length, fanOutArea))
+    val fanInNum  = fanIn.length
+    val fanOutNum = fanOut.length
+
+    val sWriteIdle :: sWaitBresp :: Nil = Enum(2)
+    val sReadIdle :: sWaitRresp :: Nil  = Enum(2)
+
+    val writeState  = RegInit(sWriteIdle)
+    val isWriteIdle = writeState === sWriteIdle
+    val isWaitBresp = writeState === sWaitBresp
+
+    val readState   = RegInit(sReadIdle)
+    val isReadIdle  = readState === sReadIdle
+    val isWaitRresp = readState === sWaitRresp
+
+    val writeRequests = VecInit(fanIn.map(in => in.awvalid)).asUInt
+    val readRequests  = VecInit(fanIn.map(in => in.arvalid)).asUInt
+
+    val writeSelected    = PriorityEncoder(writeRequests)
+    val writeSelectedReg = RegEnable(writeSelected, isWriteIdle)
+    val write            = writeRequests(writeSelected)
+
+    val readSelected    = PriorityEncoder(readRequests)
+    val readSelectedReg = RegEnable(readSelected, isReadIdle)
+    val read            = readRequests(readSelected)
+
+    val awaddr = Wire(UInt(32.W))
+    val araddr = Wire(UInt(32.W))
+    val awfire = Wire(Bool())
+    val wfire  = Wire(Bool())
+    val bfire  = Wire(Bool())
+    val arfire = Wire(Bool())
+    val rfire  = Wire(Bool())
+    val rlast  = Wire(Bool())
+
+    awaddr := DontCare
+    araddr := DontCare
+    awfire := DontCare
+    wfire  := DontCare
+    bfire  := DontCare
+    arfire := DontCare
+    rfire  := DontCare
+    rlast  := DontCare
     for (i <- 0 until fanIn.length) {
-      AXI4Interconnect.io.fanIn(i) <> fanIn(i)
+      when(writeSelectedReg === i.U) {
+        awaddr := fanIn(i).awaddr
+        awfire := fanIn(i).awvalid && fanIn(i).awready
+        wfire  := fanIn(i).wvalid && fanIn(i).wready
+        bfire  := fanIn(i).bvalid && fanIn(i).bready
+      }
+      when(readSelectedReg === i.U) {
+        araddr := fanIn(i).araddr
+        arfire := fanIn(i).arvalid && fanIn(i).arready
+        rfire  := fanIn(i).rvalid && fanIn(i).rready
+        rlast  := fanIn(i).rlast
+      }
     }
-    for (i <- 0 until fanOut.length) {
-      AXI4Interconnect.io.fanOut(i) <> fanOut(i)
+
+    val wmatches       = VecInit(fanOutArea.map(_(awaddr))).asUInt
+    val writeOutSelect = RegEnable(PriorityEncoder(wmatches), isWriteIdle)
+
+    val rmatches      = VecInit(fanOutArea.map(_(araddr))).asUInt
+    val readOutSelect = RegEnable(PriorityEncoder(rmatches), isReadIdle)
+
+    writeState := MuxLookup(writeState, sWriteIdle)(
+      Seq(
+        sWriteIdle -> Mux(write, sWaitBresp, sWriteIdle),
+        sWaitBresp -> Mux(bfire, sWriteIdle, sWaitBresp)
+      )
+    )
+
+    readState := MuxLookup(readState, sReadIdle)(
+      Seq(
+        sReadIdle -> Mux(read, sWaitRresp, sReadIdle),
+        sWaitRresp -> Mux(rfire && rlast, sReadIdle, sWaitRresp)
+      )
+    )
+
+    for (i <- 0 until fanInNum) {
+      fanIn(i) <> AXI4.none
+    }
+    for (i <- 0 until fanOutNum) {
+      AXI4.none <> fanOut(i)
+    }
+
+    for (i <- 0 until fanInNum) {
+      for (j <- 0 until fanOutNum) {
+        when(writeSelectedReg === i.U && writeOutSelect === j.U && isWaitBresp) {
+          fanIn(i).awready  := fanOut(j).awready
+          fanOut(j).awvalid := fanIn(i).awvalid
+          fanOut(j).awaddr  := fanIn(i).awaddr
+          fanOut(j).awid    := fanIn(i).awid
+          fanOut(j).awlen   := fanIn(i).awlen
+          fanOut(j).awsize  := fanIn(i).awsize
+          fanOut(j).awburst := fanIn(i).awburst
+          fanIn(i).wready   := fanOut(j).wready
+          fanOut(j).wvalid  := fanIn(i).wvalid
+          fanOut(j).wdata   := fanIn(i).wdata
+          fanOut(j).wstrb   := fanIn(i).wstrb
+          fanOut(j).wlast   := fanIn(i).wlast
+          fanOut(j).bready  := fanIn(i).bready
+          fanIn(i).bvalid   := fanOut(j).bvalid
+          fanIn(i).bresp    := fanOut(j).bresp
+          fanIn(i).bid      := fanOut(j).bid
+        }
+        when(readSelectedReg === i.U && readOutSelect === j.U && isWaitRresp) {
+          fanIn(i).arready  := fanOut(j).arready
+          fanOut(j).arvalid := fanIn(i).arvalid
+          fanOut(j).araddr  := fanIn(i).araddr
+          fanOut(j).arid    := fanIn(i).arid
+          fanOut(j).arlen   := fanIn(i).arlen
+          fanOut(j).arsize  := fanIn(i).arsize
+          fanOut(j).arburst := fanIn(i).arburst
+          fanOut(j).rready  := fanIn(i).rready
+          fanIn(i).rvalid   := fanOut(j).rvalid
+          fanIn(i).rresp    := fanOut(j).rresp
+          fanIn(i).rdata    := fanOut(j).rdata
+          fanIn(i).rlast    := fanOut(j).rlast
+          fanIn(i).rid      := fanOut(j).rid
+        }
+      }
     }
   }
 }

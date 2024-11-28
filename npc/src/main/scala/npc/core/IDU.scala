@@ -4,12 +4,12 @@ import chisel3._
 import chisel3.util._
 
 class IDUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
-  val aluASrc     = Output(UInt(xlen.W))
-  val aluBSrc     = Output(UInt(xlen.W))
-  val jumpASrc    = Output(UInt(xlen.W))
-  val jumpBSrc    = Output(UInt(xlen.W))
-  val ra1         = Output(UInt(if (extentionE) 4.W else 5.W))
-  val wa          = Output(UInt(if (extentionE) 4.W else 5.W))
+  val aluASrc  = Output(UInt(xlen.W))
+  val aluBSrc  = Output(UInt(xlen.W))
+  val jumpASrc = Output(UInt(xlen.W))
+  val jumpBSrc = Output(UInt(xlen.W))
+  val ra1      = Output(UInt(if (extentionE) 4.W else 5.W))
+  val wa       = Output(UInt(if (extentionE) 4.W else 5.W))
   val control = new Bundle {
     val regWe      = Output(Bool())
     val wbSrc      = Output(UInt(WBSrcFrom.getWidth.W))
@@ -54,18 +54,15 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
 
   val in = WireDefault(io.in.bits)
 
-  val ImmGen  = Module(new ImmGen(xlen))
-  val Control = Module(new Control(xlen, sim))
-
   val instruction = in.instruction
   val ra1         = instruction(19, 15)
   val ra2         = instruction(24, 20)
   val wa          = instruction(11, 7)
   val pc          = in.pc
-  val imm         = ImmGen.io.imm
   val rd1         = io.RegFileReturn.rd1
   val rd2         = io.RegFileReturn.rd2
-  val control     = Control.io
+  val control     = Control(instruction, xlen, sim)
+  val imm         = ImmGen(instruction, control.immType)
 
   if (sim) {
     io.RegFileAccess.ra1 := Mux(control.isEnd.get, 10.U, ra1) & Fill(5, control.needRd1)
@@ -73,11 +70,6 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
     io.RegFileAccess.ra1 := ra1 & Fill(5, control.needRd1)
   }
   io.RegFileAccess.ra2 := ra2 & Fill(5, control.needRd2)
-
-  ImmGen.io.instruction := instruction
-  ImmGen.io.immType     := control.immType
-
-  control.instruction := instruction
 
   val ifenced = RegNext(!io.out.fire && control.fence_i)
 
