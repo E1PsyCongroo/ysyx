@@ -356,7 +356,6 @@ class ControlIO(xlen: Int, sim: Boolean) extends Bundle {
 
   val csrSrc      = Output(UInt(CSRSrcFrom.getWidth.W))
   val csrCtr      = Output(UInt(CSRCtr.getWidth.W))
-  val exceptCause = Output(UInt(xlen.W))
 
   val jumpASrc = Output(UInt(JumpASrcFrom.getWidth.W))
   val jumpBSrc = Output(UInt(JumpBSrcFrom.getWidth.W))
@@ -469,7 +468,6 @@ class Control(xlen: Int, sim: Boolean) extends Module {
 
   io.csrSrc      := decodeResult(CSRSrcControlField)
   io.csrCtr      := decodeResult(CSRControlField)
-  io.exceptCause := 11.U
 
   io.jumpASrc := decodeResult(JumpASrcControlField)
   io.jumpBSrc := decodeResult(JumpBSrcControlField)

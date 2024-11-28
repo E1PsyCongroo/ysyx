@@ -44,46 +44,19 @@ class RVCPU(
   IFU.io.jump   := EXU.io.jump
   IFU.io.nextPC := EXU.io.nextPC
 
-  ICache.io.flush := EXU.io.jump
   ICache.io.clear := IDU.io.fence_i
 
   RegFile.io.ra1 := IDU.io.RegFileAccess.ra1
   RegFile.io.ra2 := IDU.io.RegFileAccess.ra2
   def conflict(ra: UInt, wa: UInt, we: Bool) = we && wa =/= 0.U && ra === wa
-  val isEXURa1RAW = conflict(IDU.io.RegFileAccess.ra1, EXU.io.RegFileAccess.wa, EXU.io.RegFileAccess.we)
-  val isEXURa2RAW = conflict(IDU.io.RegFileAccess.ra2, EXU.io.RegFileAccess.wa, EXU.io.RegFileAccess.we)
-  val isEXUForward = MuxCase(
-    false.B,
-    Seq(
-      WBSrcFrom.fromALU -> EXU.io.out.valid,
-      WBSrcFrom.fromCSR -> EXU.io.out.valid
-    ).map { case (key, data) => (EXU.io.in.bits.control.wbSrc === key, data) }
-  )
-  val EXUForwardData = MuxCase(
-    DontCare,
-    Seq(
-      WBSrcFrom.fromALU -> EXU.io.out.bits.aluOut,
-      WBSrcFrom.fromCSR -> EXU.io.out.bits.csrOut
-    ).map { case (key, data) => (EXU.io.in.bits.control.wbSrc === key, data) }
-  )
-  val isLSURa1RAW = conflict(IDU.io.RegFileAccess.ra1, LSU.io.RegFileAccess.wa, LSU.io.RegFileAccess.we)
-  val isLSURa2RAW = conflict(IDU.io.RegFileAccess.ra2, LSU.io.RegFileAccess.wa, LSU.io.RegFileAccess.we)
-  val isLSUForward = MuxCase(
-    false.B,
-    Seq(
-      WBSrcFrom.fromALU -> LSU.io.in.valid,
-      WBSrcFrom.fromCSR -> LSU.io.in.valid,
-      WBSrcFrom.fromMem -> LSU.io.out.valid
-    ).map { case (key, data) => (LSU.io.in.bits.control.wbSrc === key, data) }
-  )
-  val LSUForwardData = MuxCase(
-    DontCare,
-    Seq(
-      WBSrcFrom.fromALU -> LSU.io.in.bits.aluOut,
-      WBSrcFrom.fromCSR -> LSU.io.in.bits.csrOut,
-      WBSrcFrom.fromMem -> LSU.io.out.bits.memOut
-    ).map { case (key, data) => (LSU.io.in.bits.control.wbSrc === key, data) }
-  )
+  val isEXURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, EXU.io.RegFileAccess.wa, EXU.io.RegFileAccess.we)
+  val isEXURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, EXU.io.RegFileAccess.wa, EXU.io.RegFileAccess.we)
+  val isEXUForward   = !EXU.io.in.bits.control.wbSrc(0) && EXU.io.out.valid
+  val EXUForwardData = EXU.io.out.bits.alu_csr_Out
+  val isLSURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, LSU.io.RegFileAccess.wa, LSU.io.RegFileAccess.we)
+  val isLSURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, LSU.io.RegFileAccess.wa, LSU.io.RegFileAccess.we)
+  val isLSUForward   = Mux(LSU.io.in.bits.control.wbSrc.asBool, LSU.io.out.valid, LSU.io.in.valid)
+  val LSUForwardData = LSU.io.out.bits.wd
   val isWBURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
   val isWBURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
   val isWBUForward   = WBU.io.in.valid
@@ -142,7 +115,7 @@ class RVCPU(
       Dev.VGAAddr,
       Dev.ChipLinkMEMAddr
     )
-    val needSkipDifftest = devs.map { dev => dev.in(WBU.io.in.bits.aluOut) }.foldLeft(false.B)(_ || _)
+    val needSkipDifftest = devs.map { dev => dev.in(WBU.io.out.bits.memAddr.get) }.foldLeft(false.B)(_ || _)
     SkipDifftest(clock, WBU.io.out.fire && WBU.io.out.bits.memAccess.get && needSkipDifftest)
 
     val ICacheArfire = ICache.io.master.arvalid && ICache.io.master.arready

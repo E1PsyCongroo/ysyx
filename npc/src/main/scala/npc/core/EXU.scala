@@ -7,13 +7,12 @@ import chisel3._
 import chisel3.util._
 
 class EXUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
-  val wa     = Output(UInt(if (extentionE) 4.W else 5.W))
-  val aluOut = Output(UInt(xlen.W))
-  val csrOut = Output(UInt(xlen.W))
-  val wdata  = Output(UInt(xlen.W))
+  val wa          = Output(UInt(if (extentionE) 4.W else 5.W))
+  val alu_csr_Out = Output(UInt(xlen.W))
+  val wdata       = Output(UInt(xlen.W))
   val control = new Bundle {
     val regWe  = Bool()
-    val wbSrc  = Output(UInt(WBSrcFrom.getWidth.W))
+    val wbSrc  = Output(UInt((WBSrcFrom.getWidth - 1).W))
     val memRen = Output(Bool())
     val memWen = Output(Bool())
     val memOp  = Output(UInt(MemOp.getWidth.W))
@@ -70,7 +69,6 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   CSRControl.io.csrAddr := aluBSrc
   CSRControl.io.csrIn   := csrSrc
   CSRControl.io.csrCtr  := Mux(io.in.valid, control.csrCtr, CSRCtr.csrNone.value.U)
-  CSRControl.io.cause   := in.exceptCause
   CSRControl.io.pc      := jumpASrc
 
   BrCond.io.brType := control.brType
@@ -92,10 +90,9 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   io.in.ready                := !io.in.valid || io.out.fire
   io.out.valid               := io.in.valid
   io.out.bits.wa             := in.wa
-  io.out.bits.aluOut         := ALU.io.aluOut
-  io.out.bits.csrOut         := CSRControl.io.csrOut
+  io.out.bits.alu_csr_Out    := Mux(control.wbSrc(1), CSRControl.io.csrOut, ALU.io.aluOut)
   io.out.bits.wdata          := jumpBSrc
-  io.out.bits.control.regWe  := control.regWe
+  io.out.bits.control.regWe  := control.regWe(0)
   io.out.bits.control.wbSrc  := control.wbSrc
   io.out.bits.control.memRen := control.memRen
   io.out.bits.control.memWen := control.memWen

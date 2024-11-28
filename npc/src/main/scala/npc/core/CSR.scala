@@ -63,7 +63,6 @@ class CSRControlIO(xlen: Int) extends Bundle {
   val csrIn   = Input(UInt(xlen.W))
   val csrOut  = Output(UInt(xlen.W))
   /* Excpetion */
-  val cause = Input(UInt(xlen.W))
   val pc    = Input(UInt(xlen.W))
 }
 
@@ -82,6 +81,8 @@ class CSRControl(xlen: Int) extends Module {
           case CSRAddress.mstatus   => WireDefault(0x1800.U(xlen.W))
           case CSRAddress.mvendorid => WireDefault(0x79737978.U(xlen.W))
           case CSRAddress.marchid   => WireDefault(0x0.U(xlen.W))
+          // 仅支持 ECALL 异常
+          case CSRAddress.mcause    => WireDefault(0x11.U(xlen.W))
           case _                    => Reg(UInt(xlen.W))
         }
       )
@@ -104,9 +105,6 @@ class CSRControl(xlen: Int) extends Module {
     )
   )
 
-  val mcause = csrs(CSRAddress.mcause)
-  mcause := Mux(io.csrCtr === CSRCtr.csrExcept, io.cause, Mux(io.csrAddr === CSRAddress.mcause, csrWrite, mcause))
-
   val mepc = csrs(CSRAddress.mepc)
   mepc := Mux(io.csrCtr === CSRCtr.csrExcept, io.pc, Mux(io.csrAddr === CSRAddress.mepc, csrWrite, mepc))
 
@@ -117,6 +115,7 @@ class CSRControl(xlen: Int) extends Module {
     csrs(commCsr) := Mux(io.csrAddr === commCsr, csrWrite, csrs(commCsr))
   }
 
+  val mcause     = csrs(CSRAddress.mcause)
   val mtvec      = csrs(CSRAddress.mtvec)
   val exceptAddr = Mux(mtvec(0), mtvec + (mcause << 2.U), mtvec)
   io.csrOut := MuxCase(

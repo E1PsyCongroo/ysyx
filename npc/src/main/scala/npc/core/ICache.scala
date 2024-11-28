@@ -23,7 +23,6 @@ class ICacheIO(awidth: Int, xlen: Int, sim: Boolean) extends Bundle {
   val in     = Flipped(DecoupledIO(new IFUOut(awidth, sim)))
   val out    = DecoupledIO(new ICacheOut(xlen, sim))
   val trace  = if (sim) Some(new ICacheTrace) else None
-  val flush  = Input(Bool())
   val clear  = Input(Bool())
   val master = new AXI4MasterIO
 }

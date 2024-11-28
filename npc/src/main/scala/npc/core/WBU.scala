@@ -6,6 +6,7 @@ import chisel3.util._
 class WBUOut(xlen: Int, sim: Boolean) extends Bundle {
   val nextPC     = if (sim) Some(Output(UInt(xlen.W))) else None
   val inst       = if (sim) Some(Output(UInt(32.W))) else None
+  val memAddr    = if (sim) Some(Output(UInt(32.W))) else None
   val memAccess  = if (sim) Some(Output(Bool())) else None
   val fetchCycle = if (sim) Some(Output(UInt(64.W))) else None
   val isEnd      = if (sim) Some(Output(Bool())) else None
@@ -27,28 +28,18 @@ class WBU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
 
   val in      = WireDefault(io.in.bits)
   val wa      = in.wa
-  val aluOut  = in.aluOut
-  val memOut  = in.memOut
-  val csrOut  = in.csrOut
+  val wd      = in.wd
   val control = in.control
-
-  val wbSrc = MuxCase(
-    aluOut,
-    Seq(
-      WBSrcFrom.fromALU -> aluOut,
-      WBSrcFrom.fromMem -> memOut,
-      WBSrcFrom.fromCSR -> csrOut
-    ).map { case (key, data) => (control.wbSrc === key, data) }
-  )
 
   io.in.ready         := !io.in.valid || io.out.fire
   io.out.valid        := io.in.valid
   io.RegFileAccess.wa := wa
   io.RegFileAccess.we := control.regWe && io.in.valid
-  io.RegFileAccess.wd := wbSrc
+  io.RegFileAccess.wd := wd
   if (sim) {
     io.out.bits.nextPC.get     := in.nextPC.get
     io.out.bits.inst.get       := in.inst.get
+    io.out.bits.memAddr.get    := in.memAddr.get
     io.out.bits.memAccess.get  := in.memAccess.get
     io.out.bits.fetchCycle.get := in.fetchCycle.get
     io.out.bits.isEnd.get      := in.isEnd.get

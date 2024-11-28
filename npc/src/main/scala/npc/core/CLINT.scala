@@ -15,8 +15,7 @@ class CLINT(awidth: Int = 32, xlen: Int = 32, area: Area = Dev.CLINTAddr) extend
   val wfire  = io.wvalid && io.wready
   val bfire  = io.bvalid && io.bready
   val arfire = io.arvalid && io.arready
-  val rfire  = io.rvalid && io.rready
-  val rlast  = io.rlast
+  val rfire  = io.rvalid && io.rready && io.rlast
 
   val sWriteIdle :: sSendBresp :: Nil = Enum(2)
   val sReadIdle :: sSendRresp :: Nil  = Enum(2)
@@ -39,7 +38,7 @@ class CLINT(awidth: Int = 32, xlen: Int = 32, area: Area = Dev.CLINTAddr) extend
   readState := MuxLookup(readState, sReadIdle)(
     Seq(
       sReadIdle -> Mux(arfire, sSendRresp, sReadIdle),
-      sSendRresp -> Mux(rfire && rlast, sReadIdle, sSendRresp)
+      sSendRresp -> Mux(rfire, sReadIdle, sSendRresp)
     )
   )
   /* Write address channel */
@@ -68,14 +67,15 @@ class CLINT(awidth: Int = 32, xlen: Int = 32, area: Area = Dev.CLINTAddr) extend
 
   /* Read address channel */
   val arready         = isReadIdle
-  val readAddr        = RegEnable(io.araddr, arfire)
+  val readAddr        = io.araddr
   val alignedReadAddr = readAddr(awidth - 1, 2) ## Fill(2, "b0".U)
 
   /* Read data channel */
   val rvalid   = isSendRresp
+  val rlast    = isSendRresp
   val rdata    = Wire(UInt(xlen.W))
-  val readLow  = alignedReadAddr === area.start
-  val readHigh = alignedReadAddr === (area.start + 4.U)
+  val readLow  = RegNext(alignedReadAddr === area.start)
+  val readHigh = RegNext(alignedReadAddr === (area.start + 4.U))
   rdata := MuxCase(
     DontCare,
     Seq(
@@ -96,6 +96,6 @@ class CLINT(awidth: Int = 32, xlen: Int = 32, area: Area = Dev.CLINTAddr) extend
   io.rvalid  := rvalid
   io.rdata   := rdata
   io.rresp   := rresp
-  io.rlast   := true.B
+  io.rlast   := rlast
   io.rid     := DontCare
 }

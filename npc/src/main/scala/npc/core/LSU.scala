@@ -41,17 +41,15 @@ object SizeFeild extends DecodeField[MemControlPattern, UInt] {
 }
 
 class LSUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
-  val wa     = Output(UInt(if (extentionE) 4.W else 5.W))
-  val aluOut = Output(UInt(xlen.W))
-  val memOut = Output(UInt(xlen.W))
-  val csrOut = Output(UInt(xlen.W))
+  val wa = Output(UInt(if (extentionE) 4.W else 5.W))
+  val wd = Output(UInt(xlen.W))
   val control = new Bundle {
     val regWe = Bool()
-    val wbSrc = Output(UInt(WBSrcFrom.getWidth.W))
   }
 
   val nextPC     = if (sim) Some(Output(UInt(xlen.W))) else None
   val inst       = if (sim) Some(Output(UInt(32.W))) else None
+  val memAddr    = if (sim) Some(Output(UInt(32.W))) else None
   val memAccess  = if (sim) Some(Output(Bool())) else None
   val fetchCycle = if (sim) Some(Output(UInt(64.W))) else None
   val isEnd      = if (sim) Some(Output(Bool())) else None
@@ -75,8 +73,8 @@ class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   val wen       = in.control.memWen
   val ren       = in.control.memRen
   val memOp     = in.control.memOp
-  val raddr     = in.aluOut
-  val waddr     = in.aluOut
+  val raddr     = in.alu_csr_Out
+  val waddr     = in.alu_csr_Out
   val wdata     = in.wdata
   val memAccess = wen | ren
 
@@ -153,16 +151,14 @@ class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   io.in.ready               := !io.in.valid || io.out.fire
   io.out.valid              := io.in.valid && Mux(ren, io.master.rvalid, Mux(wen, io.master.bvalid, true.B))
   io.out.bits.wa            := in.wa
-  io.out.bits.aluOut        := in.aluOut
-  io.out.bits.memOut        := rdata
-  io.out.bits.csrOut        := in.csrOut
+  io.out.bits.wd            := Mux(in.control.wbSrc.asBool, rdata, in.alu_csr_Out)
   io.out.bits.control.regWe := in.control.regWe
-  io.out.bits.control.wbSrc := in.control.wbSrc
   io.RegFileAccess.wa       := in.wa
   io.RegFileAccess.we       := in.control.regWe && io.in.valid
   if (sim) {
     io.out.bits.nextPC.get     := in.nextPC.get
     io.out.bits.inst.get       := in.inst.get
+    io.out.bits.memAddr.get    := in.alu_csr_Out
     io.out.bits.memAccess.get  := memAccess
     io.out.bits.fetchCycle.get := in.fetchCycle.get
     io.out.bits.isEnd.get      := in.isEnd.get

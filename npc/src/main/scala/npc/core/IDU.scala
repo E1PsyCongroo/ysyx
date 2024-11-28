@@ -10,7 +10,6 @@ class IDUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
   val jumpBSrc    = Output(UInt(xlen.W))
   val ra1         = Output(UInt(if (extentionE) 4.W else 5.W))
   val wa          = Output(UInt(if (extentionE) 4.W else 5.W))
-  val exceptCause = Output(UInt(xlen.W))
   val control = new Bundle {
     val regWe      = Output(Bool())
     val wbSrc      = Output(UInt(WBSrcFrom.getWidth.W))
@@ -120,7 +119,6 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
   io.out.bits.jumpBSrc           := jumpBSrc
   io.out.bits.wa                 := wa
   io.out.bits.ra1                := ra1
-  io.out.bits.exceptCause        := control.exceptCause
   io.out.bits.control.regWe      := control.regWe
   io.out.bits.control.wbSrc      := control.wbSrc
   io.out.bits.control.aluSel     := control.aluSel
