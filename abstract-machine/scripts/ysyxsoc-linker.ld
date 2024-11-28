@@ -1,5 +1,5 @@
 ENTRY(_start)
-PHDRS { bootloader PT_LOAD; entry PT_LOAD; text PT_LOAD; rodata PT_LOAD; data PT_LOAD; }
+PHDRS { bootloader PT_LOAD; entry PT_LOAD; text PT_LOAD; rodata PT_LOAD; data PT_LOAD; bss PT_LOAD; }
 
 MEMORY {
   mrom(rx)    : ORIGIN = 0x20000000, LENGTH = 4K
@@ -64,7 +64,7 @@ SECTIONS {
     *(.scommon)
     end = .;
     _end = .;
-  } > sdram
+  } > sdram : bss
 
   _heap_start = ALIGN(0x1000);
   _stack_pointer = ORIGIN(sdram) + LENGTH(sdram);

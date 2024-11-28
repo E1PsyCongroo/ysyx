@@ -170,8 +170,8 @@ object CLINT {
     val rvalid   = isSendRresp
     val rlast    = isSendRresp
     val rdata    = Wire(UInt(xlen.W))
-    val readLow  = RegEnable(alignedReadAddr === area.start, isReadIdle)
-    val readHigh = RegEnable(alignedReadAddr === (area.start + 4.U), isReadIdle)
+    val readLow  = RegNext(alignedReadAddr === area.start)
+    val readHigh = RegNext(alignedReadAddr === (area.start + 4.U))
     rdata := MuxCase(
       DontCare,
       Seq(

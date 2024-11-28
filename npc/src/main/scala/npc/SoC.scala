@@ -33,7 +33,7 @@ class RVCPU(
   val LSU     = Module(new LSU(xlen, extentionE, sim))
   val WBU     = Module(new WBU(xlen, extentionE, sim))
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
-  val CLINT   = Module(new CLINT(awidth, xlen, Dev.mtimeAddr))
+  val CLINT   = Module(new CLINT(awidth, xlen, Dev.CLINTAddr))
 
   StageConnect(IFU.io.out, ICache.io.in, ICache.io.out, Some(EXU.io.jump))
   StageConnect(ICache.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
