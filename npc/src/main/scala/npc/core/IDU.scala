@@ -35,18 +35,12 @@ class IDUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
 }
 
 class IDUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
-  val in    = Flipped(DecoupledIO(new ICacheOut(xlen, sim)))
-  val out   = DecoupledIO(new IDUOut(xlen, extentionE, sim))
-  val stall = Input(Bool())
-  val RegFileAccess = new Bundle {
-    val ra1 = Output(UInt(if (extentionE) 4.W else 5.W))
-    val ra2 = Output(UInt(if (extentionE) 4.W else 5.W))
-  }
-  val RegFileReturn = new Bundle {
-    val rd1 = Input(UInt(xlen.W))
-    val rd2 = Input(UInt(xlen.W))
-  }
-  val fence_i = Output(Bool())
+  val in            = Flipped(DecoupledIO(new ICacheOut(xlen, sim)))
+  val out           = DecoupledIO(new IDUOut(xlen, extentionE, sim))
+  val stall         = Input(Bool())
+  val RegFileAccess = Flipped(new RegFileAccess(xlen, if (extentionE) 4 else 5))
+  val RegFileReturn = Flipped(new RegFileReturn(xlen))
+  val fence_i       = Output(Bool())
 }
 
 class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) extends Module {
@@ -70,6 +64,9 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
     io.RegFileAccess.ra1 := ra1 & Fill(5, control.needRd1)
   }
   io.RegFileAccess.ra2 := ra2 & Fill(5, control.needRd2)
+  io.RegFileAccess.wa  := DontCare
+  io.RegFileAccess.we  := DontCare
+  io.RegFileAccess.wd  := DontCare
 
   val ifenced = RegNext(!io.out.fire && control.fence_i)
 

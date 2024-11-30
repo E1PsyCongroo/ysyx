@@ -57,13 +57,10 @@ class LSUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
 }
 
 class LSUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
-  val in     = Flipped(DecoupledIO(new EXUOut(xlen, extentionE, sim)))
-  val out    = DecoupledIO(new LSUOut(xlen, extentionE, sim))
-  val master = new AXI4MasterIO
-  val RegFileAccess = new Bundle {
-    val wa = Output(UInt(if (extentionE) 4.W else 5.W))
-    val we = Output(Bool())
-  }
+  val in            = Flipped(DecoupledIO(new EXUOut(xlen, extentionE, sim)))
+  val out           = DecoupledIO(new LSUOut(xlen, extentionE, sim))
+  val master        = new AXI4MasterIO
+  val RegFileAccess = Flipped(new RegFileAccess(xlen, if (extentionE) 4 else 5))
 }
 
 class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
@@ -151,8 +148,11 @@ class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   io.out.bits.wa            := in.wa
   io.out.bits.wd            := Mux(in.control.wbSrc.asBool, rdata, in.alu_csr_Out)
   io.out.bits.control.regWe := in.control.regWe
+  io.RegFileAccess.ra1      := DontCare
+  io.RegFileAccess.ra2      := DontCare
   io.RegFileAccess.wa       := in.wa
   io.RegFileAccess.we       := in.control.regWe && io.in.valid
+  io.RegFileAccess.wd       := DontCare
 
   if (sim) {
     assert(!bfire || io.master.bresp === TransactionResponse.okey.asUInt)

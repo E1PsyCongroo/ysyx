@@ -397,32 +397,28 @@ object AXI4Interconnect {
     val readSelectedReg = RegEnable(readSelected, isReadIdle)
     val read            = readRequests(readSelected)
 
-    val awaddr = Wire(UInt(32.W))
-    val araddr = Wire(UInt(32.W))
-    val awfire = Wire(Bool())
-    val wfire  = Wire(Bool())
-    val bfire  = Wire(Bool())
-    val arfire = Wire(Bool())
-    val rfire  = Wire(Bool())
-    val rlast  = Wire(Bool())
+    val awaddr = WireDefault(fanIn(0).awaddr)
+    val araddr = WireDefault(fanIn(0).araddr)
+    val awfire = WireDefault(fanIn(0).awvalid && fanIn(0).awready)
+    val wfire  = WireDefault(fanIn(0).wvalid && fanIn(0).wready)
+    val bfire  = WireDefault(fanIn(0).bvalid && fanIn(0).bready)
+    val arfire = WireDefault(fanIn(0).arvalid && fanIn(0).arready)
+    val rfire  = WireDefault(fanIn(0).rvalid && fanIn(0).rready)
+    val rlast  = WireDefault(fanIn(0).rlast)
 
-    awaddr := DontCare
-    araddr := DontCare
-    awfire := DontCare
-    wfire  := DontCare
-    bfire  := DontCare
-    arfire := DontCare
-    rfire  := DontCare
-    rlast  := DontCare
     for (i <- 0 until fanIn.length) {
-      when(writeSelectedReg === i.U) {
+      when(writeSelected === i.U) {
         awaddr := fanIn(i).awaddr
+      }
+      when(writeSelectedReg === i.U) {
         awfire := fanIn(i).awvalid && fanIn(i).awready
         wfire  := fanIn(i).wvalid && fanIn(i).wready
         bfire  := fanIn(i).bvalid && fanIn(i).bready
       }
-      when(readSelectedReg === i.U) {
+      when(readSelected === i.U) {
         araddr := fanIn(i).araddr
+      }
+      when(readSelectedReg === i.U) {
         arfire := fanIn(i).arvalid && fanIn(i).arready
         rfire  := fanIn(i).rvalid && fanIn(i).rready
         rlast  := fanIn(i).rlast

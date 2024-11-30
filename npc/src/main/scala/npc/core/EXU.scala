@@ -26,14 +26,11 @@ class EXUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
 }
 
 class EXUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
-  val in     = Flipped(DecoupledIO(new IDUOut(xlen, extentionE, sim)))
-  val out    = DecoupledIO(new EXUOut(xlen, extentionE, sim))
-  val jump   = Output(Bool())
-  val nextPC = Output(UInt(xlen.W))
-  val RegFileAccess = new Bundle {
-    val wa = Output(UInt(if (extentionE) 4.W else 5.W))
-    val we = Output(Bool())
-  }
+  val in            = Flipped(DecoupledIO(new IDUOut(xlen, extentionE, sim)))
+  val out           = DecoupledIO(new EXUOut(xlen, extentionE, sim))
+  val jump          = Output(Bool())
+  val nextPC        = Output(UInt(xlen.W))
+  val RegFileAccess = Flipped(new RegFileAccess(xlen, if (extentionE) 4 else 5))
 }
 
 class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
@@ -82,8 +79,11 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   io.out.bits.control.memRen := control.memRen
   io.out.bits.control.memWen := control.memWen
   io.out.bits.control.memOp  := control.memOp
+  io.RegFileAccess.ra1       := DontCare
+  io.RegFileAccess.ra2       := DontCare
   io.RegFileAccess.wa        := in.wa
   io.RegFileAccess.we        := control.regWe && io.in.valid
+  io.RegFileAccess.wd        := DontCare
 
   io.jump   := !jumped && jump
   io.nextPC := nextPC

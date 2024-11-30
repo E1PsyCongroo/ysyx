@@ -14,13 +14,9 @@ class WBUOut(xlen: Int, sim: Boolean) extends Bundle {
 }
 
 class WBUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
-  val in  = Flipped(DecoupledIO(new LSUOut(xlen, extentionE, sim)))
-  val out = DecoupledIO(new WBUOut(xlen, sim))
-  val RegFileAccess = new Bundle {
-    val wa = Output(UInt(if (extentionE) 4.W else 5.W))
-    val we = Output(Bool())
-    val wd = Output(UInt(xlen.W))
-  }
+  val in            = Flipped(DecoupledIO(new LSUOut(xlen, extentionE, sim)))
+  val out           = DecoupledIO(new WBUOut(xlen, sim))
+  val RegFileAccess = Flipped(new RegFileAccess(xlen, if (extentionE) 4 else 5))
 }
 
 class WBU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
@@ -31,11 +27,13 @@ class WBU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   val wd      = in.wd
   val control = in.control
 
-  io.in.ready         := !io.in.valid || io.out.fire
-  io.out.valid        := io.in.valid
-  io.RegFileAccess.wa := wa
-  io.RegFileAccess.we := control.regWe && io.in.valid
-  io.RegFileAccess.wd := wd
+  io.in.ready          := !io.in.valid || io.out.fire
+  io.out.valid         := io.in.valid
+  io.RegFileAccess.ra1 := DontCare
+  io.RegFileAccess.ra2 := DontCare
+  io.RegFileAccess.wa  := wa
+  io.RegFileAccess.we  := control.regWe && io.in.valid
+  io.RegFileAccess.wd  := wd
   if (sim) {
     io.out.bits.nextPC.get     := in.nextPC.get
     io.out.bits.inst.get       := in.inst.get

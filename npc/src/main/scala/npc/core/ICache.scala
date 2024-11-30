@@ -13,8 +13,8 @@ class ICacheOut(xlen: Int, sim: Boolean) extends Bundle {
 }
 
 class ICacheTrace extends Bundle {
-  val need        = Output(Bool())
-  val hit         = Output(Bool())
+  val need = Output(Bool())
+  val hit  = Output(Bool())
 }
 
 class ICacheIO(awidth: Int, xlen: Int, sim: Boolean) extends Bundle {
@@ -152,10 +152,10 @@ class ICache(
   io.out.bits.instruction := Mux(need, cacheData, rdataReg)
 
   if (sim) {
-  assert(!rfire || io.master.rresp === TransactionResponse.okey.asUInt)
+    assert(!rfire || io.master.rresp === TransactionResponse.okey.asUInt)
     io.out.bits.fetchCycle.get := io.curCycle.get
 
-    io.trace.get.hit         := Mux(isCheck, cacheHit, false.B)
-    io.trace.get.need        := need
+    io.trace.get.hit  := Mux(isCheck, cacheHit, false.B)
+    io.trace.get.need := need
   }
 }

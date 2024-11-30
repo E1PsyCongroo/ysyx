@@ -22,12 +22,13 @@ class RVCPU(
     extends Module {
   val io = IO(new RVCPUIO(xlen))
 
-  val needCache: UInt => Bool = addr =>
-    Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
-      addr
-    ) || Dev.SDRAMAddr.in(addr)
+  // val needCache: UInt => Bool = addr =>
+  //   Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
+  //     addr
+  //   ) || Dev.SDRAMAddr.in(addr)
+  val needCache: UInt => Bool = addr => true.B
   val IFU     = Module(new IFU(xlen, PCReset))
-  val ICache  = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
+  val ICache  = Module(new ICache(awidth, xlen, 6, 4, 0, needCache, sim))
   val IDU     = Module(new IDU(xlen, extentionE, sim))
   val EXU     = Module(new EXU(xlen, extentionE, sim))
   val LSU     = Module(new LSU(xlen, extentionE, sim))
@@ -46,23 +47,23 @@ class RVCPU(
 
   ICache.io.clear := IDU.io.fence_i
 
-  RegFile.io.ra1 := IDU.io.RegFileAccess.ra1
-  RegFile.io.ra2 := IDU.io.RegFileAccess.ra2
-  def conflict(ra: UInt, wa: UInt, we: Bool) = we && wa =/= 0.U && ra === wa
-  val isEXURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, EXU.io.RegFileAccess.wa, EXU.io.RegFileAccess.we)
-  val isEXURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, EXU.io.RegFileAccess.wa, EXU.io.RegFileAccess.we)
+  RegFile.io.in.ra1 := IDU.io.RegFileAccess.ra1
+  RegFile.io.in.ra2 := IDU.io.RegFileAccess.ra2
+  def conflict(ra: UInt, old: RegFileAccess) = old.we && old.wa =/= 0.U && ra === old.wa
+  val isEXURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, EXU.io.RegFileAccess)
+  val isEXURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, EXU.io.RegFileAccess)
   val isEXUForward   = !EXU.io.in.bits.control.wbSrc(0) && EXU.io.out.valid
   val EXUForwardData = EXU.io.out.bits.alu_csr_Out
-  val isLSURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, LSU.io.RegFileAccess.wa, LSU.io.RegFileAccess.we)
-  val isLSURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, LSU.io.RegFileAccess.wa, LSU.io.RegFileAccess.we)
+  val isLSURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, LSU.io.RegFileAccess)
+  val isLSURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, LSU.io.RegFileAccess)
   val isLSUForward   = Mux(LSU.io.in.bits.control.wbSrc.asBool, LSU.io.out.valid, LSU.io.in.valid)
   val LSUForwardData = LSU.io.out.bits.wd
-  val isWBURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
-  val isWBURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, WBU.io.RegFileAccess.wa, WBU.io.RegFileAccess.we)
+  val isWBURa1RAW    = conflict(IDU.io.RegFileAccess.ra1, WBU.io.RegFileAccess)
+  val isWBURa2RAW    = conflict(IDU.io.RegFileAccess.ra2, WBU.io.RegFileAccess)
   val isWBUForward   = WBU.io.in.valid
   val WBUForwardData = WBU.io.RegFileAccess.wd
   IDU.io.RegFileReturn.rd1 := MuxCase(
-    RegFile.io.rd1,
+    RegFile.io.out.rd1,
     Seq(
       (isEXURa1RAW && isEXUForward) -> EXUForwardData,
       (isLSURa1RAW && isLSUForward) -> LSUForwardData,
@@ -70,7 +71,7 @@ class RVCPU(
     )
   )
   IDU.io.RegFileReturn.rd2 := MuxCase(
-    RegFile.io.rd2,
+    RegFile.io.out.rd2,
     Seq(
       (isEXURa2RAW && isEXUForward) -> EXUForwardData,
       (isLSURa2RAW && isLSUForward) -> LSUForwardData,
@@ -80,14 +81,14 @@ class RVCPU(
   IDU.io.stall := ((isEXURa1RAW || isEXURa2RAW) && !isEXUForward) || ((isLSURa1RAW || isLSURa2RAW) && !isLSUForward) || ((isWBURa1RAW || isWBURa2RAW) && !isWBUForward) || EXU.io.jump
 
   WBU.io.out.ready := true.B
-  RegFile.io.wa    := WBU.io.RegFileAccess.wa
-  RegFile.io.we    := WBU.io.RegFileAccess.we
-  RegFile.io.wd    := WBU.io.RegFileAccess.wd
+  RegFile.io.in.wa := WBU.io.RegFileAccess.wa
+  RegFile.io.in.we := WBU.io.RegFileAccess.we
+  RegFile.io.in.wd := WBU.io.RegFileAccess.wd
 
   AXI4Interconnect(
     Seq(LSU.io.master, ICache.io.master),
     Seq(CLINT.io, io.master),
-    Seq(Dev.CLINTAddr.in, !Dev.CLINTAddr.in(_))
+    Seq(Dev.CLINTAddr.in, addr => !Dev.CLINTAddr.in(addr))
   )
   io.slave <> AXI4.none
 

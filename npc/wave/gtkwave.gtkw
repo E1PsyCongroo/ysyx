@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
-[*] Wed Nov 27 06:46:52 2024
+[*] Sat Nov 30 11:54:44 2024
 [*]
 [dumpfile] "/home/focused_xy/cs/ysyx/npc/build/npc-wave.fst"
-[dumpfile_mtime] "Wed Nov 27 06:46:44 2024"
-[dumpfile_size] 361904
+[dumpfile_mtime] "Sat Nov 30 06:22:20 2024"
+[dumpfile_size] 746974098
 [savefile] "/home/focused_xy/cs/ysyx/npc/wave/gtkwave.gtkw"
-[timestart] 20149
+[timestart] 124139888
 [size] 2880 1510
 [pos] -1 -1
-*-4.500000 20360 23136186 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-4.800000 124140151 23136186 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.ysyxSoCFull.
 [treeopen] TOP.ysyxSoCFull.asic.
@@ -44,11 +44,31 @@ TOP.ysyxSoCFull.asic.cpu.cpu.IFU.pc[31:0]
 @200
 -Cache
 @28
+TOP.ysyxSoCFull.asic.cpu.cpu.ICache.state[1:0]
 TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_in_valid
 TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_out_valid
 @22
 TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_out_bits_pc[31:0]
 TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_out_bits_instruction[31:0]
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_master_rresp[1:0]
+@29
+TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_master_rvalid
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_master_arvalid
+@200
+-AXIConnection
+@28
+TOP.ysyxSoCFull.asic.cpu.cpu.writeState
+TOP.ysyxSoCFull.asic.cpu.cpu.writeOutSelect
+TOP.ysyxSoCFull.asic.cpu.cpu.writeSelectedReg
+TOP.ysyxSoCFull.asic.cpu.cpu.readState
+TOP.ysyxSoCFull.asic.cpu.cpu.readSelectedReg
+TOP.ysyxSoCFull.asic.cpu.cpu.readOutSelect
+TOP.ysyxSoCFull.asic.cpu.cpu.io_master_arvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.io_master_rvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.io_master_rready
+TOP.ysyxSoCFull.asic.cpu.cpu.io_master_rlast
 @200
 -IDU
 @28
@@ -81,12 +101,12 @@ TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_wvalid
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_bvalid
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_arvalid
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rresp[1:0]
 TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rready
 @200
 -WBU
 @28
 TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_in_valid
-@29
 TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_out_valid
 @22
 TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_RegFileAccess_wa[3:0]
@@ -137,18 +157,6 @@ TOP.ysyxSoCFull.asic.axi4xbar.auto_anon_in_arvalid
 TOP.ysyxSoCFull.asic.axi4xbar.auto_anon_out_0_arvalid
 @200
 -Arbiter
-@22
-TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.io_fanIn_0_araddr[31:0]
-@28
-TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.io_fanIn_0_arvalid
-TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.io_fanIn_1_rvalid
-@22
-TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.io_fanIn_1_araddr[31:0]
-@28
-TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.io_fanIn_1_arvalid
-TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.io_fanIn_1_arready
-TOP.ysyxSoCFull.asic.cpu.cpu.AXI4Interconnect.io_fanIn_1_rvalid
-@200
 -SDRAM_CTL
 @820
 TOP.ysyxSoCFull.asic.lsdram_axi.msdram.u_sdram_axi.u_core.dbg_state[79:0]
