@@ -28,7 +28,7 @@ class RVCPU(
   //   ) || Dev.SDRAMAddr.in(addr)
   val needCache: UInt => Bool = addr => true.B
   val IFU     = Module(new IFU(xlen, PCReset))
-  val ICache  = Module(new ICache(awidth, xlen, 6, 4, 0, needCache, sim))
+  val ICache  = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
   val IDU     = Module(new IDU(xlen, extentionE, sim))
   val EXU     = Module(new EXU(xlen, extentionE, sim))
   val LSU     = Module(new LSU(xlen, extentionE, sim))
@@ -36,14 +36,14 @@ class RVCPU(
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
   val CLINT   = Module(new CLINT(awidth, xlen, Dev.CLINTAddr))
 
-  StageConnect(IFU.io.out, ICache.io.in, ICache.io.out, Some(EXU.io.jump))
+  StageConnect(IFU.io.out, ICache.io.in, ICache.io.out, Some(EXU.io.jump || IDU.io.fence_i))
   StageConnect(ICache.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
   StageConnect(IDU.io.out, EXU.io.in, EXU.io.out)
   StageConnect(EXU.io.out, LSU.io.in, LSU.io.out)
   StageConnect(LSU.io.out, WBU.io.in, WBU.io.out)
 
-  IFU.io.jump   := EXU.io.jump
-  IFU.io.nextPC := EXU.io.nextPC
+  IFU.io.jump   := EXU.io.jump || IDU.io.fence_i
+  IFU.io.nextPC := Mux(EXU.io.jump, EXU.io.nextPC, ICache.io.in.bits.pc)
 
   ICache.io.clear := IDU.io.fence_i
 
@@ -78,7 +78,7 @@ class RVCPU(
       (isWBURa2RAW && isWBUForward) -> WBUForwardData
     )
   )
-  IDU.io.stall := ((isEXURa1RAW || isEXURa2RAW) && !isEXUForward) || ((isLSURa1RAW || isLSURa2RAW) && !isLSUForward) || ((isWBURa1RAW || isWBURa2RAW) && !isWBUForward) || EXU.io.jump
+  IDU.io.stall := ((isEXURa1RAW || isEXURa2RAW) && !isEXUForward) || ((isLSURa1RAW || isLSURa2RAW) && !isLSUForward) || ((isWBURa1RAW || isWBURa2RAW) && !isWBUForward)
 
   WBU.io.out.ready := true.B
   RegFile.io.in.wa := WBU.io.RegFileAccess.wa

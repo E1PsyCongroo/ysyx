@@ -29,18 +29,3 @@ class IFU(
   io.out.valid   := !io.jump
   io.out.bits.pc := pc
 }
-
-// object IFU {
-//   def apply(xlen: Int, PCReset: BigInt, jump: Bool, nextPC: UInt) = {
-//     require(nextPC.getWidth == xlen)
-//     val out = DecoupledIO(new IFUOut(xlen))
-
-//     val pc = RegInit(PCReset.U)
-//     pc := Mux(jump, nextPC, Mux(out.fire, pc + 4.U, pc))
-
-//     /* bind */
-//     out.valid   := !jump
-//     out.bits.pc := pc
-//     out
-//   }
-// }

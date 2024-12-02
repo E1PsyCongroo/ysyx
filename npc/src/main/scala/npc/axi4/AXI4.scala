@@ -426,10 +426,10 @@ object AXI4Interconnect {
     }
 
     val wmatches       = VecInit(fanOutArea.map(_(awaddr))).asUInt
-    val writeOutSelect = RegEnable(PriorityEncoder(wmatches), isWriteIdle)
+    val writeOutSelect = RegEnable(Mux1H((0 until fanOutNum).map { i => (wmatches(i), i.U) }.toSeq), isWriteIdle)
 
     val rmatches      = VecInit(fanOutArea.map(_(araddr))).asUInt
-    val readOutSelect = RegEnable(PriorityEncoder(rmatches), isReadIdle)
+    val readOutSelect = RegEnable(Mux1H((0 until fanOutNum).map { i => (rmatches(i), i.U) }.toSeq), isReadIdle)
 
     writeState := MuxLookup(writeState, sWriteIdle)(
       Seq(

@@ -17,7 +17,7 @@ class RegFileReturn(xlen: Int) extends Bundle {
 }
 
 class RegFileIO(xlen: Int = 32, awidth: Int = 4) extends Bundle {
-  val in = new RegFileAccess(xlen, awidth)
+  val in  = new RegFileAccess(xlen, awidth)
   val out = new RegFileReturn(xlen)
 }
 
@@ -32,6 +32,6 @@ class RegFile(xlen: Int = 32, addrWidth: Int = 4) extends Module {
   }
 
   val regLookup = (0 until regNum).map { i => i.U -> reg(i) }.toSeq
-  io.out.rd1 := MuxLookup(io.in.ra1, 0.U)(regLookup)
-  io.out.rd2 := MuxLookup(io.in.ra2, 0.U)(regLookup)
+  io.out.rd1 := MuxLookup(io.in.ra1, reg(0))(regLookup)
+  io.out.rd2 := MuxLookup(io.in.ra2, reg(0))(regLookup)
 }

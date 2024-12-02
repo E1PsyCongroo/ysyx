@@ -156,6 +156,7 @@ class CacheTracer extends Module {
   access := MuxCase(
     access,
     Seq(
+      (io.cacheAccessStart && io.cacheAccessFinish) -> access,
       io.cacheAccessStart -> true.B,
       io.cacheAccessFinish -> false.B
     )
@@ -186,7 +187,7 @@ class CacheTracer extends Module {
 
   val cacheTracer = Module(new CacheCount)
   cacheTracer.io.clock        := clock
-  cacheTracer.io.enable       := io.cacheAccessFinish && io.cacheNeed
+  cacheTracer.io.enable       := (access || io.cacheAccessStart) && io.cacheAccessFinish  && io.cacheNeed
   cacheTracer.io.hit          := io.cacheHit
   cacheTracer.io.access_cycle := accessCount - missPenaltyCount + 1.U
   cacheTracer.io.miss_penalty := missPenaltyCount

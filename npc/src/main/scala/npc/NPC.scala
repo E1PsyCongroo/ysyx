@@ -28,7 +28,7 @@ object StageConnect {
       if (flush.isEmpty) {
         rightIn.valid := RegNext(leftOut.fire || (!rightOut.fire && rightIn.valid), false.B)
       } else {
-        rightIn.valid := RegNext(!flush.get && (leftOut.fire || (!rightOut.fire && rightIn.valid)), false.B)
+        rightIn.valid := !flush.get && RegNext((leftOut.fire || (!rightOut.fire && rightIn.valid)), false.B)
       }
     } else if (arch == "ooo") {
       rightIn <> Queue(leftOut, 16)

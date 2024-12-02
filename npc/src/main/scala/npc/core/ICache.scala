@@ -5,6 +5,7 @@ import rvcpu.utility._
 import rvcpu.dev._
 import chisel3._
 import chisel3.util._
+import scala.collection.immutable._
 
 class ICacheOut(xlen: Int, sim: Boolean) extends Bundle {
   val pc          = Output(UInt(xlen.W))
@@ -59,36 +60,53 @@ class ICache(
   val rfire  = io.master.rvalid && io.master.rready
   val rlast  = io.master.rlast
 
-  val sCheck :: sSetAddr :: sWaitResp :: sSend :: Nil = Enum(4)
+  val sCheck :: sSetAddr :: sWaitResp :: Nil = Enum(3)
 
   val state      = RegInit(sCheck)
   val isCheck    = state === sCheck
   val isSetAddr  = state === sSetAddr
   val isWaitResp = state === sWaitResp
-  val isSend     = state === sSend
 
-  val raddr          = WireDefault(io.in.bits.pc)
-  val offset         = if (offsetWidth != 0) raddr(offsetWidth + wordWidth - 1, wordWidth) else 0.U
-  val set            = if (setWidth != 0) raddr(setWidth + blockWidth - 1, blockWidth) else 0.U
-  val tag            = raddr(tagWidth + setWidth + blockWidth - 1, setWidth + blockWidth)
-  val need           = WireDefault(needCache(raddr))
-  val cacheHit       = WireDefault(false.B)
-  val cacheData      = Wire(UInt(xlen.W))
-  val availableIndex = Reg(UInt(associativityWidth.W))
-  val readCount      = RegInit(0.U((offsetWidth + 1).W))
-  val rdataReg       = RegEnable(io.master.rdata, rfire && rlast)
-  val nextReadCount  = readCount + 1.U
-  readCount := Mux(isCheck, 0.U, Mux(rfire, nextReadCount, readCount))
+  val raddr  = WireDefault(io.in.bits.pc)
+  val offset = if (offsetWidth != 0) raddr(offsetWidth + wordWidth - 1, wordWidth) else 0.U
+  val set    = if (setWidth != 0) raddr(setWidth + blockWidth - 1, blockWidth) else 0.U
+  val tag    = raddr(tagWidth + setWidth + blockWidth - 1, setWidth + blockWidth)
+  val need   = WireDefault(needCache(raddr))
+  val cacheSelSet =
+    for (i <- 0 until associativity)
+      yield {
+        val tags   = Mux1H((0 until setNum).map { j => (set === j.U, cacheBlocksTag(j)(i)) })
+        val valids = Mux1H((0 until setNum).map { j => (set === j.U, cacheBlocksValid(j)(i)) })
+        val datas  = Mux1H((0 until setNum).map { j => (set === j.U, cacheBlocksData(j)(i)) })
+        (tags, valids, datas)
+      }
+  val cacheHit = WireDefault(MuxLookup(tag, false.B)((0 until associativity).map { i =>
+    (cacheSelSet(i)._1, cacheSelSet(i)._2)
+  }))
+  val cacheData = WireDefault(Mux1H((0 until associativity).map { i =>
+    (tag === cacheSelSet(i)._1, cacheSelSet(i)._3(offset))
+  }))
+  val randChoose = if (associativityWidth == 0) 0.U else LSFR(true.B)(associativityWidth - 1, 0)
+  val availableIndex =
+    RegEnable(MuxCase(randChoose, (0 until associativity).map { i => (!cacheSelSet(i)._2, i.U) }), isCheck)
+  val readCount     = RegInit(0.U((offsetWidth + 1).W))
+  val rdataReg      = RegEnable(io.master.rdata, rfire && rlast)
+  val nextReadCount = readCount + 1.U
+  readCount := MuxCase(
+    readCount,
+    Seq(
+      isCheck -> 0.U,
+      rfire -> nextReadCount
+    )
+  )
 
-  cacheData := DontCare
   for (setIndex <- 0 until setNum) {
     for (index <- 0 until associativity) {
-      val tagHit = setIndex.U === set && cacheBlocksTag(setIndex)(index) === tag
-      when(tagHit) {
-        cacheHit  := cacheBlocksValid(setIndex)(index)
-        cacheData := cacheBlocksData(setIndex)(index)(offset)
-      }
-      availableIndex := Mux(isCheck && setIndex.U === set && !cacheBlocksValid(setIndex)(index), index.U, 0.U)
+      cacheBlocksTag(setIndex)(index) := Mux(
+        rfire && rlast && need && setIndex.U === set && index.U === availableIndex,
+        tag,
+        cacheBlocksTag(setIndex)(index)
+      )
       cacheBlocksValid(setIndex)(index) := Mux(
         io.clear,
         false.B,
@@ -97,11 +115,6 @@ class ICache(
           true.B,
           cacheBlocksValid(setIndex)(index)
         )
-      )
-      cacheBlocksTag(setIndex)(index) := Mux(
-        rfire && rlast && need && setIndex.U === set && index.U === availableIndex,
-        tag,
-        cacheBlocksTag(setIndex)(index)
       )
       cacheBlocksData(setIndex)(index)(readCount(offsetWidth - 1, 0)) := Mux(
         rfire && need && setIndex.U === set && index.U === availableIndex,
@@ -115,8 +128,7 @@ class ICache(
     Seq(
       sCheck -> Mux(io.in.valid && !cacheHit, sSetAddr, sCheck),
       sSetAddr -> Mux(arfire, sWaitResp, sSetAddr),
-      sWaitResp -> Mux(rfire && rlast, sSend, sWaitResp),
-      sSend -> Mux(io.out.fire, sCheck, Mux(io.in.valid, sSend, sCheck))
+      sWaitResp -> Mux(rfire && rlast, sCheck, sWaitResp)
     )
   )
 
@@ -145,9 +157,9 @@ class ICache(
 
   io.master.rready := isWaitResp
 
-  io.in.ready := ((isCheck || isSend) && !io.in.valid) || io.out.fire
+  io.in.ready := (isCheck && !io.in.valid) || io.out.fire
 
-  io.out.valid            := io.in.valid && (cacheHit || isSend)
+  io.out.valid            := io.in.valid && cacheHit
   io.out.bits.pc          := raddr
   io.out.bits.instruction := Mux(need, cacheData, rdataReg)
 
@@ -155,7 +167,7 @@ class ICache(
     assert(!rfire || io.master.rresp === TransactionResponse.okey.asUInt)
     io.out.bits.fetchCycle.get := io.curCycle.get
 
-    io.trace.get.hit  := Mux(isCheck, cacheHit, false.B)
+    io.trace.get.hit  := RegEnable(cacheHit, io.in.valid)
     io.trace.get.need := need
   }
 }
