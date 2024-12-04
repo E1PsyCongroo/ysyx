@@ -125,8 +125,8 @@ module CLINT(	// @[src/main/scala/npc/core/CLINT.scala:9:7]
       else	// @[src/main/scala/npc/core/CLINT.scala:27:28]
         readState <= io_arvalid & ~readState;	// @[src/main/scala/npc/core/CLINT.scala:17:27, :27:28, :28:31]
     end
-    readLow <= io_araddr[31:2] == 30'h0;	// @[src/main/scala/npc/core/CLINT.scala:71:{33,49}, :77:{25,42}]
-    readHigh <= io_araddr[31:2] == 30'h1;	// @[src/main/scala/npc/core/CLINT.scala:71:33, :78:{25,42}]
+    readLow <= io_araddr[31:2] == 30'h28000012;	// @[src/main/scala/npc/core/CLINT.scala:71:33, :77:{25,42}]
+    readHigh <= io_araddr[31:2] == 30'h28000013;	// @[src/main/scala/npc/core/CLINT.scala:71:33, :78:{25,42,58}]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[src/main/scala/npc/core/CLINT.scala:9:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[src/main/scala/npc/core/CLINT.scala:9:7]

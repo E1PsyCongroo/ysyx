@@ -85,7 +85,7 @@
 `endif // not def STOP_COND_
 
 // VCS coverage exclude_file
-module mem_4194304x32(	// @[src/main/scala/npc/dev/Mem.scala:31:17]
+module mem_4194304x32(	// @[src/main/scala/npc/dev/Mem.scala:31:18]
   input  [21:0] R0_addr,
   input         R0_en,
                 R0_clk,
@@ -97,29 +97,29 @@ module mem_4194304x32(	// @[src/main/scala/npc/dev/Mem.scala:31:17]
   input  [3:0]  W0_mask
 );
 
-  reg [31:0] Memory[0:4194303];	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-  always @(posedge W0_clk) begin	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-    if (W0_en & W0_mask[0])	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-      Memory[W0_addr][32'h0 +: 8] <= W0_data[7:0];	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-    if (W0_en & W0_mask[1])	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-      Memory[W0_addr][32'h8 +: 8] <= W0_data[15:8];	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-    if (W0_en & W0_mask[2])	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-      Memory[W0_addr][32'h10 +: 8] <= W0_data[23:16];	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-    if (W0_en & W0_mask[3])	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-      Memory[W0_addr][32'h18 +: 8] <= W0_data[31:24];	// @[src/main/scala/npc/dev/Mem.scala:31:17]
+  reg [31:0] Memory[0:4194303];	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+  always @(posedge W0_clk) begin	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+    if (W0_en & W0_mask[0])	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+      Memory[W0_addr][32'h0 +: 8] <= W0_data[7:0];	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+    if (W0_en & W0_mask[1])	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+      Memory[W0_addr][32'h8 +: 8] <= W0_data[15:8];	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+    if (W0_en & W0_mask[2])	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+      Memory[W0_addr][32'h10 +: 8] <= W0_data[23:16];	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+    if (W0_en & W0_mask[3])	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+      Memory[W0_addr][32'h18 +: 8] <= W0_data[31:24];	// @[src/main/scala/npc/dev/Mem.scala:31:18]
   end // always @(posedge)
-  `ifdef ENABLE_INITIAL_MEM_	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-    reg [31:0] _RANDOM_MEM;	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-    initial begin	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-      `INIT_RANDOM_PROLOG_	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-      `ifdef RANDOMIZE_MEM_INIT	// @[src/main/scala/npc/dev/Mem.scala:31:17]
+  `ifdef ENABLE_INITIAL_MEM_	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+    reg [31:0] _RANDOM_MEM;	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+    initial begin	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+      `INIT_RANDOM_PROLOG_	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+      `ifdef RANDOMIZE_MEM_INIT	// @[src/main/scala/npc/dev/Mem.scala:31:18]
         for (logic [22:0] i = 23'h0; i < 23'h400000; i += 23'h1) begin
-          _RANDOM_MEM = `RANDOM;	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-          Memory[i[21:0]] = _RANDOM_MEM;	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-        end	// @[src/main/scala/npc/dev/Mem.scala:31:17]
+          _RANDOM_MEM = `RANDOM;	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+          Memory[i[21:0]] = _RANDOM_MEM;	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+        end	// @[src/main/scala/npc/dev/Mem.scala:31:18]
       `endif // RANDOMIZE_MEM_INIT
     end // initial
   `endif // ENABLE_INITIAL_MEM_
-  assign R0_data = R0_en ? Memory[R0_addr] : 32'bx;	// @[src/main/scala/npc/dev/Mem.scala:31:17]
+  assign R0_data = R0_en ? Memory[R0_addr] : 32'bx;	// @[src/main/scala/npc/dev/Mem.scala:31:18]
 endmodule
 

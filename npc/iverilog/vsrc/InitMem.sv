@@ -86,27 +86,27 @@
 
 module InitMem(	// @[src/main/scala/npc/dev/Mem.scala:28:7]
   input         clock,	// @[src/main/scala/npc/dev/Mem.scala:28:7]
-                io_ren,	// @[src/main/scala/npc/dev/Mem.scala:30:16]
-  input  [31:0] io_raddr,	// @[src/main/scala/npc/dev/Mem.scala:30:16]
-  output [31:0] io_rdata,	// @[src/main/scala/npc/dev/Mem.scala:30:16]
-  input         io_wen,	// @[src/main/scala/npc/dev/Mem.scala:30:16]
-  input  [31:0] io_waddr,	// @[src/main/scala/npc/dev/Mem.scala:30:16]
-                io_wdata,	// @[src/main/scala/npc/dev/Mem.scala:30:16]
-  input  [3:0]  io_wmask	// @[src/main/scala/npc/dev/Mem.scala:30:16]
+                io_ren,	// @[src/main/scala/npc/dev/Mem.scala:30:17]
+  input  [31:0] io_raddr,	// @[src/main/scala/npc/dev/Mem.scala:30:17]
+  output [31:0] io_rdata,	// @[src/main/scala/npc/dev/Mem.scala:30:17]
+  input         io_wen,	// @[src/main/scala/npc/dev/Mem.scala:30:17]
+  input  [31:0] io_waddr,	// @[src/main/scala/npc/dev/Mem.scala:30:17]
+                io_wdata,	// @[src/main/scala/npc/dev/Mem.scala:30:17]
+  input  [3:0]  io_wmask	// @[src/main/scala/npc/dev/Mem.scala:30:17]
 );
 
-  wire [31:0] _mem_ext_R0_data;	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-  mem_4194304x32 mem_ext (	// @[src/main/scala/npc/dev/Mem.scala:31:17]
-    .R0_addr (io_raddr[21:0]),	// @[src/main/scala/npc/dev/Mem.scala:34:30]
+  wire [31:0] _mem_ext_R0_data;	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+  mem_4194304x32 mem_ext (	// @[src/main/scala/npc/dev/Mem.scala:31:18]
+    .R0_addr (io_raddr[23:2]),	// @[src/main/scala/npc/dev/Mem.scala:33:30]
     .R0_en   (1'h1),	// @[src/main/scala/npc/dev/Mem.scala:28:7]
     .R0_clk  (clock),
     .R0_data (_mem_ext_R0_data),
-    .W0_addr (io_waddr[21:0]),	// @[src/main/scala/npc/dev/Mem.scala:43:14]
+    .W0_addr (io_waddr[23:2]),	// @[src/main/scala/npc/dev/Mem.scala:41:14]
     .W0_en   (io_wen),
     .W0_clk  (clock),
     .W0_data (io_wdata),
     .W0_mask (io_wmask)
   );
-  assign io_rdata = io_ren ? _mem_ext_R0_data : 32'h0;	// @[src/main/scala/npc/dev/Mem.scala:28:7, :31:17, :34:18]
+  assign io_rdata = io_ren ? _mem_ext_R0_data : 32'h0;	// @[src/main/scala/npc/dev/Mem.scala:28:7, :31:18, :33:18]
 endmodule
 
