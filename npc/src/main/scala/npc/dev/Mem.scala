@@ -5,32 +5,47 @@ import rvcpu.utility._
 import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
+import chisel3.util.experimental.loadMemoryFromFileInline
 
-class MemIO extends Bundle {
+class MemIO(awidth: Int, dwidth: Int) extends Bundle {
   val ren   = Input(Bool())
-  val raddr = Input(UInt(32.W))
-  val rdata = Output(UInt(32.W))
+  val raddr = Input(UInt(awidth.W))
+  val rdata = Output(UInt(dwidth.W))
 
   val wen   = Input(Bool())
-  val waddr = Input(UInt(32.W))
-  val wdata = Input(UInt(32.W))
-  val wmask = Input(UInt(4.W))
+  val waddr = Input(UInt(awidth.W))
+  val wdata = Input(UInt(dwidth.W))
+  val wmask = Input(UInt((dwidth / 8).W))
 }
 
-class Mem extends BlackBox with HasBlackBoxResource {
-  val io = IO(new MemIO {
+class DPIMem extends BlackBox with HasBlackBoxResource {
+  val io = IO(new MemIO(32, 32) {
     val clock = Input(Clock())
   })
-  addResource("/Mem.sv")
+  addResource("/DPIMem.sv")
 }
 
-class AXI4Mem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module {
-  require(log2Ceil(size) < awidth)
-  require(log2Ceil(size) < dwidth)
+class InitMem(awidth: Int, dwidth: Int, program: String) extends Module {
+  val size = dwidth / 8
+  val io   = IO(new MemIO(awidth, dwidth))
+  val mem  = Mem(BigInt("400000", 16), Vec(size, UInt(8.W)))
+  loadMemoryFromFileInline(mem, program)
+  val raddr = (io.raddr - "h8000_0000".U) >> 2.U
+  io.rdata := Mux(io.ren, mem(raddr).asUInt, 0.U)
+  val waddr = (io.waddr - "h8000_0000".U) >> 2.U
+  val wdata = Wire(Vec(size, UInt(8.W)))
+  for (i <- 0 until size) {
+    wdata(i) := io.wdata(i * 8 + 7, i * 8)
+  }
+  val wmask = WireDefault(VecInit(io.wmask.asBools))
+  when(io.wen) {
+    mem.write(waddr, wdata, wmask)
+  }
+}
 
-  val io  = IO(Flipped(new AXI4MasterIO))
-  val Mem = Module(new Mem)
-  Mem.io.clock := clock
+class AXI4Mem(awidth: Int, dwidth: Int, useProgram: Option[String] = None) extends Module {
+  val size = dwidth / 8
+  val io   = IO(Flipped(new AXI4MasterIO))
 
   val awfire = io.awvalid && io.awready
   val wfire  = io.wvalid && io.wready
@@ -76,11 +91,7 @@ class AXI4Mem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module 
   /* Write response channel */
   val bvalid = WireDefault(isSendBresp)
   val bresp  = WireDefault(TransactionResponse.okey.asUInt)
-  bresp        := TransactionResponse.okey.asUInt
-  Mem.io.waddr := writeAddr
-  Mem.io.wdata := writeData
-  Mem.io.wmask := writeMask
-  Mem.io.wen   := isWriteIdle && awfire && wfire
+  bresp := TransactionResponse.okey.asUInt
 
   /* Read address channel */
   val arready       = WireDefault(isReadIdle)
@@ -88,10 +99,27 @@ class AXI4Mem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module 
   val araddr        = RegEnable(io.araddr, isReadIdle)
   val readCount     = RegInit(0.U(8.W))
   val nextReadCount = readCount + 1.U
-  readCount    := Mux(io.rlast, 0.U, Mux(rfire, nextReadCount, readCount))
-  Mem.io.raddr := araddr(awidth - 1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U) + (readCount << 2.U)
-  Mem.io.ren   := isSendRresp
-  val readData = Mem.io.rdata
+  readCount := Mux(io.rlast, 0.U, Mux(rfire, nextReadCount, readCount))
+  val readData = if (useProgram.isEmpty) {
+    val Mem = Module(new DPIMem)
+    Mem.io.clock := clock
+    Mem.io.waddr := writeAddr
+    Mem.io.wdata := writeData
+    Mem.io.wmask := writeMask
+    Mem.io.wen   := isWriteIdle && awfire && wfire
+    Mem.io.raddr := araddr(awidth - 1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U) + (readCount << 2.U)
+    Mem.io.ren   := isSendRresp
+    Mem.io.rdata
+  } else {
+    val Mem = Module(new InitMem(awidth, dwidth, useProgram.get))
+    Mem.io.waddr := writeAddr
+    Mem.io.wdata := writeData
+    Mem.io.wmask := writeMask
+    Mem.io.wen   := isWriteIdle && awfire && wfire
+    Mem.io.raddr := araddr(awidth - 1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U) + (readCount << 2.U)
+    Mem.io.ren   := isSendRresp
+    Mem.io.rdata
+  }
 
   /* Read data channel */
   // val delay       = LSFR(rfire)(2, 0)

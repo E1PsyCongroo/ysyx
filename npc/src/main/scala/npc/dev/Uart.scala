@@ -72,7 +72,6 @@ class Uart(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module {
   )
   when(isWrite && writeValid) {
     printf("%c", writeData(7, 0))
-    SkipDifftest(clock, isWrite && writeValid)
   }
 
   /* Read address channel */

@@ -1,0 +1,72 @@
+[*]
+[*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
+[*] Wed Dec  4 11:41:33 2024
+[*]
+[dumpfile] "/home/focused_xy/cs/ysyx/npc/build/simtop.fst"
+[dumpfile_mtime] "Wed Dec  4 11:41:31 2024"
+[dumpfile_size] 7629549
+[savefile] "/home/focused_xy/cs/ysyx/npc/wave/iverilog.gtkw"
+[timestart] 0
+[size] 2880 1510
+[pos] -1 -1
+*-14.400001 39000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] simtop.
+[treeopen] simtop.dut.
+[treeopen] simtop.dut.npc.
+[sst_width] 428
+[signals_width] 486
+[sst_expanded] 1
+[sst_vpaned_height] 467
+@28
+simtop.clk
+simtop.reset
+@29
+simtop.isEnd
+@200
+-NPC
+@28
+simtop.dut.npc.io_isEnd
+simtop.dut.npc._WBU_io_out_valid
+simtop.dut.npc._WBU_io_out_bits_isEnd
+@200
+-IFU
+@28
+simtop.dut.npc.IFU.io_jump
+@22
+simtop.dut.npc.IFU.pc[31:0]
+@200
+-ICache
+@28
+simtop.dut.npc.ICache.state[1:0]
+simtop.dut.npc.ICache.io_in_valid
+simtop.dut.npc.ICache.io_out_valid
+@22
+simtop.dut.npc.ICache.io_out_bits_pc[31:0]
+simtop.dut.npc.ICache.io_out_bits_instruction[31:0]
+@200
+-IDU
+@28
+simtop.dut.npc.IDU.io_in_valid
+simtop.dut.npc.IDU.io_out_valid
+simtop.dut.npc.IDU.io_fence_i
+simtop.dut.npc.IDU.ifenced
+@200
+-EXU
+@28
+simtop.dut.npc.EXU.io_in_valid
+simtop.dut.npc.EXU.io_in_valid
+simtop.dut.npc.EXU.jumped
+simtop.dut.npc.EXU.jump
+@200
+-LSU
+@28
+simtop.dut.npc.LSU.io_in_valid
+simtop.dut.npc.LSU.io_out_valid
+@200
+-WBU
+@28
+simtop.dut.npc.WBU.io_in_valid
+simtop.dut.npc.WBU.io_out_valid
+simtop.dut.npc.WBU.io_out_bits_isEnd
+[pattern_trace] 1
+[pattern_trace] 0

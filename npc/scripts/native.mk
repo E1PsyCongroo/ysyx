@@ -50,8 +50,11 @@ gdb: run-env
 perf: $(BINARY)
 	@make -C $(NPC_HOME)/../am-kernels/benchmarks/microbench ARCH=riscv32e-ysyxsoc NPCFLAGS="-b" mainargs=train run | tee perf-log/log_$(shell date +"%Y-%m-%dT%H_%M_%S").txt
 
-sta: $(V_FILE_GEN)
+sta: $(YOSYS_V_FILE_GEN)
 	@make -C $(YOSYS_DIR) sta
+
+iverilog: $(IVERILOG_TARGET)
+	@vvp $< -fst
 
 clean-tools = $(dir $(shell find ./tools -maxdepth 2 -mindepth 2 -name "Makefile"))
 $(clean-tools):
@@ -59,4 +62,4 @@ $(clean-tools):
 clean-tools: $(clean-tools)
 clean-all: clean distclean clean-tools
 
-.PHONY: run gdb run-env clean-tools clean-all $(clean-tools) test mill-help reformat checkformat sta perf
+.PHONY: run gdb run-env clean-tools clean-all $(clean-tools) test mill-help reformat checkformat sta perf iverilog

@@ -36,7 +36,7 @@ object StageConnect {
   }
 }
 
-class NPCIO(awidth: Int = 32, xlen: Int = 32) extends Bundle {
+class NPCIO(awidth: Int, xlen: Int) extends Bundle {
   val interrupt = Input(Bool())
   val master    = new AXI4MasterIO
   val slave     = Flipped(new AXI4MasterIO)
@@ -110,51 +110,54 @@ class NPCImpl(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim:
     Seq(Dev.mtimeAddr.in, !Dev.mtimeAddr.in(_))
   )
   io.slave <> AXI4.none
-
   if (sim) {
     val cycle = RegInit(0.U(64.W))
-    cycle := cycle + 1.U
-
+    cycle                  := cycle + 1.U
     ICache.io.curCycle.get := cycle
 
-    val InstTracer = Module(new InstTracer)
-    InstTracer.io.clock      := clock
-    InstTracer.io.npc        := WBU.io.out.bits.nextPC.get
-    InstTracer.io.inst       := WBU.io.out.bits.inst.get
-    InstTracer.io.mtvec      := WBU.io.out.bits.mtvec.get
-    InstTracer.io.mepc       := WBU.io.out.bits.mepc.get
-    InstTracer.io.exec_cycle := cycle - WBU.io.out.bits.fetchCycle.get
-    InstTracer.io.en         := WBU.io.out.fire
+    when (WBU.io.out.fire && WBU.io.out.bits.isEnd.get) {
+      printf("SIM END!")
+    }
 
-    EndControl(clock, WBU.io.out.fire && WBU.io.out.bits.isEnd.get, WBU.io.out.bits.exitCode.get)
+    // val InstTracer = Module(new InstTracer)
+    // InstTracer.io.clock      := clock
+    // InstTracer.io.npc        := WBU.io.out.bits.nextPC.get
+    // InstTracer.io.inst       := WBU.io.out.bits.inst.get
+    // InstTracer.io.mtvec      := WBU.io.out.bits.mtvec.get
+    // InstTracer.io.mepc       := WBU.io.out.bits.mepc.get
+    // InstTracer.io.exec_cycle := cycle - WBU.io.out.bits.fetchCycle.get
+    // InstTracer.io.en         := WBU.io.out.fire
 
-    val devs = Seq(
-      Dev.mtimeAddr,
-      Dev.uartAddr
-    )
-    val needSkipDifftest = devs.map { dev => dev.in(WBU.io.out.bits.memAddr.get) }.foldLeft(false.B)(_ || _)
-    SkipDifftest(clock, WBU.io.out.fire && WBU.io.out.bits.memAccess.get && needSkipDifftest)
+    // EndControl(clock, WBU.io.out.fire && WBU.io.out.bits.isEnd.get, WBU.io.out.bits.exitCode.get)
 
-    val TracerDataFetch = Module(new TracerDataFetch)
-    TracerDataFetch.io.clock  := clock
-    TracerDataFetch.io.reset  := reset
-    TracerDataFetch.io.start  := LSU.io.master.arvalid
-    TracerDataFetch.io.finish := LSU.io.master.rvalid && LSU.io.master.rready
+    // val devs = Seq(
+    //   Dev.mtimeAddr,
+    //   Dev.uartAddr
+    // )
+    // val needSkipDifftest = devs.map { dev => dev.in(WBU.io.out.bits.memAddr.get) }.foldLeft(false.B)(_ || _)
+    // SkipDifftest(clock, WBU.io.out.fire && WBU.io.out.bits.memAccess.get && needSkipDifftest)
 
-    val CacheTracer = Module(new CacheTracer)
-    CacheTracer.io.cacheNeed         := ICache.io.trace.get.need
-    CacheTracer.io.cacheHit          := ICache.io.trace.get.hit
-    CacheTracer.io.cacheAccessStart  := IFU.io.out.fire
-    CacheTracer.io.cacheAccessFinish := ICache.io.out.fire
-    CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
-    CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rlast && ICache.io.master.rready
+    // val TracerDataFetch = Module(new TracerDataFetch)
+    // TracerDataFetch.io.clock  := clock
+    // TracerDataFetch.io.reset  := reset
+    // TracerDataFetch.io.start  := LSU.io.master.arvalid
+    // TracerDataFetch.io.finish := LSU.io.master.rvalid && LSU.io.master.rready
+
+    // val CacheTracer = Module(new CacheTracer)
+    // CacheTracer.io.cacheNeed         := ICache.io.trace.get.need
+    // CacheTracer.io.cacheHit          := ICache.io.trace.get.hit
+    // CacheTracer.io.cacheAccessStart  := IFU.io.out.fire
+    // CacheTracer.io.cacheAccessFinish := ICache.io.out.fire
+    // CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
+    // CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rlast && ICache.io.master.rready
   }
 }
 
-class NPC(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim: Boolean) extends Module {
+class NPC(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim: Boolean, useProgram: Option[String])
+    extends Module {
   val npc     = Module(new NPCImpl(awidth, xlen, extentionE, PCReset, sim))
   val uart    = Module(new Uart(awidth, xlen))
-  val AXI4Mem = Module(new AXI4Mem(awidth, xlen))
+  val AXI4Mem = Module(new AXI4Mem(awidth, xlen, useProgram))
   AXI4Interconnect(
     Seq(npc.io.master),
     Seq(uart.io, AXI4Mem.io),

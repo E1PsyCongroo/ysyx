@@ -22,10 +22,11 @@ class IFU(
     extends Module {
   val io = IO(new IFUIO(xlen))
 
-  val pc = RegInit(PCReset.U)
-  pc := Mux(io.jump, io.nextPC, Mux(io.out.fire, pc + 4.U, pc))
+  val pc  = RegInit(PCReset.U)
+  val npc = Mux(io.jump, io.nextPC, pc)
+  pc := Mux(io.out.fire, npc + 4.U, npc)
 
   /* IO bind */
-  io.out.valid   := !io.jump
-  io.out.bits.pc := pc
+  io.out.valid   := true.B
+  io.out.bits.pc := npc
 }

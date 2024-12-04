@@ -37,7 +37,8 @@ object npc extends App {
       xlen       = 32,
       extentionE = true,
       PCReset    = BigInt("80000000", 16),
-      sim        = true
+      sim        = true,
+      useProgram = None
     ),
     args,
     firtoolOptions
@@ -60,6 +61,29 @@ object Yosys extends App {
       extentionE = true,
       PCReset    = BigInt("30000000", 16),
       sim        = false
+    ),
+    args,
+    firtoolOptions
+  )
+}
+
+object IVerilog extends App {
+  val firtoolOptions = Array(
+    "--lowering-options=" + List(
+      "disallowLocalVariables",
+      "disallowPackedArrays",
+      "locationInfoStyle=wrapInAtSquareBracket"
+    ).mkString(",")
+  )
+
+  circt.stage.ChiselStage.emitSystemVerilogFile(
+    new rvcpu.NPC(
+      awidth     = 32,
+      xlen       = 32,
+      extentionE = true,
+      PCReset    = BigInt("80000000", 16),
+      sim        = true,
+      useProgram = Some("/home/focused_xy/cs/ysyx/npc/src/main/resources/rtthread-riscv32e-npc.hex")
     ),
     args,
     firtoolOptions

@@ -25,7 +25,7 @@ CFLAGS += -I$(AM_HOME)/am/src/riscv/ysyxsoc/include
 image: $(IMAGE).elf
 	@$(OBJDUMP) -d $(IMAGE).elf > $(IMAGE).txt
 	@echo + OBJCOPY "->" $(IMAGE_REL).bin
-	@$(OBJCOPY) -S -O binary $(IMAGE).elf $(IMAGE).bin
+	@$(OBJCOPY) -S -O binary --set-section-flags .bss=alloc,contents $(IMAGE).elf $(IMAGE).bin
 
 run: image
 	$(MAKE) -C $(NPC_HOME) run ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin ELF=$(IMAGE).elf

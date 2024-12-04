@@ -18,16 +18,18 @@ BUILD_DIR           := $(WORK_DIR)/build
 OBJ_DIR             := $(BUILD_DIR)/obj-$(NAME)$(SO)
 VERILATOR_DIR       := $(OBJ_DIR)/verilator
 VSRC_DIR            := $(OBJ_DIR)/verilog
-YOSYS_DIR           := $(WORK_DIR)/yosys
 SRC_DIR             := $(WORK_DIR)/src/main
 CSRC_DIR            := $(SRC_DIR)/csrc
 RESOURCES_DIR       := $(SRC_DIR)/resources
 CONSTR_DIR          := $(SRC_DIR)/constr
 CHISEL_SRC_DIR      := $(SRC_DIR)/scala
+YOSYS_DIR           := $(WORK_DIR)/yosys
+IVERILOG_DIR        := $(WORK_DIR)/iverilog
 
 INC_PATH            := $(WORK_DIR)/include $(VERILATOR_ROOT)/include $(VERILATOR_ROOT)/include/vltstd \
                        $(VERILATOR_DIR) $(INC_PATH)
 BINARY              := $(BUILD_DIR)/$(NAME)$(SO)
+IVERILOG_TARGET     := $(BUILD_DIR)/npc_sim
 
 # Project sources
 RESOURCES           ?= $(shell find $(RESOURCES_DIR) -type f -name "*.v" -or -name "*.sv")
@@ -38,7 +40,9 @@ VSRCS               += $(YSYXSOC_HOME)/build/ysyxSoCFull.v
 endif
 CHISELSRCS          ?= $(shell find $(CHISEL_SRC_DIR) -type f -name "*.scala" -or -name "*.sc")
 CHISELSRCS          += $(SRC_DIR)/Elaborate.scala
-V_FILE_GEN          := $(YOSYS_DIR)/RVCPU.sv
+YOSYS_V_FILE_GEN    := $(YOSYS_DIR)/RVCPU.sv
+IVERILOG_V_FILE_GEN := $(IVERILOG_DIR)/NPC.sv
+IVERILOG_SRCS       := $(shell find $(IVERILOG_DIR) -type f -name "*.sv" -or -name "*.v")
 
 # Rules for NVBoard
 include $(NVBOARD_HOME)/scripts/nvboard.mk
@@ -63,9 +67,15 @@ VERILATOR_CFLAGS    := --MMD --build --cc -O3 --trace-fst --x-assign fast --x-in
 											 $(VERILATOR_INCLUDES)
 
 # Generating Verilog
-$(V_FILE_GEN): $(CHISELSRCS) $(RESOURCES)
+$(YOSYS_V_FILE_GEN): $(CHISELSRCS) $(RESOURCES)
 	@echo + VERILOG $^
 	@mill -i $(PRJ).runMain Yosys --target-dir $(YOSYS_DIR)
+	@sed -i -e 's/_\(aw\|ar\|w\|r\|b\)_\(\|bits_\)/_\1/g' $@
+	@sed -i '/firrtl_black_box_resource_files.f/, $$d' $@
+
+$(IVERILOG_V_FILE_GEN): $(CHISELSRCS) $(RESOURCES)
+	@echo + VERILOG $^
+	@mill -i $(PRJ).runMain IVerilog --target-dir $(IVERILOG_DIR)
 	@sed -i -e 's/_\(aw\|ar\|w\|r\|b\)_\(\|bits_\)/_\1/g' $@
 	@sed -i '/firrtl_black_box_resource_files.f/, $$d' $@
 
@@ -83,6 +93,11 @@ $(VERILATOR_DIR)/lib$(PRJ).%: $(BUILD_DIR)/.stamp.verilog$(PLATFORM) $(VSRCS)
 	@$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(TOP_MODULE) $(VSRCS) \
 		--lib-create $(PRJ) --Mdir $(VERILATOR_DIR)
+
+# IVerilog
+$(IVERILOG_TARGET): $(IVERILOG_V_FILE_GEN) $(IVERILOG_SRCS)
+	@echo + IVERILOG $^
+	@iverilog -s simtop -g 2012 -o $@ $^
 
 # NVBOARD
 $(OBJ_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc

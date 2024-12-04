@@ -68,7 +68,7 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
   io.RegFileAccess.we  := DontCare
   io.RegFileAccess.wd  := DontCare
 
-  val ifenced = RegNext(!io.out.fire && control.fence_i)
+  val ifenced = RegNext(!io.out.fire && io.fence_i)
 
   val aluASrc = MuxCase(
     DontCare,
@@ -122,7 +122,7 @@ class IDU(xlen: Int = 32, extentionE: Boolean = true, sim: Boolean = true) exten
   io.out.bits.control.memRen     := control.memRen
   io.out.bits.control.memWen     := control.memWen
   io.out.bits.control.memOp      := control.memOp
-  io.fence_i                     := control.fence_i && !ifenced
+  io.fence_i                     := io.in.valid && control.fence_i && !ifenced
 
   if (sim) {
     io.out.bits.pc.get         := pc
