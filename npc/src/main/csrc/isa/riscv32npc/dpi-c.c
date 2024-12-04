@@ -46,9 +46,11 @@ void count_cache_hit(int hit, uint32_t access_cycle, uint32_t miss_penalty) {
   }
 }
 
-void sync_rvcpu(uint32_t npc, uint32_t inst) {
+void sync_rvcpu(uint32_t npc, uint32_t inst, uint32_t mtvec, uint32_t mepc) {
   cpu.pc = npc;
   cur_inst = inst;
+  cpu.mtvec = mtvec;
+  cpu.mepc = mepc;
 }
 
 void decode_inst(uint32_t inst, uint64_t exec_cycle) {

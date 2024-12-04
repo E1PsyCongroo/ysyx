@@ -36,13 +36,14 @@ object StageConnect {
   }
 }
 
-class NPC(
-  awidth:     Int     = 32,
-  xlen:       Int     = 32,
-  extentionE: Boolean = true,
-  PCReset:    BigInt  = BigInt("80000000", 16),
-  sim:        Boolean = true)
-    extends Module {
+class NPCIO(awidth: Int = 32, xlen: Int = 32) extends Bundle {
+  val interrupt = Input(Bool())
+  val master    = new AXI4MasterIO
+  val slave     = Flipped(new AXI4MasterIO)
+}
+
+class NPCImpl(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim: Boolean) extends Module {
+  val io = IO(new NPCIO(awidth, xlen))
 
   val needCache: UInt => Bool = Dev.memoryAddr.in
   val IFU     = Module(new IFU(xlen, PCReset))
@@ -52,9 +53,7 @@ class NPC(
   val LSU     = Module(new LSU(xlen, extentionE, sim))
   val WBU     = Module(new WBU(xlen, extentionE, sim))
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
-  val AXI4Mem = Module(new AXI4Mem(awidth, xlen))
   val CLINT   = Module(new CLINT(awidth, xlen, Dev.mtimeAddr))
-  val Uart    = Module(new Uart(awidth, xlen))
 
   StageConnect(IFU.io.out, ICache.io.in, ICache.io.out, Some(EXU.io.jump))
   StageConnect(ICache.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
@@ -62,8 +61,8 @@ class NPC(
   StageConnect(EXU.io.out, LSU.io.in, LSU.io.out)
   StageConnect(LSU.io.out, WBU.io.in, WBU.io.out)
 
-  IFU.io.jump   := EXU.io.jump
-  IFU.io.nextPC := EXU.io.nextPC
+  IFU.io.jump   := EXU.io.jump || IDU.io.fence_i
+  IFU.io.nextPC := Mux(EXU.io.jump, EXU.io.nextPC, ICache.io.in.bits.pc)
 
   ICache.io.clear := IDU.io.fence_i
 
@@ -98,18 +97,19 @@ class NPC(
       (isWBURa2RAW && isWBUForward) -> WBUForwardData
     )
   )
-  IDU.io.stall := ((isEXURa1RAW || isEXURa2RAW) && !isEXUForward) || ((isLSURa1RAW || isLSURa2RAW) && !isLSUForward) || ((isWBURa1RAW || isWBURa2RAW) && !isWBUForward) || EXU.io.jump
+  IDU.io.stall := ((isEXURa1RAW || isEXURa2RAW) && !isEXUForward) || ((isLSURa1RAW || isLSURa2RAW) && !isLSUForward) || ((isWBURa1RAW || isWBURa2RAW) && !isWBUForward)
 
   WBU.io.out.ready := true.B
-  RegFile.io.in.wa    := WBU.io.RegFileAccess.wa
-  RegFile.io.in.we    := WBU.io.RegFileAccess.we
-  RegFile.io.in.wd    := WBU.io.RegFileAccess.wd
+  RegFile.io.in.wa := WBU.io.RegFileAccess.wa
+  RegFile.io.in.we := WBU.io.RegFileAccess.we
+  RegFile.io.in.wd := WBU.io.RegFileAccess.wd
 
   AXI4Interconnect(
     Seq(LSU.io.master, ICache.io.master),
-    Seq(CLINT.io, Uart.io, AXI4Mem.io),
-    Seq(Dev.mtimeAddr.in, Dev.uartAddr.in, addr => !Dev.mtimeAddr.in(addr) && !Dev.uartAddr.in(addr))
+    Seq(CLINT.io, io.master),
+    Seq(Dev.mtimeAddr.in, !Dev.mtimeAddr.in(_))
   )
+  io.slave <> AXI4.none
 
   if (sim) {
     val cycle = RegInit(0.U(64.W))
@@ -121,6 +121,8 @@ class NPC(
     InstTracer.io.clock      := clock
     InstTracer.io.npc        := WBU.io.out.bits.nextPC.get
     InstTracer.io.inst       := WBU.io.out.bits.inst.get
+    InstTracer.io.mtvec      := WBU.io.out.bits.mtvec.get
+    InstTracer.io.mepc       := WBU.io.out.bits.mepc.get
     InstTracer.io.exec_cycle := cycle - WBU.io.out.bits.fetchCycle.get
     InstTracer.io.en         := WBU.io.out.fire
 
@@ -147,4 +149,17 @@ class NPC(
     CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
     CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rlast && ICache.io.master.rready
   }
+}
+
+class NPC(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim: Boolean) extends Module {
+  val npc     = Module(new NPCImpl(awidth, xlen, extentionE, PCReset, sim))
+  val uart    = Module(new Uart(awidth, xlen))
+  val AXI4Mem = Module(new AXI4Mem(awidth, xlen))
+  AXI4Interconnect(
+    Seq(npc.io.master),
+    Seq(uart.io, AXI4Mem.io),
+    Seq(Dev.uartAddr.in, !Dev.uartAddr.in(_))
+  )
+  npc.io.slave <> AXI4.none
+  npc.io.interrupt := false.B
 }

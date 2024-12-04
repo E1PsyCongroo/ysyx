@@ -48,11 +48,11 @@ static word_t ecall(vaddr_t epc) {
 #define ECALL(epc) ecall(epc)
 
 static vaddr_t mret() {
-  mstatus_t* mstatus = (mstatus_t*)&cpu.mstatus;
-  cpu.priv = mstatus->mpp;
-  mstatus->mpp = UMODE;
-  mstatus->mie = mstatus->mpie;
-  mstatus->mpie = 1;
+  // mstatus_t* mstatus = (mstatus_t*)&cpu.mstatus;
+  // cpu.priv = mstatus->mpp;
+  // mstatus->mpp = UMODE;
+  // mstatus->mie = mstatus->mpie;
+  // mstatus->mpie = 1;
   return cpu.mepc;
 }
 #define MRET() mret()

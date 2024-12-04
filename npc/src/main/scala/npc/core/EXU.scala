@@ -23,6 +23,8 @@ class EXUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
   val fetchCycle = if (sim) Some(Output(UInt(64.W))) else None
   val isEnd      = if (sim) Some(Output(Bool())) else None
   val exitCode   = if (sim) Some(Output(UInt(32.W))) else None
+  val mtvec      = if (sim) Some(Output(UInt(xlen.W))) else None
+  val mepc       = if (sim) Some(Output(UInt(xlen.W))) else None
 }
 
 class EXUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
@@ -54,7 +56,7 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
     ).map { case (key, data) => (key === control.csrSrc, data) }
   )
   val csrCtr = Mux(io.in.valid, control.csrCtr, CSRCtr.csrNone.value.U)
-  val csrOut = CSRControl(xlen, csrCtr, aluBSrc(11, 0), csrSrc, jumpASrc)
+  val csr    = CSRControl(xlen, sim, csrCtr, aluBSrc(11, 0), csrSrc, jumpASrc)
 
   val brJump = BrCond(control.brType, aluOut.less, aluOut.zero)
   val jump   = io.in.valid && (brJump || (control.pcSrc === PCSrcFrom.fromCSR))
@@ -65,14 +67,14 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
     pcCom,
     Seq(
       PCSrcFrom.fromCom -> pcCom,
-      PCSrcFrom.fromCSR -> csrOut
+      PCSrcFrom.fromCSR -> csr.out
     ).map { case (key, data) => (key === control.pcSrc, data) }
   )
 
   io.in.ready                := !io.in.valid || io.out.fire
   io.out.valid               := io.in.valid
   io.out.bits.wa             := in.wa
-  io.out.bits.alu_csr_Out    := Mux(control.wbSrc(1), csrOut, aluOut.out)
+  io.out.bits.alu_csr_Out    := Mux(control.wbSrc(1), csr.out, aluOut.out)
   io.out.bits.wdata          := jumpBSrc
   io.out.bits.control.regWe  := control.regWe(0)
   io.out.bits.control.wbSrc  := control.wbSrc
@@ -94,5 +96,7 @@ class EXU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
     io.out.bits.fetchCycle.get := in.fetchCycle.get
     io.out.bits.isEnd.get      := in.isEnd.get
     io.out.bits.exitCode.get   := in.exitCode.get
+    io.out.bits.mtvec.get      := csr.mtvec.get
+    io.out.bits.mepc.get       := csr.mepc.get
   }
 }

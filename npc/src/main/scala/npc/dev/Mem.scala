@@ -94,7 +94,7 @@ class AXI4Mem(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module 
   val readData = Mem.io.rdata
 
   /* Read data channel */
-  // val delay       = LSFR(rfire)
+  // val delay       = LSFR(rfire)(2, 0)
   val delay      = 1.U(1.W)
   val delayCount = RegInit(0.U(delay.getWidth.W))
   val isFetch    = delayCount === delay - 1.U

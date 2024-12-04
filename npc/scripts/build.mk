@@ -115,8 +115,6 @@ $(OBJ_DIR)/%.o: %.cc
 
 # Some convenient rules
 
-.PHONY: app verilog verilator clean
-
 app: $(BINARY)
 
 $(BINARY):: $(ARCHIVES) $(OBJS)
@@ -127,5 +125,11 @@ verilog: $(BUILD_DIR)/.stamp.verilog$(PLATFORM)
 
 verilator: $(VERILATOR_DIR)/lib$(PRJ).so
 
+lint: verilog
+	@$(VERILATOR) --lint-only -Wall -Wno-DECLFILENAME $(VERILATOR_INCLUDES) \
+		--top-module $(TOP_MODULE) $(VSRCS) \
+
 clean:
 	-rm -rf $(BUILD_DIR)
+
+.PHONY: app verilog verilator clean lint

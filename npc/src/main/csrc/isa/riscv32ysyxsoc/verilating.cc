@@ -88,12 +88,6 @@ static void rvcpu_sync(void) {
   cpu.gpr[15] =
       rvcpu->rootp
           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_15;
-  cpu.mtvec =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__csrOut_csrs_2_2;
-  cpu.mepc =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__EXU__DOT__csrOut_csrs_3_2;
 }
 
 void rvcpu_init(const char *wave_file, int argc, char **argv) {
@@ -113,7 +107,7 @@ void rvcpu_init(const char *wave_file, int argc, char **argv) {
   cpu.pc = RESET_VECTOR;
   cpu.gpr[0] = 0;
   cpu.mstatus = 0x1800;
-  cpu.mcause = 0x11;
+  cpu.mcause = 11;
   cpu.priv = static_cast<decltype(cpu.priv)>(0b11);
   rvcpu_sync();
   /* Exit */

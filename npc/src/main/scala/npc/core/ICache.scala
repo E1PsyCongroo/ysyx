@@ -90,7 +90,6 @@ class ICache(
   val availableIndex =
     RegEnable(MuxCase(randChoose, (0 until associativity).map { i => (!cacheSelSet(i)._2, i.U) }), isCheck)
   val readCount     = RegInit(0.U((offsetWidth + 1).W))
-  val rdataReg      = RegEnable(io.master.rdata, rfire && rlast)
   val nextReadCount = readCount + 1.U
   readCount := MuxCase(
     readCount,
@@ -124,9 +123,14 @@ class ICache(
     }
   }
 
+  val rdataValid = RegInit(false.B)
+  rdataValid := Mux(io.out.fire, false.B, Mux(rfire && rlast, true.B, rdataValid))
+  val rdataReg  = RegEnable(io.master.rdata, rfire && rlast)
+  val dataValid = Mux(need, cacheHit, rdataValid)
+
   state := MuxLookup(state, sCheck)(
     Seq(
-      sCheck -> Mux(io.in.valid && !cacheHit, sSetAddr, sCheck),
+      sCheck -> Mux(io.in.valid && !dataValid, sSetAddr, sCheck),
       sSetAddr -> Mux(arfire, sWaitResp, sSetAddr),
       sWaitResp -> Mux(rfire && rlast, sCheck, sWaitResp)
     )
@@ -159,7 +163,7 @@ class ICache(
 
   io.in.ready := (isCheck && !io.in.valid) || io.out.fire
 
-  io.out.valid            := io.in.valid && cacheHit
+  io.out.valid            := io.in.valid && dataValid
   io.out.bits.pc          := raddr
   io.out.bits.instruction := Mux(need, cacheData, rdataReg)
 

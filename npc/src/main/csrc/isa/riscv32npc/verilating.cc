@@ -38,23 +38,21 @@ uint64_t g_cache_miss_penalty = 0;
 
 static void rvcpu_sync(void) {
   /* synchronizing cpu with rvcpu */
-  cpu.gpr[1] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_1;
-  cpu.gpr[2] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_2;
-  cpu.gpr[3] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_3;
-  cpu.gpr[4] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_4;
-  cpu.gpr[5] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_5;
-  cpu.gpr[6] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_6;
-  cpu.gpr[7] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_7;
-  cpu.gpr[8] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_8;
-  cpu.gpr[9] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_9;
-  cpu.gpr[10] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_10;
-  cpu.gpr[11] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_11;
-  cpu.gpr[12] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_12;
-  cpu.gpr[13] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_13;
-  cpu.gpr[14] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_14;
-  cpu.gpr[15] = rvcpu->rootp->NPC__DOT__RegFile__DOT__reg_15;
-  cpu.mtvec = rvcpu->rootp->NPC__DOT__EXU__DOT__csrOut_csrs_2_2;
-  cpu.mepc = rvcpu->rootp->NPC__DOT__EXU__DOT__csrOut_csrs_3_2;
+  cpu.gpr[1] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_1;
+  cpu.gpr[2] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_2;
+  cpu.gpr[3] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_3;
+  cpu.gpr[4] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_4;
+  cpu.gpr[5] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_5;
+  cpu.gpr[6] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_6;
+  cpu.gpr[7] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_7;
+  cpu.gpr[8] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_8;
+  cpu.gpr[9] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_9;
+  cpu.gpr[10] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_10;
+  cpu.gpr[11] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_11;
+  cpu.gpr[12] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_12;
+  cpu.gpr[13] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_13;
+  cpu.gpr[14] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_14;
+  cpu.gpr[15] = rvcpu->rootp->NPC__DOT__npc__DOT__RegFile__DOT__reg_15;
 }
 
 void rvcpu_init(const char *wave_file, int argc, char **argv) {
@@ -72,7 +70,7 @@ void rvcpu_init(const char *wave_file, int argc, char **argv) {
   cpu.pc = RESET_VECTOR;
   cpu.gpr[0] = 0;
   cpu.mstatus = 0x1800;
-  cpu.mcause = 0x11;
+  cpu.mcause = 11;
   cpu.priv = static_cast<decltype(cpu.priv)>(0b11);
   rvcpu_sync();
   /* Exit */
@@ -133,10 +131,10 @@ void rvcpu_single_cycle(void) {
 
 void rvcpu_single_exec(void) {
   g_nr_fetch_inst++;
-  while (!rvcpu->rootp->NPC__DOT___WBU_io_out_valid) {
+  while (!rvcpu->rootp->NPC__DOT__npc__DOT___WBU_io_out_valid) {
     rvcpu_single_cycle();
   }
-  if (rvcpu->rootp->NPC__DOT___WBU_io_out_valid) {
+  if (rvcpu->rootp->NPC__DOT__npc__DOT___WBU_io_out_valid) {
     rvcpu_single_cycle();
   }
   rvcpu_sync();

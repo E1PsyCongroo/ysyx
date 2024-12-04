@@ -29,7 +29,8 @@ object ALU {
     )
     val zero     = adder.zero
     val adderOut = adder.result.asUInt
-    val shiftOut = Shifter(inA, inB(4, 0), isLeft, isArith)
+    val shiftOut = BarrelShifter(inA, inB(4, 0), isLeft, isArith)
+    // val shiftOut = Shifter(inA, inB(4, 0), isLeft, isArith)
     val sltOut   = 0.U((width - 1).W) ## less.asUInt
     val BOut     = inB
     val xorOut   = inA ^ inB

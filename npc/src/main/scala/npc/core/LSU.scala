@@ -54,6 +54,8 @@ class LSUOut(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
   val fetchCycle = if (sim) Some(Output(UInt(64.W))) else None
   val isEnd      = if (sim) Some(Output(Bool())) else None
   val exitCode   = if (sim) Some(Output(UInt(32.W))) else None
+  val mtvec      = if (sim) Some(Output(UInt(xlen.W))) else None
+  val mepc       = if (sim) Some(Output(UInt(xlen.W))) else None
 }
 
 class LSUIO(xlen: Int, extentionE: Boolean, sim: Boolean) extends Bundle {
@@ -164,5 +166,7 @@ class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
     io.out.bits.fetchCycle.get := in.fetchCycle.get
     io.out.bits.isEnd.get      := in.isEnd.get
     io.out.bits.exitCode.get   := in.exitCode.get
+    io.out.bits.mtvec.get      := in.mtvec.get
+    io.out.bits.mepc.get       := in.mepc.get
   }
 }

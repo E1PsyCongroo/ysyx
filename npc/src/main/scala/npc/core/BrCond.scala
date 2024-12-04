@@ -13,8 +13,7 @@ object BrCond {
     val isLt = less
     val isGe = !less
     val out  = Wire(Bool())
-    out := MuxCase(
-      DontCare,
+    out := MuxLookup(brType, false.B)(
       Seq(
         brNone -> false.B,
         brJ -> true.B,
@@ -22,7 +21,7 @@ object BrCond {
         brNe -> isNe,
         brLt -> isLt,
         brGe -> isGe
-      ).map { case (key, data) => (brType === key, data) }
+      ).map { case (key, data) => (key.value.U, data) }
     )
     out
   }

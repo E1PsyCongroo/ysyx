@@ -20,7 +20,7 @@ class RVCPU(
   PCReset:    BigInt  = BigInt("30000000", 16),
   sim:        Boolean = true)
     extends Module {
-  val io = IO(new RVCPUIO(xlen))
+  val io = IO(new RVCPUIO(awidth, xlen))
 
   // val needCache: UInt => Bool = addr =>
   //   Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
@@ -102,6 +102,8 @@ class RVCPU(
     InstTracer.io.clock      := clock
     InstTracer.io.npc        := WBU.io.out.bits.nextPC.get
     InstTracer.io.inst       := WBU.io.out.bits.inst.get
+    InstTracer.io.mtvec      := WBU.io.out.bits.mtvec.get
+    InstTracer.io.mepc       := WBU.io.out.bits.mepc.get
     InstTracer.io.exec_cycle := cycle - WBU.io.out.bits.fetchCycle.get
     InstTracer.io.en         := WBU.io.out.fire
 
