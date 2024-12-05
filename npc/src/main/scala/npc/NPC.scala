@@ -46,7 +46,7 @@ class NPCImpl(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim:
     extends Module {
   val io = IO(new NPCIO(awidth, xlen))
 
-  val needCache: UInt => Bool = Dev.npc.PMEMAddr.in
+  val needCache: UInt => Bool = Dev.npc.npc.PMEMAddr.in
   val IFU     = Module(new IFU(xlen, PCReset))
   val ICache  = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
   val IDU     = Module(new IDU(xlen, extentionE, sim))

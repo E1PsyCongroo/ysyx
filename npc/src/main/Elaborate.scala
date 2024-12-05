@@ -89,3 +89,25 @@ object IVerilog extends App {
     firtoolOptions
   )
 }
+
+object FPGA extends App {
+  val firtoolOptions = Array(
+    "--lowering-options=" + List(
+      "disallowLocalVariables",
+      "disallowPackedArrays",
+      "locationInfoStyle=wrapInAtSquareBracket"
+    ).mkString(",")
+  )
+
+  circt.stage.ChiselStage.emitSystemVerilogFile(
+    new rvcpu.FPGA(
+      awidth       = 32,
+      xlen         = 32,
+      extentionE   = true,
+      PCReset      = BigInt("0f000000", 16),
+      sim          = false,
+    ),
+    args,
+    firtoolOptions
+  )
+}

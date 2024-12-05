@@ -63,13 +63,13 @@ VSRC_DIR            := $(OBJ_DIR)/verilog
 INC_PATH            += $(VERILATOR_ROOT)/include $(VERILATOR_ROOT)/include/vltstd $(VERILATOR_DIR)
 
 # Project sources
-RESOURCES           ?= $(wildcard $(RESOURCES_DIR)/*.v $(RESOURCES_DIR)/*.sv)
+RESOURCES           ?= $(shell find $(RESOURCES_DIR) -type f -name "*.v" -or -name "*.sv")
 VSRCS               ?= $(wildcard $(VSRC_DIR)/*.v $(VSRC_DIR)/*.sv)
 ifdef CONFIG_ISA_riscv_ysyxsoc
 VSRCS               += $(shell find $(YSYXSOC_HOME)/perip -type f -name "*.v" -or -name "*.sv")
 VSRCS               += $(YSYXSOC_HOME)/build/ysyxSoCFull.v
 endif
-CHISELSRCS          ?= $(wildcard $(CHISEL_SRC_DIR)/*.v $(CHISEL_SRC_DIR)/*.sv)
+CHISELSRCS          += $(shell find $(CHISEL_SRC_DIR) -type f -name "*.scala" -or -name "*.sc")
 CHISELSRCS          += $(SRC_DIR)/Elaborate.scala
 
 # Verilator flags
