@@ -368,12 +368,15 @@ class AXI4Interconnect(fanInNum: Int, fanOutSeq: Seq[UInt => Bool]) extends Modu
 
 object AXI4Interconnect {
   def apply(
-    fanIn:      Seq[AXI4MasterIO],
-    fanOut:     Seq[AXI4MasterIO],
-    fanOutArea: Seq[UInt => Bool]
+    fanIn:       Seq[AXI4MasterIO],
+    fanOut:      Seq[AXI4MasterIO],
+    fanOutArea:  Seq[Area],
+    fanOutTrans: Seq[Boolean]
   ) = {
     val fanInNum  = fanIn.length
     val fanOutNum = fanOut.length
+    require(fanOutNum == fanOutArea.length)
+    require(fanOutNum == fanOutTrans.length)
 
     val sWriteIdle :: sWaitBresp :: Nil = Enum(2)
     val sReadIdle :: sWaitRresp :: Nil  = Enum(2)
@@ -391,11 +394,11 @@ object AXI4Interconnect {
 
     val writeSelected    = PriorityEncoder(writeRequests)
     val writeSelectedReg = RegEnable(writeSelected, isWriteIdle)
-    val write            = writeRequests(writeSelected)
+    val write            = writeRequests =/= 0.U
 
     val readSelected    = PriorityEncoder(readRequests)
     val readSelectedReg = RegEnable(readSelected, isReadIdle)
-    val read            = readRequests(readSelected)
+    val read            = readRequests =/= 0.U
 
     val awaddr = WireDefault(fanIn(0).awaddr)
     val araddr = WireDefault(fanIn(0).araddr)
@@ -425,10 +428,10 @@ object AXI4Interconnect {
       }
     }
 
-    val wmatches       = VecInit(fanOutArea.map(_(awaddr))).asUInt
+    val wmatches       = VecInit(fanOutArea.map(_.in(awaddr))).asUInt
     val writeOutSelect = RegEnable(Mux1H((0 until fanOutNum).map { i => (wmatches(i), i.U) }.toSeq), isWriteIdle)
 
-    val rmatches      = VecInit(fanOutArea.map(_(araddr))).asUInt
+    val rmatches      = VecInit(fanOutArea.map(_.in(araddr))).asUInt
     val readOutSelect = RegEnable(Mux1H((0 until fanOutNum).map { i => (rmatches(i), i.U) }.toSeq), isReadIdle)
 
     writeState := MuxLookup(writeState, sWriteIdle)(
@@ -457,7 +460,11 @@ object AXI4Interconnect {
         when(writeSelectedReg === i.U && writeOutSelect === j.U && isWaitBresp) {
           fanIn(i).awready  := fanOut(j).awready
           fanOut(j).awvalid := fanIn(i).awvalid
-          fanOut(j).awaddr  := fanIn(i).awaddr
+          if (fanOutTrans(j)) {
+            fanOut(j).awaddr  := fanIn(i).awaddr - fanOutArea(j).start
+          } else {
+            fanOut(j).awaddr := fanIn(i).awaddr
+          }
           fanOut(j).awid    := fanIn(i).awid
           fanOut(j).awlen   := fanIn(i).awlen
           fanOut(j).awsize  := fanIn(i).awsize
@@ -475,7 +482,11 @@ object AXI4Interconnect {
         when(readSelectedReg === i.U && readOutSelect === j.U && isWaitRresp) {
           fanIn(i).arready  := fanOut(j).arready
           fanOut(j).arvalid := fanIn(i).arvalid
-          fanOut(j).araddr  := fanIn(i).araddr
+          if (fanOutTrans(j)) {
+            fanOut(j).araddr := fanIn(i).araddr - fanOutArea(j).start
+          } else {
+            fanOut(j).araddr := fanIn(i).araddr
+          }
           fanOut(j).arid    := fanIn(i).arid
           fanOut(j).arlen   := fanIn(i).arlen
           fanOut(j).arsize  := fanIn(i).arsize

@@ -12,12 +12,16 @@ void npc_difftest_skipi_ref() { difftest_skip_ref(); }
 
 void sim_end(int code) { set_npc_state(NPC_END, cpu.pc, code); }
 
-word_t rvcpu_pmem_ifetch(paddr_t raddr) { return vaddr_ifetch(raddr, 4); }
+word_t rvcpu_pmem_ifetch(paddr_t raddr) {
+  return vaddr_ifetch((raddr << 2) + PMEM_LEFT, 4);
+}
 
-word_t rvcpu_pmem_read(paddr_t raddr) { return vaddr_read(raddr & ~0x3, 4); }
+word_t rvcpu_pmem_read(paddr_t raddr) {
+  return vaddr_read((raddr << 2) + PMEM_LEFT, 4);
+}
 
 void rvcpu_pmem_write(paddr_t waddr, word_t wdata, uint8_t wmask) {
-  paddr_t aligned_addr = waddr & ~0x3;
+  paddr_t aligned_addr = (waddr << 2) + PMEM_LEFT;
   int len = 0;
   uint32_t offset = 0;
   while ((wmask & 1) == 0) {

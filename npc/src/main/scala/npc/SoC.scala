@@ -23,9 +23,9 @@ class RVCPU(
   val io = IO(new RVCPUIO(awidth, xlen))
 
   // val needCache: UInt => Bool = addr =>
-  //   Dev.MROMAddr.in(addr) || Dev.FlashAddr.in(addr) || Dev.ChipLinkMEMAddr.in(addr) || Dev.PSRAMAddr.in(
+  //   Dev.ysyxsoc.MROMAddr.in(addr) || Dev.ysyxsoc.FlashAddr.in(addr) || Dev.ysyxsoc.ChipLinkMEMAddr.in(addr) || Dev.ysyxsoc.PSRAMAddr.in(
   //     addr
-  //   ) || Dev.SDRAMAddr.in(addr)
+  //   ) || Dev.ysyxsoc.SDRAMAddr.in(addr)
   val needCache: UInt => Bool = addr => true.B
   val IFU     = Module(new IFU(xlen, PCReset))
   val ICache  = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
@@ -34,7 +34,7 @@ class RVCPU(
   val LSU     = Module(new LSU(xlen, extentionE, sim))
   val WBU     = Module(new WBU(xlen, extentionE, sim))
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
-  val CLINT   = Module(new CLINT(awidth, xlen, Dev.CLINTAddr))
+  val CLINT   = Module(new CLINT(awidth, xlen))
 
   StageConnect(IFU.io.out, ICache.io.in, ICache.io.out, Some(EXU.io.jump || IDU.io.fence_i))
   StageConnect(ICache.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
@@ -85,10 +85,12 @@ class RVCPU(
   RegFile.io.in.we := WBU.io.RegFileAccess.we
   RegFile.io.in.wd := WBU.io.RegFileAccess.wd
 
+  val OutDevAddr = Area("h0f000000".U, Dev.all.end)
   AXI4Interconnect(
     Seq(LSU.io.master, ICache.io.master),
     Seq(CLINT.io, io.master),
-    Seq(Dev.CLINTAddr.in, addr => !Dev.CLINTAddr.in(addr))
+    Seq(Dev.ysyxsoc.CLINTAddr, OutDevAddr),
+    Seq(true, false)
   )
   io.slave <> AXI4.none
 
@@ -110,13 +112,13 @@ class RVCPU(
     EndControl(clock, WBU.io.out.fire && WBU.io.out.bits.isEnd.get, WBU.io.out.bits.exitCode.get)
 
     val devs = Seq(
-      Dev.CLINTAddr,
-      Dev.UART16550Addr,
-      Dev.SPIMasterAddr,
-      Dev.GPIOAddr,
-      Dev.PS2Addr,
-      Dev.VGAAddr,
-      Dev.ChipLinkMEMAddr
+      Dev.ysyxsoc.CLINTAddr,
+      Dev.ysyxsoc.UART16550Addr,
+      Dev.ysyxsoc.SPIMasterAddr,
+      Dev.ysyxsoc.GPIOAddr,
+      Dev.ysyxsoc.PS2Addr,
+      Dev.ysyxsoc.VGAAddr,
+      Dev.ysyxsoc.ChipLinkMEMAddr
     )
     val needSkipDifftest = devs.map { dev => dev.in(WBU.io.out.bits.memAddr.get) }.foldLeft(false.B)(_ || _)
     SkipDifftest(clock, WBU.io.out.fire && WBU.io.out.bits.memAccess.get && needSkipDifftest)

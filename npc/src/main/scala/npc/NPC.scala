@@ -42,10 +42,11 @@ class NPCIO(awidth: Int, xlen: Int) extends Bundle {
   val slave     = Flipped(new AXI4MasterIO)
 }
 
-class NPCImpl(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim: Boolean) extends Module {
+class NPCImpl(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim: Boolean, useDPIC: Boolean)
+    extends Module {
   val io = IO(new NPCIO(awidth, xlen))
 
-  val needCache: UInt => Bool = Dev.memoryAddr.in
+  val needCache: UInt => Bool = Dev.npc.PMEMAddr.in
   val IFU     = Module(new IFU(xlen, PCReset))
   val ICache  = Module(new ICache(awidth, xlen, 6, 5, 0, needCache, sim))
   val IDU     = Module(new IDU(xlen, extentionE, sim))
@@ -53,7 +54,6 @@ class NPCImpl(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim:
   val LSU     = Module(new LSU(xlen, extentionE, sim))
   val WBU     = Module(new WBU(xlen, extentionE, sim))
   val RegFile = Module(new RegFile(xlen, if (extentionE) 4 else 5))
-  val CLINT   = Module(new CLINT(awidth, xlen, Dev.mtimeAddr))
 
   StageConnect(IFU.io.out, ICache.io.in, ICache.io.out, Some(EXU.io.jump))
   StageConnect(ICache.io.out, IDU.io.in, IDU.io.out, Some(EXU.io.jump))
@@ -106,8 +106,9 @@ class NPCImpl(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim:
 
   AXI4Interconnect(
     Seq(LSU.io.master, ICache.io.master),
-    Seq(CLINT.io, io.master),
-    Seq(Dev.mtimeAddr.in, !Dev.mtimeAddr.in(_))
+    Seq(io.master),
+    Seq(Dev.all),
+    Seq(false)
   )
   io.slave <> AXI4.none
   if (sim) {
@@ -115,53 +116,66 @@ class NPCImpl(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim:
     cycle                  := cycle + 1.U
     ICache.io.curCycle.get := cycle
 
-    when (WBU.io.out.fire && WBU.io.out.bits.isEnd.get) {
+    when(WBU.io.out.fire && WBU.io.out.bits.isEnd.get) {
       printf("SIM END!")
     }
 
-    // val InstTracer = Module(new InstTracer)
-    // InstTracer.io.clock      := clock
-    // InstTracer.io.npc        := WBU.io.out.bits.nextPC.get
-    // InstTracer.io.inst       := WBU.io.out.bits.inst.get
-    // InstTracer.io.mtvec      := WBU.io.out.bits.mtvec.get
-    // InstTracer.io.mepc       := WBU.io.out.bits.mepc.get
-    // InstTracer.io.exec_cycle := cycle - WBU.io.out.bits.fetchCycle.get
-    // InstTracer.io.en         := WBU.io.out.fire
+    if (useDPIC) {
+      val InstTracer = Module(new InstTracer)
+      InstTracer.io.clock      := clock
+      InstTracer.io.npc        := WBU.io.out.bits.nextPC.get
+      InstTracer.io.inst       := WBU.io.out.bits.inst.get
+      InstTracer.io.mtvec      := WBU.io.out.bits.mtvec.get
+      InstTracer.io.mepc       := WBU.io.out.bits.mepc.get
+      InstTracer.io.exec_cycle := cycle - WBU.io.out.bits.fetchCycle.get
+      InstTracer.io.en         := WBU.io.out.fire
 
-    // EndControl(clock, WBU.io.out.fire && WBU.io.out.bits.isEnd.get, WBU.io.out.bits.exitCode.get)
+      EndControl(clock, WBU.io.out.fire && WBU.io.out.bits.isEnd.get, WBU.io.out.bits.exitCode.get)
 
-    // val devs = Seq(
-    //   Dev.mtimeAddr,
-    //   Dev.uartAddr
-    // )
-    // val needSkipDifftest = devs.map { dev => dev.in(WBU.io.out.bits.memAddr.get) }.foldLeft(false.B)(_ || _)
-    // SkipDifftest(clock, WBU.io.out.fire && WBU.io.out.bits.memAccess.get && needSkipDifftest)
+      val devs = Seq(
+        Dev.npc.CLINTAddr,
+        Dev.npc.UARTAddr
+      )
+      val needSkipDifftest = devs.map { dev => dev.in(WBU.io.out.bits.memAddr.get) }.foldLeft(false.B)(_ || _)
+      SkipDifftest(clock, WBU.io.out.fire && WBU.io.out.bits.memAccess.get && needSkipDifftest)
 
-    // val TracerDataFetch = Module(new TracerDataFetch)
-    // TracerDataFetch.io.clock  := clock
-    // TracerDataFetch.io.reset  := reset
-    // TracerDataFetch.io.start  := LSU.io.master.arvalid
-    // TracerDataFetch.io.finish := LSU.io.master.rvalid && LSU.io.master.rready
+      val TracerDataFetch = Module(new TracerDataFetch)
+      TracerDataFetch.io.clock  := clock
+      TracerDataFetch.io.reset  := reset
+      TracerDataFetch.io.start  := LSU.io.master.arvalid
+      TracerDataFetch.io.finish := LSU.io.master.rvalid && LSU.io.master.rready
 
-    // val CacheTracer = Module(new CacheTracer)
-    // CacheTracer.io.cacheNeed         := ICache.io.trace.get.need
-    // CacheTracer.io.cacheHit          := ICache.io.trace.get.hit
-    // CacheTracer.io.cacheAccessStart  := IFU.io.out.fire
-    // CacheTracer.io.cacheAccessFinish := ICache.io.out.fire
-    // CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
-    // CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rlast && ICache.io.master.rready
+      val CacheTracer = Module(new CacheTracer)
+      CacheTracer.io.cacheNeed         := ICache.io.trace.get.need
+      CacheTracer.io.cacheHit          := ICache.io.trace.get.hit
+      CacheTracer.io.cacheAccessStart  := IFU.io.out.fire
+      CacheTracer.io.cacheAccessFinish := ICache.io.out.fire
+      CacheTracer.io.cacheFetchStart   := ICache.io.master.arvalid
+      CacheTracer.io.cacheFetchFinish  := ICache.io.master.rvalid && ICache.io.master.rlast && ICache.io.master.rready
+    }
   }
 }
 
-class NPC(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim: Boolean, useProgram: Option[String])
-    extends Module {
-  val npc     = Module(new NPCImpl(awidth, xlen, extentionE, PCReset, sim))
-  val uart    = Module(new Uart(awidth, xlen))
-  val AXI4Mem = Module(new AXI4Mem(awidth, xlen, useProgram))
+class NPC(awidth: Int, xlen: Int, extentionE: Boolean, PCReset: BigInt, sim: Boolean, useDPIC: Boolean) extends Module {
+  val npc   = Module(new NPCImpl(awidth, xlen, extentionE, PCReset, sim, useDPIC))
+  val clint = Module(new CLINT(awidth, xlen))
+  val uart  = Module(new Uart(awidth, xlen))
+  val mem   = Module(new AXI4Mem(awidth, xlen, useDPIC))
+
   AXI4Interconnect(
     Seq(npc.io.master),
-    Seq(uart.io, AXI4Mem.io),
-    Seq(Dev.uartAddr.in, !Dev.uartAddr.in(_))
+    Seq(clint.io, uart.io, mem.io, mem.io, mem.io, mem.io, mem.io, mem.io),
+    Seq(
+      Dev.npc.CLINTAddr,
+      Dev.npc.UARTAddr,
+      Dev.npc.PMEMAddr,
+      Dev.npc.KDBAddr,
+      Dev.npc.VGACTLAddr,
+      Dev.npc.VGABUFAddr,
+      Dev.npc.AUDIOCTLAddr,
+      Dev.npc.AUDIOBUFAddr
+    ),
+    Seq(true, true, true, true, true, true, true, true)
   )
   npc.io.slave <> AXI4.none
   npc.io.interrupt := false.B

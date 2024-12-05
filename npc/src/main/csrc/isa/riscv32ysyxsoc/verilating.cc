@@ -1,4 +1,3 @@
-#include "memory/paddr.h"
 #include <VysyxSoCFull.h>
 #include <VysyxSoCFull__Dpi.h>
 #include <VysyxSoCFull___024root.h>

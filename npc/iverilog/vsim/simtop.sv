@@ -9,13 +9,15 @@ module simtop();
 
   always #(`CLK_PERIOD/2) clk <= ~clk;
   initial begin
-    $dumpfile("build/simtop.fst");
+    $dumpfile("simtop.fst");
     $dumpvars(0, simtop);
     for (i = 0; i < 4194304; i = i + 1) begin
-      dut.AXI4Mem.readData_Mem.mem_ext.Memory[i] = 0;
+      dut.mem.readData_Mem.mem_ext.Memory[i] = 0;
     end
-    $readmemh("/home/focused_xy/cs/ysyx/npc/src/main/resources/microbench-riscv32e-npc.hex",
-      dut.AXI4Mem.readData_Mem.mem_ext.Memory);
+    $readmemh(
+      "/home/focused_xy/cs/ysyx/npc/iverilog/hex/microbench-riscv32e-npc.hex",
+      dut.mem.readData_Mem.mem_ext.Memory
+    );
     repeat(10) @(posedge clk);
     reset = 1;
     repeat(10) @(posedge clk);
@@ -25,7 +27,8 @@ module simtop();
   end
 
   initial begin
-    #1000_0000;
+    // #1000_0000;
+    #1000_0;
     $error("Timeout!");
     $fatal();
     $finish();

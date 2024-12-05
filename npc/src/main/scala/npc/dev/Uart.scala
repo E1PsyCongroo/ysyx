@@ -5,9 +5,8 @@ import rvcpu.utility._
 import chisel3._
 import chisel3.util._
 
-import Dev.uartAddr
-
-class Uart(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module {
+class Uart(awidth: Int, dwidth: Int) extends Module {
+  val size = dwidth / 8
   require(log2Ceil(size) < awidth)
   require(log2Ceil(size) < dwidth)
 
@@ -61,7 +60,7 @@ class Uart(awidth: Int = 32, dwidth: Int = 32, size: Int = 4) extends Module {
 
   /* Write response channel */
   val bvalid     = WireDefault(isWrite)
-  val writeValid = (writeMask === 1.U) && uartAddr.in(writeAddr)
+  val writeValid = (writeMask === 1.U) && (writeAddr === 0.U)
   val bresp      = WireDefault(TransactionResponse.okey.asUInt)
   bresp := MuxCase(
     TransactionResponse.okey.asUInt,

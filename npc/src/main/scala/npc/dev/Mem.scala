@@ -25,14 +25,15 @@ class DPIMem extends BlackBox with HasBlackBoxResource {
   addResource("/DPIMem.sv")
 }
 
-class InitMem(awidth: Int, dwidth: Int, program: String) extends Module {
+class InitMem(awidth: Int, dwidth: Int) extends Module {
   val size = dwidth / 8
   val io   = IO(new MemIO(awidth, dwidth))
   val mem  = Mem(BigInt("400000", 16), Vec(size, UInt(8.W)))
-  loadMemoryFromFileInline(mem, program)
-  val raddr = (io.raddr - "h8000_0000".U) >> 2.U
+
+  val raddr = io.raddr
   io.rdata := Mux(io.ren, mem(raddr).asUInt, 0.U)
-  val waddr = (io.waddr - "h8000_0000".U) >> 2.U
+
+  val waddr = io.waddr
   val wdata = Wire(Vec(size, UInt(8.W)))
   for (i <- 0 until size) {
     wdata(i) := io.wdata(i * 8 + 7, i * 8)
@@ -43,7 +44,7 @@ class InitMem(awidth: Int, dwidth: Int, program: String) extends Module {
   }
 }
 
-class AXI4Mem(awidth: Int, dwidth: Int, useProgram: Option[String] = None) extends Module {
+class AXI4Mem(awidth: Int, dwidth: Int, useDPIC: Boolean) extends Module {
   val size = dwidth / 8
   val io   = IO(Flipped(new AXI4MasterIO))
 
@@ -79,14 +80,14 @@ class AXI4Mem(awidth: Int, dwidth: Int, useProgram: Option[String] = None) exten
   )
 
   /* Write address channel */
-  val awready   = WireDefault(isWriteIdle)
-  val writeAddr = WireDefault(io.awaddr)
-  val writeSize = WireDefault(io.awsize)
+  val awready = WireDefault(isWriteIdle)
+  val awaddr  = WireDefault(io.awaddr)
+  val awsize  = WireDefault(io.awsize)
 
   /* Write data channel */
-  val wready    = WireDefault(isWriteIdle)
-  val writeData = WireDefault(io.wdata)
-  val writeMask = WireDefault(io.wstrb)
+  val wready = WireDefault(isWriteIdle)
+  val wdata  = WireDefault(io.wdata)
+  val wstrb  = WireDefault(io.wstrb)
 
   /* Write response channel */
   val bvalid = WireDefault(isSendBresp)
@@ -100,23 +101,23 @@ class AXI4Mem(awidth: Int, dwidth: Int, useProgram: Option[String] = None) exten
   val readCount     = RegInit(0.U(8.W))
   val nextReadCount = readCount + 1.U
   readCount := Mux(io.rlast, 0.U, Mux(rfire, nextReadCount, readCount))
-  val readData = if (useProgram.isEmpty) {
+  val readData = if (useDPIC) {
     val Mem = Module(new DPIMem)
     Mem.io.clock := clock
-    Mem.io.waddr := writeAddr
-    Mem.io.wdata := writeData
-    Mem.io.wmask := writeMask
+    Mem.io.waddr := awaddr >> 2.U
+    Mem.io.wdata := wdata
+    Mem.io.wmask := wstrb
     Mem.io.wen   := isWriteIdle && awfire && wfire
-    Mem.io.raddr := araddr(awidth - 1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U) + (readCount << 2.U)
+    Mem.io.raddr := (araddr >> 2.U) + readCount
     Mem.io.ren   := isSendRresp
     Mem.io.rdata
   } else {
-    val Mem = Module(new InitMem(awidth, dwidth, useProgram.get))
-    Mem.io.waddr := writeAddr
-    Mem.io.wdata := writeData
-    Mem.io.wmask := writeMask
+    val Mem = Module(new InitMem(awidth, dwidth))
+    Mem.io.waddr := awaddr >> 2.U
+    Mem.io.wdata := wdata
+    Mem.io.wmask := wstrb
     Mem.io.wen   := isWriteIdle && awfire && wfire
-    Mem.io.raddr := araddr(awidth - 1, log2Ceil(size)) ## Fill(log2Ceil(size), "b0".U) + (readCount << 2.U)
+    Mem.io.raddr := (araddr >> 2.U) + readCount
     Mem.io.ren   := isSendRresp
     Mem.io.rdata
   }

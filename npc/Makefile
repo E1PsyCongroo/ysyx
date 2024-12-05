@@ -9,6 +9,10 @@ endif
 
 remove_quote = $(patsubst "%",%,$(1))
 
+WORK_DIR          := .
+BUILD_DIR         := $(WORK_DIR)/build
+PRJ               := NPC
+
 # Extract variabls from menuconfig
 GUEST_ISA         ?= $(call remove_quote,$(CONFIG_ISA))
 PLATFORM          ?= $(call remove_quote, $(CONFIG_PLATFORM))
@@ -45,7 +49,10 @@ CFLAGS            += $(CFLAGS_BUILD) $(CFLAGS_TRACE) -D__GUEST_ISA__=$(GUEST_ISA
 LDFLAGS           += $(CFLAGS_BUILD)
 
 # Include rules for menuconfig
-include $(NPC_HOME)/scripts/config.mk
+include $(NPC_HOME)/scripts/make/config.mk
 
 # Include rules to build NPC
-include $(NPC_HOME)/scripts/native.mk
+include $(NPC_HOME)/scripts/make/native.mk
+
+# Include rules to fpga
+include $(NPC_HOME)/scripts/make/fpga.mk

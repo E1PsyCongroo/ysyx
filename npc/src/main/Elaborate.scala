@@ -38,7 +38,7 @@ object npc extends App {
       extentionE = true,
       PCReset    = BigInt("80000000", 16),
       sim        = true,
-      useProgram = None
+      useDPIC    = true
     ),
     args,
     firtoolOptions
@@ -83,7 +83,7 @@ object IVerilog extends App {
       extentionE = true,
       PCReset    = BigInt("80000000", 16),
       sim        = true,
-      useProgram = Some("/home/focused_xy/cs/ysyx/npc/src/main/resources/rtthread-riscv32e-npc.hex")
+      useDPIC    = false
     ),
     args,
     firtoolOptions
