@@ -84,154 +84,248 @@
   `endif // STOP_COND
 `endif // not def STOP_COND_
 
-module NPC(	// @[src/main/scala/npc/NPC.scala:156:7]
-  input clock,	// @[src/main/scala/npc/NPC.scala:156:7]
-        reset	// @[src/main/scala/npc/NPC.scala:156:7]
+module NPC(	// @[src/main/scala/npc/NPC.scala:159:7]
+  input clock,	// @[src/main/scala/npc/NPC.scala:159:7]
+        reset	// @[src/main/scala/npc/NPC.scala:159:7]
 );
 
-  wire        _AXI4Mem_io_awready;	// @[src/main/scala/npc/NPC.scala:160:23]
-  wire        _AXI4Mem_io_wready;	// @[src/main/scala/npc/NPC.scala:160:23]
-  wire        _AXI4Mem_io_bvalid;	// @[src/main/scala/npc/NPC.scala:160:23]
-  wire        _AXI4Mem_io_arready;	// @[src/main/scala/npc/NPC.scala:160:23]
-  wire        _AXI4Mem_io_rvalid;	// @[src/main/scala/npc/NPC.scala:160:23]
-  wire [31:0] _AXI4Mem_io_rdata;	// @[src/main/scala/npc/NPC.scala:160:23]
-  wire        _AXI4Mem_io_rlast;	// @[src/main/scala/npc/NPC.scala:160:23]
-  wire        _uart_io_awready;	// @[src/main/scala/npc/NPC.scala:159:23]
-  wire        _uart_io_wready;	// @[src/main/scala/npc/NPC.scala:159:23]
-  wire        _uart_io_bvalid;	// @[src/main/scala/npc/NPC.scala:159:23]
-  wire [1:0]  _uart_io_bresp;	// @[src/main/scala/npc/NPC.scala:159:23]
-  wire        _uart_io_arready;	// @[src/main/scala/npc/NPC.scala:159:23]
-  wire        _uart_io_rvalid;	// @[src/main/scala/npc/NPC.scala:159:23]
-  wire        _npc_io_master_awvalid;	// @[src/main/scala/npc/NPC.scala:158:23]
-  wire [31:0] _npc_io_master_awaddr;	// @[src/main/scala/npc/NPC.scala:158:23]
-  wire        _npc_io_master_wvalid;	// @[src/main/scala/npc/NPC.scala:158:23]
-  wire [31:0] _npc_io_master_wdata;	// @[src/main/scala/npc/NPC.scala:158:23]
-  wire [3:0]  _npc_io_master_wstrb;	// @[src/main/scala/npc/NPC.scala:158:23]
-  wire        _npc_io_master_bready;	// @[src/main/scala/npc/NPC.scala:158:23]
-  wire        _npc_io_master_arvalid;	// @[src/main/scala/npc/NPC.scala:158:23]
-  wire [31:0] _npc_io_master_araddr;	// @[src/main/scala/npc/NPC.scala:158:23]
-  wire        _npc_io_master_rready;	// @[src/main/scala/npc/NPC.scala:158:23]
-  wire [7:0]  _npc_io_master_arlen;	// @[src/main/scala/npc/NPC.scala:158:23]
-  reg         writeState;	// @[src/main/scala/npc/axi4/AXI4.scala:381:30]
-  reg         readState;	// @[src/main/scala/npc/axi4/AXI4.scala:385:30]
-  reg         writeOutSelect;	// @[src/main/scala/npc/axi4/AXI4.scala:429:35]
-  reg         readOutSelect;	// @[src/main/scala/npc/axi4/AXI4.scala:432:34]
-  wire        _GEN = ~writeOutSelect & writeState;	// @[src/main/scala/npc/axi4/AXI4.scala:381:30, :429:35, :457:{57,65}]
-  wire        _GEN_0 = ~readOutSelect & readState;	// @[src/main/scala/npc/axi4/AXI4.scala:385:30, :432:34, :475:{55,63}]
-  wire        _GEN_1 = writeOutSelect & writeState;	// @[src/main/scala/npc/axi4/AXI4.scala:381:30, :429:35, :457:65]
-  wire        _GEN_2 = _GEN_1 ? _AXI4Mem_io_bvalid : _GEN & _uart_io_bvalid;	// @[src/main/scala/npc/NPC.scala:159:23, :160:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :457:{65,81}, :471:29]
-  wire        _GEN_3 = readOutSelect & readState;	// @[src/main/scala/npc/axi4/AXI4.scala:385:30, :432:34, :475:63]
-  wire        _GEN_4 = _GEN_3 ? _AXI4Mem_io_rvalid : _GEN_0 & _uart_io_rvalid;	// @[src/main/scala/npc/NPC.scala:159:23, :160:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :475:{63,79}, :484:29]
-  wire        rlast = _GEN_3 ? _AXI4Mem_io_rlast : _GEN_0;	// @[src/main/scala/npc/NPC.scala:160:23, src/main/scala/npc/axi4/AXI4.scala:475:{63,79}, :487:29]
-  always @(posedge clock) begin	// @[src/main/scala/npc/NPC.scala:156:7]
-    if (reset) begin	// @[src/main/scala/npc/NPC.scala:156:7]
-      writeState <= 1'h0;	// @[src/main/scala/npc/NPC.scala:156:7, src/main/scala/npc/axi4/AXI4.scala:381:30]
-      readState <= 1'h0;	// @[src/main/scala/npc/NPC.scala:156:7, src/main/scala/npc/axi4/AXI4.scala:385:30]
+  wire        _mem_io_awready;	// @[src/main/scala/npc/NPC.scala:163:21]
+  wire        _mem_io_wready;	// @[src/main/scala/npc/NPC.scala:163:21]
+  wire        _mem_io_bvalid;	// @[src/main/scala/npc/NPC.scala:163:21]
+  wire        _mem_io_arready;	// @[src/main/scala/npc/NPC.scala:163:21]
+  wire        _mem_io_rvalid;	// @[src/main/scala/npc/NPC.scala:163:21]
+  wire [31:0] _mem_io_rdata;	// @[src/main/scala/npc/NPC.scala:163:21]
+  wire        _mem_io_rlast;	// @[src/main/scala/npc/NPC.scala:163:21]
+  wire        _uart_io_awready;	// @[src/main/scala/npc/NPC.scala:162:21]
+  wire        _uart_io_wready;	// @[src/main/scala/npc/NPC.scala:162:21]
+  wire        _uart_io_bvalid;	// @[src/main/scala/npc/NPC.scala:162:21]
+  wire [1:0]  _uart_io_bresp;	// @[src/main/scala/npc/NPC.scala:162:21]
+  wire        _uart_io_arready;	// @[src/main/scala/npc/NPC.scala:162:21]
+  wire        _uart_io_rvalid;	// @[src/main/scala/npc/NPC.scala:162:21]
+  wire        _clint_io_awready;	// @[src/main/scala/npc/NPC.scala:161:21]
+  wire        _clint_io_wready;	// @[src/main/scala/npc/NPC.scala:161:21]
+  wire        _clint_io_bvalid;	// @[src/main/scala/npc/NPC.scala:161:21]
+  wire        _clint_io_arready;	// @[src/main/scala/npc/NPC.scala:161:21]
+  wire        _clint_io_rvalid;	// @[src/main/scala/npc/NPC.scala:161:21]
+  wire [1:0]  _clint_io_rresp;	// @[src/main/scala/npc/NPC.scala:161:21]
+  wire [31:0] _clint_io_rdata;	// @[src/main/scala/npc/NPC.scala:161:21]
+  wire        _clint_io_rlast;	// @[src/main/scala/npc/NPC.scala:161:21]
+  wire        _npc_io_master_awvalid;	// @[src/main/scala/npc/NPC.scala:160:21]
+  wire [31:0] _npc_io_master_awaddr;	// @[src/main/scala/npc/NPC.scala:160:21]
+  wire        _npc_io_master_wvalid;	// @[src/main/scala/npc/NPC.scala:160:21]
+  wire [31:0] _npc_io_master_wdata;	// @[src/main/scala/npc/NPC.scala:160:21]
+  wire [3:0]  _npc_io_master_wstrb;	// @[src/main/scala/npc/NPC.scala:160:21]
+  wire        _npc_io_master_bready;	// @[src/main/scala/npc/NPC.scala:160:21]
+  wire        _npc_io_master_arvalid;	// @[src/main/scala/npc/NPC.scala:160:21]
+  wire [31:0] _npc_io_master_araddr;	// @[src/main/scala/npc/NPC.scala:160:21]
+  wire        _npc_io_master_rready;	// @[src/main/scala/npc/NPC.scala:160:21]
+  wire [7:0]  _npc_io_master_arlen;	// @[src/main/scala/npc/NPC.scala:160:21]
+  reg         writeState;	// @[src/main/scala/npc/axi4/AXI4.scala:384:30]
+  reg         readState;	// @[src/main/scala/npc/axi4/AXI4.scala:388:30]
+  reg  [2:0]  writeOutSelect;	// @[src/main/scala/npc/axi4/AXI4.scala:432:35]
+  reg  [2:0]  readOutSelect;	// @[src/main/scala/npc/axi4/AXI4.scala:435:34]
+  wire        _GEN = writeOutSelect == 3'h0 & writeState;	// @[src/main/scala/npc/axi4/AXI4.scala:71:18, :384:30, :432:35, :460:{57,65}]
+  wire        _GEN_0 = readOutSelect == 3'h0 & readState;	// @[src/main/scala/npc/axi4/AXI4.scala:71:18, :388:30, :435:34, :482:{55,63}]
+  wire        _GEN_1 = writeOutSelect == 3'h1 & writeState;	// @[src/main/scala/npc/axi4/AXI4.scala:384:30, :432:35, :460:{57,65}]
+  wire        _GEN_2 = readOutSelect == 3'h1 & readState;	// @[src/main/scala/npc/axi4/AXI4.scala:388:30, :435:34, :460:57, :482:{55,63}]
+  wire        _GEN_3 = writeOutSelect == 3'h2 & writeState;	// @[src/main/scala/npc/axi4/AXI4.scala:384:30, :432:35, :460:{57,65}]
+  wire        _GEN_4 = readOutSelect == 3'h2 & readState;	// @[src/main/scala/npc/axi4/AXI4.scala:388:30, :435:34, :460:57, :482:{55,63}]
+  wire        _GEN_5 = writeOutSelect == 3'h3 & writeState;	// @[src/main/scala/npc/axi4/AXI4.scala:384:30, :432:35, :460:{57,65}]
+  wire        _GEN_6 = readOutSelect == 3'h3 & readState;	// @[src/main/scala/npc/axi4/AXI4.scala:388:30, :435:34, :460:57, :482:{55,63}]
+  wire        _GEN_7 = writeOutSelect == 3'h4 & writeState;	// @[src/main/scala/chisel3/util/Mux.scala:30:73, src/main/scala/npc/axi4/AXI4.scala:384:30, :432:35, :460:{57,65}]
+  wire        _GEN_8 = readOutSelect == 3'h4 & readState;	// @[src/main/scala/chisel3/util/Mux.scala:30:73, src/main/scala/npc/axi4/AXI4.scala:388:30, :435:34, :482:{55,63}]
+  wire        _GEN_9 = writeOutSelect == 3'h5 & writeState;	// @[src/main/scala/chisel3/util/Mux.scala:30:73, src/main/scala/npc/axi4/AXI4.scala:384:30, :432:35, :460:{57,65}]
+  wire        _GEN_10 = readOutSelect == 3'h5 & readState;	// @[src/main/scala/chisel3/util/Mux.scala:30:73, src/main/scala/npc/axi4/AXI4.scala:388:30, :435:34, :482:{55,63}]
+  wire        _GEN_11 = writeOutSelect == 3'h6 & writeState;	// @[src/main/scala/chisel3/util/Mux.scala:30:73, src/main/scala/npc/axi4/AXI4.scala:384:30, :432:35, :460:{57,65}]
+  wire        _GEN_12 = readOutSelect == 3'h6 & readState;	// @[src/main/scala/chisel3/util/Mux.scala:30:73, src/main/scala/npc/axi4/AXI4.scala:388:30, :435:34, :482:{55,63}]
+  wire        _GEN_13 = (&writeOutSelect) & writeState;	// @[src/main/scala/npc/axi4/AXI4.scala:384:30, :432:35, :460:{57,65}]
+  wire        _GEN_14 = _GEN_13 | _GEN_11 | _GEN_9 | _GEN_7 | _GEN_5 | _GEN_3;	// @[src/main/scala/npc/axi4/AXI4.scala:460:{65,81}, :461:29]
+  wire        _GEN_15 =
+    _GEN_14 ? _mem_io_bvalid : _GEN_1 ? _uart_io_bvalid : _GEN & _clint_io_bvalid;	// @[src/main/scala/npc/NPC.scala:161:21, :162:21, :163:21, src/main/scala/npc/axi4/AXI4.scala:452:16, :460:{65,81}, :461:29, :478:29]
+  wire        _GEN_16 = (&readOutSelect) & readState;	// @[src/main/scala/npc/axi4/AXI4.scala:388:30, :435:34, :482:{55,63}]
+  wire        _GEN_17 = _GEN_16 | _GEN_12 | _GEN_10 | _GEN_8 | _GEN_6 | _GEN_4;	// @[src/main/scala/npc/axi4/AXI4.scala:482:{63,79}, :483:29]
+  wire        _GEN_18 =
+    _GEN_17 ? _mem_io_rvalid : _GEN_2 ? _uart_io_rvalid : _GEN_0 & _clint_io_rvalid;	// @[src/main/scala/npc/NPC.scala:161:21, :162:21, :163:21, src/main/scala/npc/axi4/AXI4.scala:452:16, :482:{63,79}, :483:29, :495:29]
+  wire        rlast = _GEN_17 ? _mem_io_rlast : _GEN_2 | _GEN_0 & _clint_io_rlast;	// @[src/main/scala/npc/NPC.scala:161:21, :163:21, src/main/scala/npc/axi4/AXI4.scala:452:16, :482:{63,79}, :483:29, :498:29]
+  always @(posedge clock) begin	// @[src/main/scala/npc/NPC.scala:159:7]
+    if (reset) begin	// @[src/main/scala/npc/NPC.scala:159:7]
+      writeState <= 1'h0;	// @[src/main/scala/npc/NPC.scala:159:7, src/main/scala/npc/axi4/AXI4.scala:384:30]
+      readState <= 1'h0;	// @[src/main/scala/npc/NPC.scala:159:7, src/main/scala/npc/axi4/AXI4.scala:388:30]
     end
-    else begin	// @[src/main/scala/npc/NPC.scala:156:7]
-      if (writeState)	// @[src/main/scala/npc/axi4/AXI4.scala:381:30]
-        writeState <= ~(_GEN_2 & _npc_io_master_bready);	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:381:30, :383:34, :404:46, :437:26, :457:81, :471:29]
-      else	// @[src/main/scala/npc/axi4/AXI4.scala:381:30]
-        writeState <= _npc_io_master_awvalid;	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:381:30]
-      if (readState)	// @[src/main/scala/npc/axi4/AXI4.scala:385:30]
-        readState <= ~(_GEN_4 & _npc_io_master_rready & rlast);	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:381:30, :383:34, :385:30, :444:{26,33}, :475:79, :484:29, :487:29]
-      else	// @[src/main/scala/npc/axi4/AXI4.scala:385:30]
-        readState <= _npc_io_master_arvalid;	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:385:30]
+    else begin	// @[src/main/scala/npc/NPC.scala:159:7]
+      if (writeState)	// @[src/main/scala/npc/axi4/AXI4.scala:384:30]
+        writeState <= ~(_GEN_15 & _npc_io_master_bready);	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:384:30, :386:34, :407:46, :440:26, :460:81, :478:29]
+      else	// @[src/main/scala/npc/axi4/AXI4.scala:384:30]
+        writeState <= _npc_io_master_awvalid;	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:384:30]
+      if (readState)	// @[src/main/scala/npc/axi4/AXI4.scala:388:30]
+        readState <= ~(_GEN_18 & _npc_io_master_rready & rlast);	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:384:30, :386:34, :388:30, :447:{26,33}, :482:79, :495:29, :498:29]
+      else	// @[src/main/scala/npc/axi4/AXI4.scala:388:30]
+        readState <= _npc_io_master_arvalid;	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:388:30]
     end
-    if (writeState) begin	// @[src/main/scala/npc/axi4/AXI4.scala:381:30]
+    if (writeState) begin	// @[src/main/scala/npc/axi4/AXI4.scala:384:30]
     end
-    else	// @[src/main/scala/npc/axi4/AXI4.scala:381:30]
+    else	// @[src/main/scala/npc/axi4/AXI4.scala:384:30]
       writeOutSelect <=
-        ~(_npc_io_master_awaddr > 32'hA00003F7 & _npc_io_master_awaddr < 32'hA00003F9);	// @[src/main/scala/npc/NPC.scala:158:23, :164:26, src/main/scala/npc/axi4/AXI4.scala:429:35, src/main/scala/npc/dev/Dev.scala:8:{10,19,27}]
-    if (readState) begin	// @[src/main/scala/npc/axi4/AXI4.scala:385:30]
+        {_npc_io_master_awaddr > 32'hA00000FF & _npc_io_master_awaddr < 32'hA0000108,
+         {_npc_io_master_awaddr[31] & _npc_io_master_awaddr < 32'h88000000,
+          _npc_io_master_awaddr > 32'hA00003F7 & _npc_io_master_awaddr < 32'hA00003F9}
+           | {2{_npc_io_master_awaddr > 32'hA000005F
+                  & _npc_io_master_awaddr < 32'hA0000064}}}
+        | (_npc_io_master_awaddr > 32'hA0FFFFFF & _npc_io_master_awaddr < 32'hA1138800
+             ? 3'h5
+             : 3'h0)
+        | (_npc_io_master_awaddr > 32'hA00001FF & _npc_io_master_awaddr < 32'hA0000218
+             ? 3'h6
+             : 3'h0)
+        | {3{_npc_io_master_awaddr > 32'hA1FFFFFF
+               & _npc_io_master_awaddr < 32'hA0010000}};	// @[src/main/scala/chisel3/util/Mux.scala:30:73, src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:71:18, :432:35, src/main/scala/npc/dev/Dev.scala:8:{10,19,27}]
+    if (readState) begin	// @[src/main/scala/npc/axi4/AXI4.scala:388:30]
     end
-    else	// @[src/main/scala/npc/axi4/AXI4.scala:385:30]
+    else	// @[src/main/scala/npc/axi4/AXI4.scala:388:30]
       readOutSelect <=
-        ~(_npc_io_master_araddr > 32'hA00003F7 & _npc_io_master_araddr < 32'hA00003F9);	// @[src/main/scala/npc/NPC.scala:158:23, :164:26, src/main/scala/npc/axi4/AXI4.scala:432:34, src/main/scala/npc/dev/Dev.scala:8:{10,19,27}]
+        {_npc_io_master_araddr > 32'hA00000FF & _npc_io_master_araddr < 32'hA0000108,
+         {_npc_io_master_araddr[31] & _npc_io_master_araddr < 32'h88000000,
+          _npc_io_master_araddr > 32'hA00003F7 & _npc_io_master_araddr < 32'hA00003F9}
+           | {2{_npc_io_master_araddr > 32'hA000005F
+                  & _npc_io_master_araddr < 32'hA0000064}}}
+        | (_npc_io_master_araddr > 32'hA0FFFFFF & _npc_io_master_araddr < 32'hA1138800
+             ? 3'h5
+             : 3'h0)
+        | (_npc_io_master_araddr > 32'hA00001FF & _npc_io_master_araddr < 32'hA0000218
+             ? 3'h6
+             : 3'h0)
+        | {3{_npc_io_master_araddr > 32'hA1FFFFFF
+               & _npc_io_master_araddr < 32'hA0010000}};	// @[src/main/scala/chisel3/util/Mux.scala:30:73, src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:71:18, :435:34, src/main/scala/npc/dev/Dev.scala:8:{10,19,27}]
   end // always @(posedge)
-  `ifdef ENABLE_INITIAL_REG_	// @[src/main/scala/npc/NPC.scala:156:7]
-    `ifdef FIRRTL_BEFORE_INITIAL	// @[src/main/scala/npc/NPC.scala:156:7]
-      `FIRRTL_BEFORE_INITIAL	// @[src/main/scala/npc/NPC.scala:156:7]
+  `ifdef ENABLE_INITIAL_REG_	// @[src/main/scala/npc/NPC.scala:159:7]
+    `ifdef FIRRTL_BEFORE_INITIAL	// @[src/main/scala/npc/NPC.scala:159:7]
+      `FIRRTL_BEFORE_INITIAL	// @[src/main/scala/npc/NPC.scala:159:7]
     `endif // FIRRTL_BEFORE_INITIAL
-    logic [31:0] _RANDOM[0:0];	// @[src/main/scala/npc/NPC.scala:156:7]
-    initial begin	// @[src/main/scala/npc/NPC.scala:156:7]
-      `ifdef INIT_RANDOM_PROLOG_	// @[src/main/scala/npc/NPC.scala:156:7]
-        `INIT_RANDOM_PROLOG_	// @[src/main/scala/npc/NPC.scala:156:7]
+    logic [31:0] _RANDOM[0:0];	// @[src/main/scala/npc/NPC.scala:159:7]
+    initial begin	// @[src/main/scala/npc/NPC.scala:159:7]
+      `ifdef INIT_RANDOM_PROLOG_	// @[src/main/scala/npc/NPC.scala:159:7]
+        `INIT_RANDOM_PROLOG_	// @[src/main/scala/npc/NPC.scala:159:7]
       `endif // INIT_RANDOM_PROLOG_
-      `ifdef RANDOMIZE_REG_INIT	// @[src/main/scala/npc/NPC.scala:156:7]
-        _RANDOM[/*Zero width*/ 1'b0] = `RANDOM;	// @[src/main/scala/npc/NPC.scala:156:7]
-        writeState = _RANDOM[/*Zero width*/ 1'b0][0];	// @[src/main/scala/npc/NPC.scala:156:7, src/main/scala/npc/axi4/AXI4.scala:381:30]
-        readState = _RANDOM[/*Zero width*/ 1'b0][1];	// @[src/main/scala/npc/NPC.scala:156:7, src/main/scala/npc/axi4/AXI4.scala:381:30, :385:30]
-        writeOutSelect = _RANDOM[/*Zero width*/ 1'b0][4];	// @[src/main/scala/npc/NPC.scala:156:7, src/main/scala/npc/axi4/AXI4.scala:381:30, :429:35]
-        readOutSelect = _RANDOM[/*Zero width*/ 1'b0][5];	// @[src/main/scala/npc/NPC.scala:156:7, src/main/scala/npc/axi4/AXI4.scala:381:30, :432:34]
+      `ifdef RANDOMIZE_REG_INIT	// @[src/main/scala/npc/NPC.scala:159:7]
+        _RANDOM[/*Zero width*/ 1'b0] = `RANDOM;	// @[src/main/scala/npc/NPC.scala:159:7]
+        writeState = _RANDOM[/*Zero width*/ 1'b0][0];	// @[src/main/scala/npc/NPC.scala:159:7, src/main/scala/npc/axi4/AXI4.scala:384:30]
+        readState = _RANDOM[/*Zero width*/ 1'b0][1];	// @[src/main/scala/npc/NPC.scala:159:7, src/main/scala/npc/axi4/AXI4.scala:384:30, :388:30]
+        writeOutSelect = _RANDOM[/*Zero width*/ 1'b0][6:4];	// @[src/main/scala/npc/NPC.scala:159:7, src/main/scala/npc/axi4/AXI4.scala:384:30, :432:35]
+        readOutSelect = _RANDOM[/*Zero width*/ 1'b0][9:7];	// @[src/main/scala/npc/NPC.scala:159:7, src/main/scala/npc/axi4/AXI4.scala:384:30, :435:34]
       `endif // RANDOMIZE_REG_INIT
     end // initial
-    `ifdef FIRRTL_AFTER_INITIAL	// @[src/main/scala/npc/NPC.scala:156:7]
-      `FIRRTL_AFTER_INITIAL	// @[src/main/scala/npc/NPC.scala:156:7]
+    `ifdef FIRRTL_AFTER_INITIAL	// @[src/main/scala/npc/NPC.scala:159:7]
+      `FIRRTL_AFTER_INITIAL	// @[src/main/scala/npc/NPC.scala:159:7]
     `endif // FIRRTL_AFTER_INITIAL
   `endif // ENABLE_INITIAL_REG_
-  NPCImpl npc (	// @[src/main/scala/npc/NPC.scala:158:23]
+  NPCImpl npc (	// @[src/main/scala/npc/NPC.scala:160:21]
     .clock             (clock),
     .reset             (reset),
-    .io_master_awready (_GEN_1 ? _AXI4Mem_io_awready : _GEN & _uart_io_awready),	// @[src/main/scala/npc/NPC.scala:159:23, :160:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :457:{65,81}, :458:29]
+    .io_master_awready
+      (_GEN_14 ? _mem_io_awready : _GEN_1 ? _uart_io_awready : _GEN & _clint_io_awready),	// @[src/main/scala/npc/NPC.scala:161:21, :162:21, :163:21, src/main/scala/npc/axi4/AXI4.scala:452:16, :460:{65,81}, :461:29]
     .io_master_awvalid (_npc_io_master_awvalid),
     .io_master_awaddr  (_npc_io_master_awaddr),
-    .io_master_wready  (_GEN_1 ? _AXI4Mem_io_wready : _GEN & _uart_io_wready),	// @[src/main/scala/npc/NPC.scala:159:23, :160:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :457:{65,81}, :465:29]
+    .io_master_wready
+      (_GEN_14 ? _mem_io_wready : _GEN_1 ? _uart_io_wready : _GEN & _clint_io_wready),	// @[src/main/scala/npc/NPC.scala:161:21, :162:21, :163:21, src/main/scala/npc/axi4/AXI4.scala:452:16, :460:{65,81}, :461:29, :472:29]
     .io_master_wvalid  (_npc_io_master_wvalid),
     .io_master_wdata   (_npc_io_master_wdata),
     .io_master_wstrb   (_npc_io_master_wstrb),
     .io_master_bready  (_npc_io_master_bready),
-    .io_master_bvalid  (_GEN_2),	// @[src/main/scala/npc/axi4/AXI4.scala:457:81, :471:29]
-    .io_master_bresp   (_GEN_1 | ~_GEN ? 2'h0 : _uart_io_bresp),	// @[src/main/scala/npc/NPC.scala:158:23, :159:23, :160:23, src/main/scala/npc/axi4/AXI4.scala:457:{65,81}, :472:29]
-    .io_master_arready (_GEN_3 ? _AXI4Mem_io_arready : _GEN_0 & _uart_io_arready),	// @[src/main/scala/npc/NPC.scala:159:23, :160:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :475:{63,79}, :476:29]
+    .io_master_bvalid  (_GEN_15),	// @[src/main/scala/npc/axi4/AXI4.scala:460:81, :478:29]
+    .io_master_bresp   (_GEN_14 ? 2'h0 : _GEN_1 ? _uart_io_bresp : {_GEN, 1'h0}),	// @[src/main/scala/npc/NPC.scala:159:7, :160:21, :162:21, :163:21, src/main/scala/npc/axi4/AXI4.scala:452:16, :460:{65,81}, :461:29, :479:29]
+    .io_master_arready
+      (_GEN_17
+         ? _mem_io_arready
+         : _GEN_2 ? _uart_io_arready : _GEN_0 & _clint_io_arready),	// @[src/main/scala/npc/NPC.scala:161:21, :162:21, :163:21, src/main/scala/npc/axi4/AXI4.scala:452:16, :482:{63,79}, :483:29]
     .io_master_arvalid (_npc_io_master_arvalid),
     .io_master_araddr  (_npc_io_master_araddr),
     .io_master_rready  (_npc_io_master_rready),
-    .io_master_rvalid  (_GEN_4),	// @[src/main/scala/npc/axi4/AXI4.scala:475:79, :484:29]
-    .io_master_rresp   (_GEN_3 ? 2'h0 : {_GEN_0, 1'h0}),	// @[src/main/scala/npc/NPC.scala:156:7, :158:23, :160:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :475:{63,79}, :485:29]
-    .io_master_rdata   (_GEN_3 ? _AXI4Mem_io_rdata : 32'h0),	// @[src/main/scala/npc/NPC.scala:158:23, :159:23, :160:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :475:{63,79}, :486:29]
+    .io_master_rvalid  (_GEN_18),	// @[src/main/scala/npc/axi4/AXI4.scala:482:79, :495:29]
+    .io_master_rresp   (_GEN_17 ? 2'h0 : _GEN_2 ? 2'h2 : _GEN_0 ? _clint_io_rresp : 2'h0),	// @[src/main/scala/npc/NPC.scala:160:21, :161:21, :162:21, :163:21, src/main/scala/npc/axi4/AXI4.scala:452:16, :482:{63,79}, :483:29, :496:29]
+    .io_master_rdata
+      (_GEN_17 ? _mem_io_rdata : _GEN_2 | ~_GEN_0 ? 32'h0 : _clint_io_rdata),	// @[src/main/scala/npc/NPC.scala:160:21, :161:21, :162:21, :163:21, src/main/scala/npc/axi4/AXI4.scala:482:{63,79}, :483:29, :497:29]
     .io_master_arlen   (_npc_io_master_arlen),
-    .io_master_rlast   (rlast)	// @[src/main/scala/npc/axi4/AXI4.scala:475:79, :487:29]
+    .io_master_rlast   (rlast)	// @[src/main/scala/npc/axi4/AXI4.scala:482:79, :498:29]
   );
-  Uart uart (	// @[src/main/scala/npc/NPC.scala:159:23]
+  CLINT clint (	// @[src/main/scala/npc/NPC.scala:161:21]
+    .clock      (clock),
+    .reset      (reset),
+    .io_awready (_clint_io_awready),
+    .io_awvalid (_GEN & _npc_io_master_awvalid),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:{65,81}, :462:29]
+    .io_wready  (_clint_io_wready),
+    .io_wvalid  (_GEN & _npc_io_master_wvalid),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:{65,81}, :473:29]
+    .io_bready  (_GEN & _npc_io_master_bready),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:{65,81}, :477:29]
+    .io_bvalid  (_clint_io_bvalid),
+    .io_arready (_clint_io_arready),
+    .io_arvalid (_GEN_0 & _npc_io_master_arvalid),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :482:{63,79}, :484:29]
+    .io_araddr  (_GEN_0 ? _npc_io_master_araddr + 32'h5FFFFFB8 : 32'h0),	// @[src/main/scala/npc/NPC.scala:160:21, :162:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :482:{63,79}, :486:{30,49}]
+    .io_rready  (_GEN_0 & _npc_io_master_rready),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :482:{63,79}, :494:29]
+    .io_rvalid  (_clint_io_rvalid),
+    .io_rresp   (_clint_io_rresp),
+    .io_rdata   (_clint_io_rdata),
+    .io_rlast   (_clint_io_rlast)
+  );
+  Uart uart (	// @[src/main/scala/npc/NPC.scala:162:21]
     .clock      (clock),
     .reset      (reset),
     .io_awready (_uart_io_awready),
-    .io_awvalid (_GEN & _npc_io_master_awvalid),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:452:17, :457:{65,81}, :459:29]
-    .io_awaddr  (_GEN ? _npc_io_master_awaddr : 32'h0),	// @[src/main/scala/npc/NPC.scala:158:23, :159:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :452:17, :457:{65,81}, :460:29, :475:79, :486:29]
+    .io_awvalid (_GEN_1 & _npc_io_master_awvalid),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:{65,81}, :462:29]
+    .io_awaddr  (_GEN_1 ? _npc_io_master_awaddr + 32'h5FFFFC08 : 32'h0),	// @[src/main/scala/npc/NPC.scala:160:21, :162:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:{65,81}, :464:{31,50}]
     .io_wready  (_uart_io_wready),
-    .io_wvalid  (_GEN & _npc_io_master_wvalid),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:452:17, :457:{65,81}, :466:29]
-    .io_wdata   (_GEN ? _npc_io_master_wdata : 32'h0),	// @[src/main/scala/npc/NPC.scala:158:23, :159:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :452:17, :457:{65,81}, :467:29, :475:79, :486:29]
-    .io_wstrb   (_GEN ? _npc_io_master_wstrb : 4'h0),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:83:17, :452:17, :457:{65,81}, :468:29]
-    .io_bready  (_GEN & _npc_io_master_bready),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:452:17, :457:{65,81}, :470:29]
+    .io_wvalid  (_GEN_1 & _npc_io_master_wvalid),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:{65,81}, :473:29]
+    .io_wdata   (_GEN_1 ? _npc_io_master_wdata : 32'h0),	// @[src/main/scala/npc/NPC.scala:160:21, :162:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:{65,81}, :474:29]
+    .io_wstrb   (_GEN_1 ? _npc_io_master_wstrb : 4'h0),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:83:17, :455:17, :460:{65,81}, :475:29]
+    .io_bready  (_GEN_1 & _npc_io_master_bready),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:{65,81}, :477:29]
     .io_bvalid  (_uart_io_bvalid),
     .io_bresp   (_uart_io_bresp),
     .io_arready (_uart_io_arready),
-    .io_arvalid (_GEN_0 & _npc_io_master_arvalid),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:452:17, :475:{63,79}, :477:29]
-    .io_araddr  (_GEN_0 ? _npc_io_master_araddr : 32'h0),	// @[src/main/scala/npc/NPC.scala:158:23, :159:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :452:17, :475:{63,79}, :478:29, :486:29]
-    .io_rready  (_GEN_0 & _npc_io_master_rready),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:452:17, :475:{63,79}, :483:29]
+    .io_arvalid (_GEN_2 & _npc_io_master_arvalid),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :482:{63,79}, :484:29]
+    .io_araddr  (_GEN_2 ? _npc_io_master_araddr + 32'h5FFFFC08 : 32'h0),	// @[src/main/scala/npc/NPC.scala:160:21, :162:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :464:50, :482:{63,79}, :486:{30,49}]
+    .io_rready  (_GEN_2 & _npc_io_master_rready),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :482:{63,79}, :494:29]
     .io_rvalid  (_uart_io_rvalid)
   );
-  AXI4Mem AXI4Mem (	// @[src/main/scala/npc/NPC.scala:160:23]
+  AXI4Mem mem (	// @[src/main/scala/npc/NPC.scala:163:21]
     .clock      (clock),
     .reset      (reset),
-    .io_awready (_AXI4Mem_io_awready),
-    .io_awvalid (_GEN_1 & _npc_io_master_awvalid),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:452:17, :457:{65,81}, :459:29]
-    .io_awaddr  (_GEN_1 ? _npc_io_master_awaddr : 32'h0),	// @[src/main/scala/npc/NPC.scala:158:23, :159:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :452:17, :457:{65,81}, :460:29, :475:79, :486:29]
-    .io_wready  (_AXI4Mem_io_wready),
-    .io_wvalid  (_GEN_1 & _npc_io_master_wvalid),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:452:17, :457:{65,81}, :466:29]
-    .io_wdata   (_GEN_1 ? _npc_io_master_wdata : 32'h0),	// @[src/main/scala/npc/NPC.scala:158:23, :159:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :452:17, :457:{65,81}, :467:29, :475:79, :486:29]
-    .io_wstrb   (_GEN_1 ? _npc_io_master_wstrb : 4'h0),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:83:17, :452:17, :457:{65,81}, :468:29]
-    .io_bready  (_GEN_1 & _npc_io_master_bready),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:452:17, :457:{65,81}, :470:29]
-    .io_bvalid  (_AXI4Mem_io_bvalid),
-    .io_arready (_AXI4Mem_io_arready),
-    .io_arvalid (_GEN_3 & _npc_io_master_arvalid),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:452:17, :475:{63,79}, :477:29]
-    .io_araddr  (_GEN_3 ? _npc_io_master_araddr : 32'h0),	// @[src/main/scala/npc/NPC.scala:158:23, :159:23, src/main/scala/npc/axi4/AXI4.scala:449:16, :452:17, :475:{63,79}, :478:29, :486:29]
-    .io_rready  (_GEN_3 & _npc_io_master_rready),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:452:17, :475:{63,79}, :483:29]
-    .io_rvalid  (_AXI4Mem_io_rvalid),
-    .io_rdata   (_AXI4Mem_io_rdata),
-    .io_arlen   (_GEN_3 ? _npc_io_master_arlen : 8'h0),	// @[src/main/scala/npc/NPC.scala:158:23, src/main/scala/npc/axi4/AXI4.scala:70:18, :452:17, :475:{63,79}, :480:29]
-    .io_rlast   (_AXI4Mem_io_rlast)
+    .io_awready (_mem_io_awready),
+    .io_awvalid (_GEN_14 & _npc_io_master_awvalid),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:81, :461:29, :462:29]
+    .io_awaddr
+      (_GEN_13
+         ? _npc_io_master_awaddr + 32'h5E000000
+         : _GEN_11
+             ? _npc_io_master_awaddr + 32'h5FFFFE00
+             : _GEN_9
+                 ? _npc_io_master_awaddr + 32'h5F000000
+                 : _GEN_7
+                     ? _npc_io_master_awaddr + 32'h5FFFFF00
+                     : _GEN_5
+                         ? _npc_io_master_awaddr + 32'h5FFFFFA0
+                         : _GEN_3 ? _npc_io_master_awaddr - 32'h80000000 : 32'h0),	// @[src/main/scala/npc/NPC.scala:160:21, :162:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:{65,81}, :464:{31,50}]
+    .io_wready  (_mem_io_wready),
+    .io_wvalid  (_GEN_14 & _npc_io_master_wvalid),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:81, :461:29, :473:29]
+    .io_wdata   (_GEN_14 ? _npc_io_master_wdata : 32'h0),	// @[src/main/scala/npc/NPC.scala:160:21, :162:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:81, :461:29, :474:29]
+    .io_wstrb   (_GEN_14 ? _npc_io_master_wstrb : 4'h0),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:83:17, :455:17, :460:81, :461:29, :475:29]
+    .io_bready  (_GEN_14 & _npc_io_master_bready),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :460:81, :461:29, :477:29]
+    .io_bvalid  (_mem_io_bvalid),
+    .io_arready (_mem_io_arready),
+    .io_arvalid (_GEN_17 & _npc_io_master_arvalid),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :482:79, :483:29, :484:29]
+    .io_araddr
+      (_GEN_16
+         ? _npc_io_master_araddr + 32'h5E000000
+         : _GEN_12
+             ? _npc_io_master_araddr + 32'h5FFFFE00
+             : _GEN_10
+                 ? _npc_io_master_araddr + 32'h5F000000
+                 : _GEN_8
+                     ? _npc_io_master_araddr + 32'h5FFFFF00
+                     : _GEN_6
+                         ? _npc_io_master_araddr + 32'h5FFFFFA0
+                         : _GEN_4 ? _npc_io_master_araddr - 32'h80000000 : 32'h0),	// @[src/main/scala/npc/NPC.scala:160:21, :162:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :464:50, :482:{63,79}, :486:{30,49}]
+    .io_rready  (_GEN_17 & _npc_io_master_rready),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:455:17, :482:79, :483:29, :494:29]
+    .io_rvalid  (_mem_io_rvalid),
+    .io_rdata   (_mem_io_rdata),
+    .io_arlen   (_GEN_17 ? _npc_io_master_arlen : 8'h0),	// @[src/main/scala/npc/NPC.scala:160:21, src/main/scala/npc/axi4/AXI4.scala:70:18, :455:17, :482:79, :483:29, :491:29]
+    .io_rlast   (_mem_io_rlast)
   );
 endmodule
 

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenRun Id="impl_1" LaunchPart="xc7z020clg400-1" LaunchTime="1733584297">
+  <File Type="ROUTE-RQS-RPT" Name="route_report_qor_suggestions_0.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-RQS" Name="FPGA_postroute_physopted.rqs"/>
+  <File Type="ROUTE-RQS" Name="FPGA_routed.rqs"/>
+  <File Type="WBT-USG" Name="usage_statistics_webtalk.html"/>
+  <File Type="BG-BGN" Name="FPGA.bgn"/>
+  <File Type="BITSTR-SYSDEF" Name="FPGA.sysdef"/>
+  <File Type="BITSTR-LTX" Name="debug_nets.ltx"/>
+  <File Type="BITSTR-LTX" Name="FPGA.ltx"/>
+  <File Type="RBD_FILE" Name="FPGA.rbd"/>
+  <File Type="NPI_FILE" Name="FPGA.npi"/>
+  <File Type="RNPI_FILE" Name="FPGA.rnpi"/>
+  <File Type="CFI_FILE" Name="FPGA.cfi"/>
+  <File Type="RCFI_FILE" Name="FPGA.rcfi"/>
+  <File Type="PL-PDI-FILE" Name="FPGA_pld.pdi"/>
+  <File Type="BOOT-PDI-FILE" Name="FPGA_soc.pdi"/>
+  <File Type="RDI-RDI" Name="FPGA.vdi"/>
+  <File Type="PDI-FILE" Name="FPGA.pdi"/>
+  <File Type="BITSTR-MMI" Name="FPGA.mmi"/>
+  <File Type="BITSTR-BMM" Name="FPGA_bd.bmm"/>
+  <File Type="BITSTR-NKY" Name="FPGA.nky"/>
+  <File Type="BITSTR-RBT" Name="FPGA.rbt"/>
+  <File Type="BITSTR-MSK" Name="FPGA.msk"/>
+  <File Type="BG-BIN" Name="FPGA.bin"/>
+  <File Type="POSTROUTE-PHYSOPT-RQS-RPT" Name="postroute_physopt_report_qor_suggestions_0.rpt"/>
+  <File Type="BG-BIT" Name="FPGA.bit"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW-RPX" Name="FPGA_bus_skew_postroute_physopted.rpx"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW-PB" Name="FPGA_bus_skew_postroute_physopted.pb"/>
+  <File Type="POSTROUTE-PHYSOPT-BUS-SKEW" Name="FPGA_bus_skew_postroute_physopted.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING-RPX" Name="FPGA_timing_summary_postroute_physopted.rpx"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING-PB" Name="FPGA_timing_summary_postroute_physopted.pb"/>
+  <File Type="POSTROUTE-PHYSOPT-TIMING" Name="FPGA_timing_summary_postroute_physopted.rpt"/>
+  <File Type="POSTROUTE-PHYSOPT-BLACKBOX-DCP" Name="FPGA_postroute_physopt_bb.dcp"/>
+  <File Type="POSTROUTE-PHYSOPT-DCP" Name="FPGA_postroute_physopt.dcp"/>
+  <File Type="BG-DRC" Name="FPGA.drc"/>
+  <File Type="ROUTE-RQS-PB" Name="FPGA_rqs_routed.pb"/>
+  <File Type="ROUTE-BUS-SKEW-RPX" Name="FPGA_bus_skew_routed.rpx"/>
+  <File Type="ROUTE-BUS-SKEW-PB" Name="FPGA_bus_skew_routed.pb"/>
+  <File Type="ROUTE-BUS-SKEW" Name="FPGA_bus_skew_routed.rpt"/>
+  <File Type="ROUTE-CLK" Name="FPGA_clock_utilization_routed.rpt"/>
+  <File Type="ROUTE-SIMILARITY" Name="FPGA_incremental_reuse_routed.rpt"/>
+  <File Type="ROUTE-TIMING-RPX" Name="FPGA_timing_summary_routed.rpx"/>
+  <File Type="ROUTE-TIMING-PB" Name="FPGA_timing_summary_routed.pb"/>
+  <File Type="ROUTE-TIMINGSUMMARY" Name="FPGA_timing_summary_routed.rpt"/>
+  <File Type="ROUTE-STATUS-PB" Name="FPGA_route_status.pb"/>
+  <File Type="ROUTE-STATUS" Name="FPGA_route_status.rpt"/>
+  <File Type="ROUTE-PWR-RPX" Name="FPGA_power_routed.rpx"/>
+  <File Type="ROUTE-PWR-SUM" Name="FPGA_power_summary_routed.pb"/>
+  <File Type="ROUTE-PWR" Name="FPGA_power_routed.rpt"/>
+  <File Type="ROUTE-METHODOLOGY-DRC-PB" Name="FPGA_methodology_drc_routed.pb"/>
+  <File Type="ROUTE-METHODOLOGY-DRC-RPX" Name="FPGA_methodology_drc_routed.rpx"/>
+  <File Type="ROUTE-METHODOLOGY-DRC" Name="FPGA_methodology_drc_routed.rpt"/>
+  <File Type="ROUTE-DRC-RPX" Name="FPGA_drc_routed.rpx"/>
+  <File Type="ROUTE-DRC-PB" Name="FPGA_drc_routed.pb"/>
+  <File Type="ROUTE-DRC" Name="FPGA_drc_routed.rpt"/>
+  <File Type="ROUTE-BLACKBOX-DCP" Name="FPGA_routed_bb.dcp"/>
+  <File Type="ROUTE-DCP" Name="FPGA_routed.dcp"/>
+  <File Type="ROUTE-ERROR-DCP" Name="FPGA_routed_error.dcp"/>
+  <File Type="PHYSOPT-TIMING" Name="FPGA_timing_summary_physopted.rpt"/>
+  <File Type="PHYSOPT-DRC" Name="FPGA_drc_physopted.rpt"/>
+  <File Type="PHYSOPT-DCP" Name="FPGA_physopt.dcp"/>
+  <File Type="POSTPLACE-PWROPT-TIMING" Name="FPGA_timing_summary_postplace_pwropted.rpt"/>
+  <File Type="POSTPLACE-PWROPT-DCP" Name="FPGA_postplace_pwropt.dcp"/>
+  <File Type="PLACE-RQA-PB" Name="FPGA_rqa_placed.pb"/>
+  <File Type="PLACE-TIMING" Name="FPGA_timing_summary_placed.rpt"/>
+  <File Type="PLACE-PRE-SIMILARITY" Name="FPGA_incremental_reuse_pre_placed.rpt"/>
+  <File Type="PLACE-SIMILARITY" Name="FPGA_incremental_reuse_placed.rpt"/>
+  <File Type="PLACE-CTRL" Name="FPGA_control_sets_placed.rpt"/>
+  <File Type="PLACE-UTIL-PB" Name="FPGA_utilization_placed.pb"/>
+  <File Type="PLACE-UTIL" Name="FPGA_utilization_placed.rpt"/>
+  <File Type="PLACE-CLK" Name="FPGA_clock_utilization_placed.rpt"/>
+  <File Type="PLACE-IO" Name="FPGA_io_placed.rpt"/>
+  <File Type="PLACE-DCP" Name="FPGA_placed.dcp"/>
+  <File Type="PWROPT-TIMING" Name="FPGA_timing_summary_pwropted.rpt"/>
+  <File Type="PWROPT-DRC" Name="FPGA_drc_pwropted.rpt"/>
+  <File Type="PWROPT-DCP" Name="FPGA_pwropt.dcp"/>
+  <File Type="OPT-RQA-PB" Name="FPGA_rqa_opted.pb"/>
+  <File Type="OPT-HWDEF" Name="FPGA.hwdef"/>
+  <File Type="OPT-METHODOLOGY-DRC" Name="FPGA_methodology_drc_opted.rpt"/>
+  <File Type="OPT-DRC" Name="FPGA_drc_opted.rpt"/>
+  <File Type="OPT-DCP" Name="FPGA_opt.dcp"/>
+  <File Type="OPT-TIMING" Name="FPGA_timing_summary_opted.rpt"/>
+  <File Type="REPORTS-TCL" Name="FPGA_reports.tcl"/>
+  <File Type="INIT-TIMING" Name="FPGA_timing_summary_init.rpt"/>
+  <File Type="PA-TCL" Name="FPGA.tcl"/>
+  <FileSet Name="sources" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
+    <Filter Type="Srcs"/>
+    <File Path="$PSRCDIR/sources_1/ip/AXI4_TO_AXI4Lite_IP/AXI4_TO_AXI4Lite_IP.xci">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/imports/fpga/FPGA.sv">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/FPGA.sv"/>
+        <Attr Name="ImportTime" Val="1733454358"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/fpga.coe/hello-riscv32e-fpga.coe">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/fpga.coe/microbench-riscv32e-fpga.coe">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/fpga.coe/microbench-train-riscv32e-fpga.coe">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/fpga.coe/microbench-test-riscv32e-fpga.coe">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PPRDIR/fpga.coe/microbench-ref-riscv32e-fpga.coe">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <Config>
+      <Option Name="DesignMode" Val="RTL"/>
+      <Option Name="TopModule" Val="FPGA"/>
+      <Option Name="TopAutoSet" Val="TRUE"/>
+    </Config>
+  </FileSet>
+  <FileSet Name="constrs_in" Type="Constrs" RelSrcDir="$PSRCDIR/constrs_1" RelGenDir="$PGENDIR/constrs_1">
+    <Filter Type="Constrs"/>
+    <File Path="$PSRCDIR/constrs_1/imports/pynq-z2_v1.0.xdc/PYNQ-Z2 v1.0.xdc">
+      <FileInfo>
+        <Attr Name="ImportPath" Val="$PPRDIR/../../fpga/pynq-z2_v1.0.xdc/PYNQ-Z2 v1.0.xdc"/>
+        <Attr Name="ImportTime" Val="1697433691"/>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+      </FileInfo>
+    </File>
+    <Config>
+      <Option Name="TargetConstrsFile" Val="$PSRCDIR/constrs_1/imports/pynq-z2_v1.0.xdc/PYNQ-Z2 v1.0.xdc"/>
+      <Option Name="ConstrsType" Val="XDC"/>
+    </Config>
+  </FileSet>
+  <FileSet Name="utils" Type="Utils" RelSrcDir="$PSRCDIR/utils_1" RelGenDir="$PGENDIR/utils_1">
+    <Filter Type="Utils"/>
+    <File Path="$PSRCDIR/utils_1/imports/synth_1/FPGA.dcp">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedInSteps" Val="synth_1"/>
+        <Attr Name="AutoDcp" Val="1"/>
+      </FileInfo>
+    </File>
+    <Config>
+      <Option Name="TopAutoSet" Val="TRUE"/>
+    </Config>
+  </FileSet>
+  <Strategy Version="1" Minor="2">
+    <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2023"/>
+    <Step Id="init_design"/>
+    <Step Id="opt_design"/>
+    <Step Id="power_opt_design"/>
+    <Step Id="place_design"/>
+    <Step Id="post_place_power_opt_design"/>
+    <Step Id="phys_opt_design"/>
+    <Step Id="route_design"/>
+    <Step Id="post_route_phys_opt_design"/>
+    <Step Id="write_bitstream"/>
+  </Strategy>
+  <BlockFileSet Type="BlockSrcs" Name="RAM_IP"/>
+  <BlockFileSet Type="BlockSrcs" Name="CLK_WIZ_IP"/>
+  <BlockFileSet Type="BlockSrcs" Name="AXI_UART_IP"/>
+</GenRun>

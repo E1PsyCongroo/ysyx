@@ -40,4 +40,9 @@ object Dev {
     val ChipLinkMEMAddr  = Area("hc0000000".U, "hffffffff".U)
   }
 
+  object fpga {
+    val CLINTAddr = Area("h02000000".U, "h0200ffff".U)
+    val BRAMAddr  = Area("h0f000000".U, "h0f0fffff".U)
+    val UARTAddr  = Area("h10000000".U, "h10000fff".U)
+  }
 }

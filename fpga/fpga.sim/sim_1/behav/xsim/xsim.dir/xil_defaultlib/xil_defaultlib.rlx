@@ -1,0 +1,12 @@
+0.7
+2020.2
+May  7 2023
+15:10:42
+/home/focused_xy/cs/ysyx/fpga/fpga.gen/sources_1/ip/AXI4_TO_AXI4Lite_IP/sim/AXI4_TO_AXI4Lite_IP.v,1733575456,verilog,,/home/focused_xy/cs/ysyx/fpga/fpga.gen/sources_1/ip/RAM_IP/sim/RAM_IP.v,,AXI4_TO_AXI4Lite_IP,,uvm,../../../../fpga.ip_user_files/ipstatic;../../../../fpga.ip_user_files/ipstatic/hdl,,,,,
+/home/focused_xy/cs/ysyx/fpga/fpga.gen/sources_1/ip/AXI_UART_IP/sim/AXI_UART_IP.vhd,1733450924,vhdl,,,,axi_uart_ip,,,,,,,,
+/home/focused_xy/cs/ysyx/fpga/fpga.gen/sources_1/ip/CLK_WIZ_IP/CLK_WIZ_IP.v,1733450422,verilog,,,,CLK_WIZ_IP,,uvm,../../../../fpga.ip_user_files/ipstatic;../../../../fpga.ip_user_files/ipstatic/hdl,,,,,
+/home/focused_xy/cs/ysyx/fpga/fpga.gen/sources_1/ip/CLK_WIZ_IP/CLK_WIZ_IP_clk_wiz.v,1733450422,verilog,,/home/focused_xy/cs/ysyx/fpga/fpga.gen/sources_1/ip/CLK_WIZ_IP/CLK_WIZ_IP.v,,CLK_WIZ_IP_clk_wiz,,uvm,../../../../fpga.ip_user_files/ipstatic;../../../../fpga.ip_user_files/ipstatic/hdl,,,,,
+/home/focused_xy/cs/ysyx/fpga/fpga.gen/sources_1/ip/RAM_IP/sim/RAM_IP.v,1733582010,verilog,,/home/focused_xy/cs/ysyx/fpga/fpga.gen/sources_1/ip/CLK_WIZ_IP/CLK_WIZ_IP_clk_wiz.v,,RAM_IP,,uvm,../../../../fpga.ip_user_files/ipstatic;../../../../fpga.ip_user_files/ipstatic/hdl,,,,,
+/home/focused_xy/cs/ysyx/fpga/fpga.sim/sim_1/behav/xsim/glbl.v,1694849942,verilog,,,,glbl,,uvm,,,,,,
+/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sim_1/new/sim.v,1733582069,verilog,,,,sim,,uvm,../../../../fpga.ip_user_files/ipstatic;../../../../fpga.ip_user_files/ipstatic/hdl,,,,,
+/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA.sv,1733580800,systemVerilog,,,,AXI4_RAM_IP;AXI4_UART_IP;CLINT;EXU;FPGA;FPGA_RVCPU;ICache;IDU;IFU;LSU;PLL_IP;RegFile;WBU,,uvm,../../../../fpga.ip_user_files/ipstatic;../../../../fpga.ip_user_files/ipstatic/hdl,,,,,

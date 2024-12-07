@@ -8,6 +8,7 @@
 !/npc/*
 !/cachesim/*
 !/resources/**
+!/fpga/**
 !Makefile
 !README.md
 !.gitignore

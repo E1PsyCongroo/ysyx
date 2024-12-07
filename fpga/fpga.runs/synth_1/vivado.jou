@@ -1,0 +1,14 @@
+#-----------------------------------------------------------
+# Vivado v2023.1 (64-bit)
+# SW Build 3865809 on Sun May  7 15:04:56 MDT 2023
+# IP Build 3864474 on Sun May  7 20:36:21 MDT 2023
+# SharedData Build 3865790 on Sun May 07 13:33:03 MDT 2023
+# Start of session at: Sat Dec  7 23:11:38 2024
+# Process ID: 661602
+# Current directory: /home/focused_xy/cs/ysyx/fpga/fpga.runs/synth_1
+# Command line: vivado -log FPGA.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source FPGA.tcl
+# Log file: /home/focused_xy/cs/ysyx/fpga/fpga.runs/synth_1/FPGA.vds
+# Journal file: /home/focused_xy/cs/ysyx/fpga/fpga.runs/synth_1/vivado.jou
+# Running On: FocusedXYArchlinuxLaptop, OS: Linux, CPU Frequency: 1289.837 MHz, CPU Physical cores: 14, Host memory: 16457 MB
+#-----------------------------------------------------------
+source FPGA.tcl -notrace

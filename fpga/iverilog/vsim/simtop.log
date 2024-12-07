@@ -1,0 +1,8 @@
+FST info: dumpfile simtop.fst opened for output.
+Warning : input CLKIN1 period and attribute CLKIN1_PERIOD on PLLE2_ADV instance simtop.dut.pll.pll.inst.plle2_adv_inst are not same.
+ERROR: /home/focused_xy/cs/ysyx/nemu/../fpga/iverilog/vsrc/LSU.sv:152: Assertion failed
+    at LSU.scala:160 assert(!bfire || io.master.bresp === TransactionResponse.okey.asUInt)
+
+       Time: 814000  Scope: simtop.dut.rvcpu.LSU
+FATAL: /home/focused_xy/cs/ysyx/nemu/../fpga/iverilog/vsrc/LSU.sv:154: 
+       Time: 814000  Scope: simtop.dut.rvcpu.LSU

@@ -54,5 +54,3 @@ include $(NPC_HOME)/scripts/make/config.mk
 # Include rules to build NPC
 include $(NPC_HOME)/scripts/make/native.mk
 
-# Include rules to fpga
-include $(NPC_HOME)/scripts/make/fpga.mk

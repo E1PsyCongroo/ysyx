@@ -7,7 +7,7 @@ import rvcpu.utility._
 import chisel3._
 import chisel3.util._
 
-class CLK_WIZIO extends Bundle {
+class CLK_WIZ_IPIO extends Bundle {
   val clk_out1 = Output(Clock()) // 200 MHz
   val clk_out2 = Output(Clock()) // 100 MHz
   val clk_out3 = Output(Clock()) // 50  MHz
@@ -18,8 +18,8 @@ class CLK_WIZIO extends Bundle {
   val clk_in1  = Input(Clock())
 }
 
-class CLK_WIZ extends BlackBox {
-  val io = IO(new CLK_WIZIO)
+class CLK_WIZ_IP extends BlackBox {
+  val io = IO(new CLK_WIZ_IPIO)
 }
 
 class PLL_IP extends Module {
@@ -27,7 +27,7 @@ class PLL_IP extends Module {
     val locked = Output(Bool())
     val clk    = Output(Clock())
   })
-  val pll = Module(new CLK_WIZ)
+  val pll = Module(new CLK_WIZ_IP)
   pll.io.clk_in1 := clock
   pll.io.reset   := reset
   io.locked      := pll.io.locked

@@ -74,6 +74,14 @@ clean-vsim:
 	$(IVERILOG_DIR)/vsim/*.jou $(IVERILOG_DIR)/vsim/*.log \
 	$(IVERILOG_DIR)/vsim/*.out
 
+fpga-vsim: $(FPGA_SIM_DIR)/vsim/simtop.fst
+
+clean-fpga-sim:
+	-rm -rf $(FPGA_SIM_DIR)/vsim//*.vpd $(FPGA_SIM_DIR)/vsim/*.vcd \
+	$(FPGA_SIM_DIR)/vsim/*.tbi $(FPGA_SIM_DIR)/vsim/*.fst \
+	$(FPGA_SIM_DIR)/vsim/*.jou $(FPGA_SIM_DIR)/vsim/*.log \
+	$(FPGA_SIM_DIR)/vsim/*.out
+
 clean-tools = $(dir $(shell find ./tools -maxdepth 2 -mindepth 2 -name "Makefile"))
 $(clean-tools):
 	-@$(MAKE) -s -C $@ clean
@@ -83,4 +91,4 @@ clean-all: clean distclean clean-tools clean-vsim
 .PHONY: test mill-help reformat checkformat bsp idea \
         verilog verilator lint run-env run gdb \
         clean-tools clean-all $(clean-tools) sta perf \
-        iverilog vsim clean-vsim
+        iverilog vsim clean-vsim fpga-vsim clean-fpga-sim

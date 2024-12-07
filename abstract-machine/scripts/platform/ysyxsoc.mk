@@ -1,14 +1,11 @@
-AM_SRCS := riscv/ysyxsoc/start.S \
-           riscv/ysyxsoc/trm.c \
-					 riscv/ysyxsoc/ioe/ioe.c \
-           riscv/ysyxsoc/ioe/timer.c \
-           riscv/ysyxsoc/ioe/uart.c \
-           riscv/ysyxsoc/ioe/input.c \
-           riscv/ysyxsoc/ioe/gpu.c \
-           riscv/ysyxsoc/ioe/audio.c \
-           riscv/ysyxsoc/ioe/disk.c \
-           riscv/ysyxsoc/cte.c \
-           riscv/ysyxsoc/trap.S \
+AM_SRCS := platform/ysyxsoc/trm.c \
+           platform/ysyxsoc/ioe/ioe.c \
+           platform/ysyxsoc/ioe/timer.c \
+           platform/ysyxsoc/ioe/input.c \
+           platform/ysyxsoc/ioe/gpu.c \
+           platform/ysyxsoc/ioe/audio.c \
+           platform/ysyxsoc/ioe/disk.c \
+           platform/ysyxsoc/ioe/uart.c \
            platform/dummy/vme.c \
            platform/dummy/mpe.c
 
@@ -19,8 +16,8 @@ override NPCFLAGS += -l $(shell dirname $(IMAGE).elf)/npc-log.txt
 # override NPCFLAGS += -w $(shell dirname $(IMAGE).elf)/npc-wave.fst
 
 CFLAGS += -DMAINARGS=\"$(mainargs)\"
-CFLAGS += -I$(AM_HOME)/am/src/riscv/ysyxsoc/include
-.PHONY: $(AM_HOME)/am/src/riscv/ysyxsoc/trm.c
+CFLAGS += -I$(AM_HOME)/am/src/platform/ysyxsoc/include
+.PHONY: $(AM_HOME)/am/src/platform/ysyxsoc/trm.c
 
 image: $(IMAGE).elf
 	@$(OBJDUMP) -d $(IMAGE).elf > $(IMAGE).txt

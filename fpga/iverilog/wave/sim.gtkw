@@ -1,0 +1,60 @@
+[*]
+[*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
+[*] Sat Dec  7 12:02:36 2024
+[*]
+[dumpfile] "/home/focused_xy/cs/ysyx/fpga/iverilog/vsim/simtop.fst"
+[dumpfile_mtime] "Sat Dec  7 12:01:24 2024"
+[dumpfile_size] 29219
+[savefile] "/home/focused_xy/cs/ysyx/fpga/iverilog/wave/sim.gtkw"
+[timestart] 0
+[size] 2560 1330
+[pos] -781 -365
+*-15.900000 37200 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] simtop.
+[treeopen] simtop.dut.
+[treeopen] simtop.dut.rvcpu.
+[sst_width] 281
+[signals_width] 500
+[sst_expanded] 1
+[sst_vpaned_height] 405
+@28
+simtop.clk
+simtop.reset
+@200
+-IFU
+@22
+simtop.dut.rvcpu.IFU.pc[31:0]
+@28
+simtop.dut.rvcpu.IFU.io_jump
+@200
+-ICache
+@28
+simtop.dut.rvcpu.ICache.io_in_valid
+simtop.dut.rvcpu.ICache.io_out_valid
+simtop.dut.rvcpu.ICache.io_out_ready
+@22
+simtop.dut.rvcpu.ICache.io_out_bits_pc[31:0]
+simtop.dut.rvcpu.ICache.io_out_bits_instruction[31:0]
+@200
+-IDU
+@28
+simtop.dut.rvcpu.IDU.io_in_valid
+simtop.dut.rvcpu.IDU.io_out_valid
+@200
+-EXU
+@28
+simtop.dut.rvcpu.EXU.io_in_valid
+simtop.dut.rvcpu.EXU.io_out_valid
+@200
+-LSU
+@28
+simtop.dut.rvcpu.LSU.io_in_valid
+simtop.dut.rvcpu.LSU.io_out_valid
+@200
+-WBU
+@28
+simtop.dut.rvcpu.WBU.io_in_valid
+@29
+simtop.dut.rvcpu.WBU.io_out_valid
+[pattern_trace] 1
+[pattern_trace] 0

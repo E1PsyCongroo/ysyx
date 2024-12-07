@@ -108,15 +108,17 @@ class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   val arfire = io.master.arvalid && io.master.arready
   val rfire  = io.master.rvalid && io.master.rready
 
-  val sSendReq :: sWaitResp :: Nil = Enum(2)
+  val sSendReq :: sWaitWfire :: sWaitResp :: Nil = Enum(3)
 
-  val state      = RegInit(sSendReq)
-  val isSendReq  = state === sSendReq
-  val isWaitResp = state === sWaitResp
+  val state       = RegInit(sSendReq)
+  val isSendReq   = state === sSendReq
+  val isWaitWfire = state === sWaitWfire
+  val isWaitResp  = state === sWaitResp
 
   state := MuxLookup(state, sSendReq)(
     Seq(
-      sSendReq -> Mux(memAccess && (arfire || (awfire && wfire)), sWaitResp, sSendReq),
+      sSendReq -> Mux(arfire, sWaitResp, Mux(awfire, sWaitWfire, sSendReq)),
+      sWaitWfire -> Mux(wfire, sWaitResp, sWaitWfire),
       sWaitResp -> Mux(io.out.fire, sSendReq, sWaitResp)
     )
   )
@@ -129,7 +131,7 @@ class LSU(xlen: Int, extentionE: Boolean, sim: Boolean) extends Module {
   io.master.awsize  := size
   io.master.awburst := "b01".U
 
-  io.master.wvalid := isSendReq && io.in.valid && wen
+  io.master.wvalid := isWaitWfire && io.in.valid && wen
   io.master.wdata  := wdata << (waddr(1, 0) << 3.U)
   io.master.wstrb  := wmask
   io.master.wlast  := isSendReq

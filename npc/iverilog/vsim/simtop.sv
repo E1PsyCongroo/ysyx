@@ -15,7 +15,7 @@ module simtop();
       dut.mem.readData_Mem.mem_ext.Memory[i] = 0;
     end
     $readmemh(
-      "/home/focused_xy/cs/ysyx/npc/iverilog/hex/microbench-riscv32e-npc.hex",
+      "/home/focused_xy/cs/ysyx/npc/iverilog/hex/hello-riscv32e-npc.hex",
       dut.mem.readData_Mem.mem_ext.Memory
     );
     repeat(10) @(posedge clk);
@@ -27,8 +27,7 @@ module simtop();
   end
 
   initial begin
-    // #1000_0000;
-    #1000_0;
+    #1000_0000;
     $error("Timeout!");
     $fatal();
     $finish();

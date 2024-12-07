@@ -1,0 +1,2 @@
+AXI4_TO_AXI4Lite_IP.v,verilog,xil_defaultlib,../../../../fpga.gen/sources_1/ip/AXI4_TO_AXI4Lite_IP/sim/AXI4_TO_AXI4Lite_IP.v,incdir="$ref_dir/../../../ipstatic/hdl"incdir="../../../ipstatic/hdl"
+glbl.v,Verilog,xil_defaultlib,glbl.v

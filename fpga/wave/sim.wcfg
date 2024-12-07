@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="sim_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="ipif_pkg" />
+            <top_module name="lib_pkg" />
+            <top_module name="sim" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="1,020.566 ns"></ZoomStartTime>
+      <ZoomEndTime time="1,122.967 ns"></ZoomEndTime>
+      <Cursor1Time time="1,084.066 ns"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="401"></NameColumnWidth>
+      <ValueColumnWidth column_width="154"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="7" />
+   <wvobject type="logic" fp_name="/sim/dut/pll/io_clk">
+      <obj_property name="ElementShortName">io_clk</obj_property>
+      <obj_property name="ObjectShortName">io_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/sim/dut/rvcpu/reset">
+      <obj_property name="ElementShortName">reset</obj_property>
+      <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject type="group" fp_name="group86">
+      <obj_property name="label">TOP</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="logic" fp_name="/sim/tx">
+         <obj_property name="ElementShortName">tx</obj_property>
+         <obj_property name="ObjectShortName">tx</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/sim/dut/readState">
+         <obj_property name="ElementShortName">readState</obj_property>
+         <obj_property name="ObjectShortName">readState</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/sim/dut/readOutSelect">
+         <obj_property name="ElementShortName">readOutSelect[1:0]</obj_property>
+         <obj_property name="ObjectShortName">readOutSelect[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/sim/dut/writeState">
+         <obj_property name="ElementShortName">writeState</obj_property>
+         <obj_property name="ObjectShortName">writeState</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/sim/dut/writeOutSelect">
+         <obj_property name="ElementShortName">writeOutSelect[1:0]</obj_property>
+         <obj_property name="ObjectShortName">writeOutSelect[1:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group7">
+      <obj_property name="label">RVCPU</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="group" fp_name="group87">
+         <obj_property name="label">TOP</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject type="group" fp_name="group81">
+            <obj_property name="label">AXI</obj_property>
+            <obj_property name="DisplayName">label</obj_property>
+            <obj_property name="isExpanded"></obj_property>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/io_master_arvalid">
+               <obj_property name="ElementShortName">io_master_arvalid</obj_property>
+               <obj_property name="ObjectShortName">io_master_arvalid</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/io_master_arready">
+               <obj_property name="ElementShortName">io_master_arready</obj_property>
+               <obj_property name="ObjectShortName">io_master_arready</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/io_master_araddr">
+               <obj_property name="ElementShortName">io_master_araddr[31:0]</obj_property>
+               <obj_property name="ObjectShortName">io_master_araddr[31:0]</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/io_master_rvalid">
+               <obj_property name="ElementShortName">io_master_rvalid</obj_property>
+               <obj_property name="ObjectShortName">io_master_rvalid</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/io_master_rready">
+               <obj_property name="ElementShortName">io_master_rready</obj_property>
+               <obj_property name="ObjectShortName">io_master_rready</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/io_master_rdata">
+               <obj_property name="ElementShortName">io_master_rdata[31:0]</obj_property>
+               <obj_property name="ObjectShortName">io_master_rdata[31:0]</obj_property>
+            </wvobject>
+         </wvobject>
+      </wvobject>
+      <wvobject type="group" fp_name="group6">
+         <obj_property name="label">IFU</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject type="array" fp_name="/sim/dut/rvcpu/IFU/pc">
+            <obj_property name="ElementShortName">pc[31:0]</obj_property>
+            <obj_property name="ObjectShortName">pc[31:0]</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/rvcpu/IFU/io_jump">
+            <obj_property name="ElementShortName">io_jump</obj_property>
+            <obj_property name="ObjectShortName">io_jump</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/sim/dut/rvcpu/IFU/io_nextPC">
+            <obj_property name="ElementShortName">io_nextPC[31:0]</obj_property>
+            <obj_property name="ObjectShortName">io_nextPC[31:0]</obj_property>
+         </wvobject>
+      </wvobject>
+      <wvobject type="group" fp_name="group50">
+         <obj_property name="label">ICache</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject type="array" fp_name="/sim/dut/rvcpu/ICache/state">
+            <obj_property name="ElementShortName">state[1:0]</obj_property>
+            <obj_property name="ObjectShortName">state[1:0]</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/rvcpu/ICache/io_in_valid">
+            <obj_property name="ElementShortName">io_in_valid</obj_property>
+            <obj_property name="ObjectShortName">io_in_valid</obj_property>
+         </wvobject>
+         <wvobject type="group" fp_name="group66">
+            <obj_property name="label">AXI</obj_property>
+            <obj_property name="DisplayName">label</obj_property>
+            <obj_property name="isExpanded"></obj_property>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/ICache/io_master_arvalid">
+               <obj_property name="ElementShortName">io_master_arvalid</obj_property>
+               <obj_property name="ObjectShortName">io_master_arvalid</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/ICache/io_master_arready">
+               <obj_property name="ElementShortName">io_master_arready</obj_property>
+               <obj_property name="ObjectShortName">io_master_arready</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/ICache/io_master_araddr">
+               <obj_property name="ElementShortName">io_master_araddr[31:0]</obj_property>
+               <obj_property name="ObjectShortName">io_master_araddr[31:0]</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/ICache/io_master_rvalid">
+               <obj_property name="ElementShortName">io_master_rvalid</obj_property>
+               <obj_property name="ObjectShortName">io_master_rvalid</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/ICache/io_master_rdata">
+               <obj_property name="ElementShortName">io_master_rdata[31:0]</obj_property>
+               <obj_property name="ObjectShortName">io_master_rdata[31:0]</obj_property>
+            </wvobject>
+         </wvobject>
+         <wvobject type="group" fp_name="group64">
+            <obj_property name="label">out</obj_property>
+            <obj_property name="DisplayName">label</obj_property>
+            <obj_property name="isExpanded"></obj_property>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/ICache/io_out_valid">
+               <obj_property name="ElementShortName">io_out_valid</obj_property>
+               <obj_property name="ObjectShortName">io_out_valid</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/ICache/io_out_ready">
+               <obj_property name="ElementShortName">io_out_ready</obj_property>
+               <obj_property name="ObjectShortName">io_out_ready</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/ICache/io_out_bits_pc">
+               <obj_property name="ElementShortName">io_out_bits_pc[31:0]</obj_property>
+               <obj_property name="ObjectShortName">io_out_bits_pc[31:0]</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/ICache/io_out_bits_instruction">
+               <obj_property name="ElementShortName">io_out_bits_instruction[31:0]</obj_property>
+               <obj_property name="ObjectShortName">io_out_bits_instruction[31:0]</obj_property>
+            </wvobject>
+         </wvobject>
+         <wvobject type="group" fp_name="group73">
+            <obj_property name="label">State</obj_property>
+            <obj_property name="DisplayName">label</obj_property>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/ICache/cacheBlocksValid_0_0">
+               <obj_property name="ElementShortName">cacheBlocksValid_0_0</obj_property>
+               <obj_property name="ObjectShortName">cacheBlocksValid_0_0</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/ICache/cacheBlocksValid_1_0">
+               <obj_property name="ElementShortName">cacheBlocksValid_1_0</obj_property>
+               <obj_property name="ObjectShortName">cacheBlocksValid_1_0</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/ICache/cacheBlocksTag_0_0">
+               <obj_property name="ElementShortName">cacheBlocksTag_0_0[25:0]</obj_property>
+               <obj_property name="ObjectShortName">cacheBlocksTag_0_0[25:0]</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/ICache/cacheBlocksTag_1_0">
+               <obj_property name="ElementShortName">cacheBlocksTag_1_0[25:0]</obj_property>
+               <obj_property name="ObjectShortName">cacheBlocksTag_1_0[25:0]</obj_property>
+            </wvobject>
+         </wvobject>
+      </wvobject>
+      <wvobject type="group" fp_name="group42">
+         <obj_property name="label">IDU</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <wvobject type="logic" fp_name="/sim/dut/rvcpu/IDU/io_in_valid">
+            <obj_property name="ElementShortName">io_in_valid</obj_property>
+            <obj_property name="ObjectShortName">io_in_valid</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/rvcpu/IDU/io_out_valid">
+            <obj_property name="ElementShortName">io_out_valid</obj_property>
+            <obj_property name="ObjectShortName">io_out_valid</obj_property>
+         </wvobject>
+      </wvobject>
+      <wvobject type="group" fp_name="group52">
+         <obj_property name="label">EXU</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <wvobject type="logic" fp_name="/sim/dut/rvcpu/EXU/io_in_valid">
+            <obj_property name="ElementShortName">io_in_valid</obj_property>
+            <obj_property name="ObjectShortName">io_in_valid</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/rvcpu/EXU/io_out_valid">
+            <obj_property name="ElementShortName">io_out_valid</obj_property>
+            <obj_property name="ObjectShortName">io_out_valid</obj_property>
+         </wvobject>
+      </wvobject>
+      <wvobject type="group" fp_name="group51">
+         <obj_property name="label">LSU</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject type="logic" fp_name="/sim/dut/rvcpu/LSU/io_in_valid">
+            <obj_property name="ElementShortName">io_in_valid</obj_property>
+            <obj_property name="ObjectShortName">io_in_valid</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/rvcpu/LSU/io_out_valid">
+            <obj_property name="ElementShortName">io_out_valid</obj_property>
+            <obj_property name="ObjectShortName">io_out_valid</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/sim/dut/rvcpu/LSU/state">
+            <obj_property name="ElementShortName">state[1:0]</obj_property>
+            <obj_property name="ObjectShortName">state[1:0]</obj_property>
+         </wvobject>
+         <wvobject type="group" fp_name="group137">
+            <obj_property name="label">AXI</obj_property>
+            <obj_property name="DisplayName">label</obj_property>
+            <obj_property name="isExpanded"></obj_property>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/LSU/io_master_awvalid">
+               <obj_property name="ElementShortName">io_master_awvalid</obj_property>
+               <obj_property name="ObjectShortName">io_master_awvalid</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/LSU/io_master_awaddr">
+               <obj_property name="ElementShortName">io_master_awaddr[31:0]</obj_property>
+               <obj_property name="ObjectShortName">io_master_awaddr[31:0]</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/LSU/io_master_wvalid">
+               <obj_property name="ElementShortName">io_master_wvalid</obj_property>
+               <obj_property name="ObjectShortName">io_master_wvalid</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/LSU/io_master_wdata">
+               <obj_property name="ElementShortName">io_master_wdata[31:0]</obj_property>
+               <obj_property name="ObjectShortName">io_master_wdata[31:0]</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/LSU/io_master_wstrb">
+               <obj_property name="ElementShortName">io_master_wstrb[3:0]</obj_property>
+               <obj_property name="ObjectShortName">io_master_wstrb[3:0]</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/LSU/io_master_bvalid">
+               <obj_property name="ElementShortName">io_master_bvalid</obj_property>
+               <obj_property name="ObjectShortName">io_master_bvalid</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/LSU/io_master_bresp">
+               <obj_property name="ElementShortName">io_master_bresp[1:0]</obj_property>
+               <obj_property name="ObjectShortName">io_master_bresp[1:0]</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/LSU/io_master_arvalid">
+               <obj_property name="ElementShortName">io_master_arvalid</obj_property>
+               <obj_property name="ObjectShortName">io_master_arvalid</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/LSU/io_master_araddr">
+               <obj_property name="ElementShortName">io_master_araddr[31:0]</obj_property>
+               <obj_property name="ObjectShortName">io_master_araddr[31:0]</obj_property>
+            </wvobject>
+            <wvobject type="logic" fp_name="/sim/dut/rvcpu/LSU/io_master_rvalid">
+               <obj_property name="ElementShortName">io_master_rvalid</obj_property>
+               <obj_property name="ObjectShortName">io_master_rvalid</obj_property>
+            </wvobject>
+            <wvobject type="array" fp_name="/sim/dut/rvcpu/LSU/io_master_rdata">
+               <obj_property name="ElementShortName">io_master_rdata[31:0]</obj_property>
+               <obj_property name="ObjectShortName">io_master_rdata[31:0]</obj_property>
+            </wvobject>
+         </wvobject>
+      </wvobject>
+      <wvobject type="group" fp_name="group53">
+         <obj_property name="label">WBU</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <wvobject type="logic" fp_name="/sim/dut/rvcpu/WBU/io_out_valid">
+            <obj_property name="ElementShortName">io_out_valid</obj_property>
+            <obj_property name="ObjectShortName">io_out_valid</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/rvcpu/WBU/io_in_valid">
+            <obj_property name="ElementShortName">io_in_valid</obj_property>
+            <obj_property name="ObjectShortName">io_in_valid</obj_property>
+         </wvobject>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group88">
+      <obj_property name="label">BRAM</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="logic" fp_name="/sim/dut/bram/io_awvalid">
+         <obj_property name="ElementShortName">io_awvalid</obj_property>
+         <obj_property name="ObjectShortName">io_awvalid</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/sim/dut/bram/io_awready">
+         <obj_property name="ElementShortName">io_awready</obj_property>
+         <obj_property name="ObjectShortName">io_awready</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/sim/dut/bram/io_awaddr">
+         <obj_property name="ElementShortName">io_awaddr[31:0]</obj_property>
+         <obj_property name="ObjectShortName">io_awaddr[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/sim/dut/bram/io_wvalid">
+         <obj_property name="ElementShortName">io_wvalid</obj_property>
+         <obj_property name="ObjectShortName">io_wvalid</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/sim/dut/bram/io_wready">
+         <obj_property name="ElementShortName">io_wready</obj_property>
+         <obj_property name="ObjectShortName">io_wready</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/sim/dut/bram/io_wdata">
+         <obj_property name="ElementShortName">io_wdata[31:0]</obj_property>
+         <obj_property name="ObjectShortName">io_wdata[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/sim/dut/bram/io_wstrb">
+         <obj_property name="ElementShortName">io_wstrb[3:0]</obj_property>
+         <obj_property name="ObjectShortName">io_wstrb[3:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/sim/dut/bram/io_bvalid">
+         <obj_property name="ElementShortName">io_bvalid</obj_property>
+         <obj_property name="ObjectShortName">io_bvalid</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/sim/dut/bram/io_bresp">
+         <obj_property name="ElementShortName">io_bresp[1:0]</obj_property>
+         <obj_property name="ObjectShortName">io_bresp[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/sim/dut/bram/io_arvalid">
+         <obj_property name="ElementShortName">io_arvalid</obj_property>
+         <obj_property name="ObjectShortName">io_arvalid</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/sim/dut/bram/io_arready">
+         <obj_property name="ElementShortName">io_arready</obj_property>
+         <obj_property name="ObjectShortName">io_arready</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/sim/dut/bram/io_araddr">
+         <obj_property name="ElementShortName">io_araddr[31:0]</obj_property>
+         <obj_property name="ObjectShortName">io_araddr[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/sim/dut/bram/io_rvalid">
+         <obj_property name="ElementShortName">io_rvalid</obj_property>
+         <obj_property name="ObjectShortName">io_rvalid</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/sim/dut/bram/io_rdata">
+         <obj_property name="ElementShortName">io_rdata[31:0]</obj_property>
+         <obj_property name="ObjectShortName">io_rdata[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group89">
+      <obj_property name="label">UART</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject type="logic" fp_name="/sim/dut/uart/io_rx">
+         <obj_property name="ElementShortName">io_rx</obj_property>
+         <obj_property name="ObjectShortName">io_rx</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/sim/dut/uart/io_tx">
+         <obj_property name="ElementShortName">io_tx</obj_property>
+         <obj_property name="ObjectShortName">io_tx</obj_property>
+      </wvobject>
+      <wvobject type="group" fp_name="group118">
+         <obj_property name="label">AXI</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+         <wvobject type="logic" fp_name="/sim/dut/uart/io_axi_awvalid">
+            <obj_property name="ElementShortName">io_axi_awvalid</obj_property>
+            <obj_property name="ObjectShortName">io_axi_awvalid</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/uart/io_axi_awready">
+            <obj_property name="ElementShortName">io_axi_awready</obj_property>
+            <obj_property name="ObjectShortName">io_axi_awready</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/sim/dut/uart/io_axi_awaddr">
+            <obj_property name="ElementShortName">io_axi_awaddr[31:0]</obj_property>
+            <obj_property name="ObjectShortName">io_axi_awaddr[31:0]</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/uart/io_axi_wvalid">
+            <obj_property name="ElementShortName">io_axi_wvalid</obj_property>
+            <obj_property name="ObjectShortName">io_axi_wvalid</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/uart/io_axi_wready">
+            <obj_property name="ElementShortName">io_axi_wready</obj_property>
+            <obj_property name="ObjectShortName">io_axi_wready</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/sim/dut/uart/io_axi_wdata">
+            <obj_property name="ElementShortName">io_axi_wdata[31:0]</obj_property>
+            <obj_property name="ObjectShortName">io_axi_wdata[31:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/sim/dut/uart/io_axi_wstrb">
+            <obj_property name="ElementShortName">io_axi_wstrb[3:0]</obj_property>
+            <obj_property name="ObjectShortName">io_axi_wstrb[3:0]</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/uart/io_axi_bvalid">
+            <obj_property name="ElementShortName">io_axi_bvalid</obj_property>
+            <obj_property name="ObjectShortName">io_axi_bvalid</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/sim/dut/uart/io_axi_bresp">
+            <obj_property name="ElementShortName">io_axi_bresp[1:0]</obj_property>
+            <obj_property name="ObjectShortName">io_axi_bresp[1:0]</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/uart/io_axi_arvalid">
+            <obj_property name="ElementShortName">io_axi_arvalid</obj_property>
+            <obj_property name="ObjectShortName">io_axi_arvalid</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/uart/io_axi_arready">
+            <obj_property name="ElementShortName">io_axi_arready</obj_property>
+            <obj_property name="ObjectShortName">io_axi_arready</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/sim/dut/uart/io_axi_araddr">
+            <obj_property name="ElementShortName">io_axi_araddr[31:0]</obj_property>
+            <obj_property name="ObjectShortName">io_axi_araddr[31:0]</obj_property>
+         </wvobject>
+         <wvobject type="logic" fp_name="/sim/dut/uart/io_axi_rvalid">
+            <obj_property name="ElementShortName">io_axi_rvalid</obj_property>
+            <obj_property name="ObjectShortName">io_axi_rvalid</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/sim/dut/uart/io_axi_rdata">
+            <obj_property name="ElementShortName">io_axi_rdata[31:0]</obj_property>
+            <obj_property name="ObjectShortName">io_axi_rdata[31:0]</obj_property>
+         </wvobject>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group90">
+      <obj_property name="label">CLINT</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject type="logic" fp_name="/sim/dut/clint/io_arvalid">
+         <obj_property name="ElementShortName">io_arvalid</obj_property>
+         <obj_property name="ObjectShortName">io_arvalid</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/sim/dut/clint/io_araddr">
+         <obj_property name="ElementShortName">io_araddr[31:0]</obj_property>
+         <obj_property name="ObjectShortName">io_araddr[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/sim/dut/clint/io_rvalid">
+         <obj_property name="ElementShortName">io_rvalid</obj_property>
+         <obj_property name="ObjectShortName">io_rvalid</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/sim/dut/clint/io_rdata">
+         <obj_property name="ElementShortName">io_rdata[31:0]</obj_property>
+         <obj_property name="ObjectShortName">io_rdata[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+</wave_config>

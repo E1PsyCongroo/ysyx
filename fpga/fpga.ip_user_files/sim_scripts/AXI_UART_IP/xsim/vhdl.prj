@@ -1,0 +1,5 @@
+vhdl xil_defaultlib  \
+"../../../../fpga.gen/sources_1/ip/AXI_UART_IP/sim/AXI_UART_IP.vhd" \
+
+# Do not sort compile order
+nosort

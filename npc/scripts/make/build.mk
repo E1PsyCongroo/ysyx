@@ -59,6 +59,7 @@ clean:
 include $(NPC_HOME)/scripts/make/verilator.mk
 include $(NPC_HOME)/scripts/make/yosys.mk
 include $(NPC_HOME)/scripts/make/iverilog.mk
+include $(NPC_HOME)/scripts/make/fpga.mk
 
 $(BINARY):: $(ARCHIVES) $(OBJS)
 	@echo + LD $@

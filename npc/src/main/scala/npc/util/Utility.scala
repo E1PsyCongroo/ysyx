@@ -19,7 +19,7 @@ object Adder {
     val tB     = inb
     val tnoCin = (Fill(width, addSub) ^ tB)
     val result = Wire(UInt((width + 1).W))
-    result       := tA +& tnoCin +& addSub
+    result       := (tA +& tnoCin) + addSub
     out.result   := result(width - 1, 0)
     out.carry    := result(width).asBool
     out.zero     := ~(out.result.orR)

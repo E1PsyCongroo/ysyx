@@ -1,0 +1,16 @@
+extern_modules.sv
+PLL_IP.sv
+IFU.sv
+ICache.sv
+IDU.sv
+EXU.sv
+LSU.sv
+WBU.sv
+RegFile.sv
+FPGA_RVCPU.sv
+CLINT.sv
+mem_4194304x32.sv
+InitMem.sv
+AXI4Mem.sv
+Uart.sv
+FPGA.sv
