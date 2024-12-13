@@ -9,9 +9,9 @@ endif
 
 BINARY              := $(BUILD_DIR)/$(NAME)$(SO)
 OBJ_DIR             := $(BUILD_DIR)/obj-$(NAME)$(SO)
-SRC_DIR             := $(WORK_DIR)/src/main
+RESOURCES_DIR       := $(WORK_DIR)/rvcpu/resources
+SRC_DIR             := $(WORK_DIR)/rvcpu/src
 CSRC_DIR            := $(SRC_DIR)/csrc
-RESOURCES_DIR       := $(SRC_DIR)/resources
 CONSTR_DIR          := $(SRC_DIR)/constr
 CHISEL_SRC_DIR      := $(SRC_DIR)/scala
 

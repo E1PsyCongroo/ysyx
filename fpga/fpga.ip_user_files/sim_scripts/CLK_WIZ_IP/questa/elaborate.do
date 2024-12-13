@@ -1,1 +1,0 @@
-vopt -64 +acc=npr -l elaborate.log +acc=npr -suppress 10016  -L xil_defaultlib -L xpm -L unisims_ver -L unimacro_ver -L secureip -work xil_defaultlib xil_defaultlib.CLK_WIZ_IP xil_defaultlib.glbl -o CLK_WIZ_IP_opt

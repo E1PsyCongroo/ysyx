@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<ProcessHandle Version="1" Minor="0">
-    <Process Command="vivado" Owner="focused_xy" Host="FocusedXYArchlinuxLaptop" Pid="179949" HostCore="20" HostMemory="16071996">
-    </Process>
-</ProcessHandle>

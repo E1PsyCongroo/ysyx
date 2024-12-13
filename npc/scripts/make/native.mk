@@ -64,7 +64,7 @@ sta: $(YOSYS_V_FILE_GEN)
 clean-yosys:
 	-rm -rf $(YOSYS_DIR)/result *.sv
 
-iverilog: $(IVERILOG_DIR)/vsim/simtop.tbi
+iverilog: $(IVERILOG_DIR)/.stamp.verilog.iverilog
 
 vsim: $(IVERILOG_DIR)/vsim/simtop.fst
 
@@ -72,7 +72,8 @@ clean-vsim:
 	-rm -rf $(IVERILOG_DIR)/vsim//*.vpd $(IVERILOG_DIR)/vsim/*.vcd \
 	$(IVERILOG_DIR)/vsim/*.tbi $(IVERILOG_DIR)/vsim/*.fst \
 	$(IVERILOG_DIR)/vsim/*.jou $(IVERILOG_DIR)/vsim/*.log \
-	$(IVERILOG_DIR)/vsim/*.out
+	$(IVERILOG_DIR)/vsim/*.out $(IVERILOG_DIR)/vsrc/* \
+	$(IVERILOG_DIR)/.stamp.verilog.iverilog
 
 fpga-vsim: $(FPGA_SIM_DIR)/vsim/simtop.fst
 

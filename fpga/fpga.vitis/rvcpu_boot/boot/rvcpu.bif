@@ -1,0 +1,7 @@
+//arch = zynq; split = false; format = BIN
+the_ROM_image:
+{
+	[bootloader]/home/focused_xy/cs/ysyx/fpga/fpga.vitis/rvcpu/export/rvcpu/sw/boot/fsbl.elf
+	/home/focused_xy/cs/ysyx/fpga/fpga.vitis/rvcpu_boot/_ide/bitstream/top.bit
+	/home/focused_xy/cs/ysyx/fpga/fpga.vitis/rvcpu_boot/build/rvcpu_boot.elf
+}

@@ -1,5 +1,5 @@
 # Sanity check
-ifeq ($(wildcard $(NPC_HOME)/src/main/csrc/npc-main.c),)
+ifeq ($(wildcard $(NPC_HOME)/rvcpu/src/csrc/npc-main.c),)
   $(error NPC_HOME=$(NPC_HOME) is not a NPC repo)
 endif
 
@@ -11,7 +11,7 @@ remove_quote = $(patsubst "%",%,$(1))
 
 WORK_DIR          := .
 BUILD_DIR         := $(WORK_DIR)/build
-PRJ               := NPC
+PRJ               := rvcpu
 
 # Extract variabls from menuconfig
 GUEST_ISA         ?= $(call remove_quote,$(CONFIG_ISA))
@@ -20,7 +20,7 @@ ENGINE            ?= $(call remove_quote,$(CONFIG_ENGINE))
 NAME              = $(GUEST_ISA)$(PLATFORM)-$(ENGINE)
 
 # Include all filelist.mk to merge file lists
-FILELIST_MK       := $(shell find -L ./src -name "filelist.mk")
+FILELIST_MK       := $(shell find -L ./rvcpu/src -name "filelist.mk")
 include $(FILELIST_MK)
 
 # Filter out directories and files in blacklist to obtain the final set of source files

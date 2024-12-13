@@ -7,8 +7,11 @@
 !*.scala
 !*.[cSh]
 !*.v
+!*.sv
 !*.cpp
 !*.cc
+!*.py
+!*.sh
 !*.nxdc
 !*.xlsx
 !.gitignore
@@ -16,10 +19,7 @@
 !build.sc
 !README.md
 !Kconfig
-!*.sv
 !wave/*
-!*.py
-!*.sh
 !perf-log/*
 include/config
 include/generated

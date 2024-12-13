@@ -1,6 +1,8 @@
 # compile vhdl design source files
 vhdl xil_defaultlib  \
-"../../../../fpga.gen/sources_1/ip/AXI_UART_IP/sim/AXI_UART_IP.vhd" \
+"../../../../fpga.ip_user_files/bd/TOP/ip/TOP_axi_uartlite_0_0/sim/TOP_axi_uartlite_0_0.vhd" \
+"../../../../fpga.ip_user_files/bd/TOP/ip/TOP_axi_gpio_0_0/sim/TOP_axi_gpio_0_0.vhd" \
+"../../../../fpga.ip_user_files/bd/TOP/ip/TOP_rst_clk_wiz_0_100M_0/sim/TOP_rst_clk_wiz_0_100M_0.vhd" \
 
 # Do not sort compile order
 nosort

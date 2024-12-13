@@ -47,13 +47,13 @@ config ISA64
   default y
 
 if ISA_riscv_nemu
-source "src/main/csrc/isa/riscv32/Kconfig"
+source "rvcpu/src/csrc/isa/riscv32/Kconfig"
 endif
 if ISA_riscv_npc
-source "src/main/csrc/isa/riscv32npc/Kconfig"
+source "rvcpu/src/csrc/isa/riscv32npc/Kconfig"
 endif
 if ISA_riscv_ysyxsoc
-source "src/main/csrc/isa/riscv32ysyxsoc/Kconfig"
+source "rvcpu/src/csrc/isa/riscv32ysyxsoc/Kconfig"
 endif
 
 choice
@@ -270,8 +270,8 @@ config DIFFTEST_REF_NAME
 endmenu
 
 if MODE_SYSTEM
-source "src/main/csrc/memory/Kconfig"
-source "src/main/csrc/device/Kconfig"
+source "rvcpu/src/csrc/memory/Kconfig"
+source "rvcpu/src/csrc/device/Kconfig"
 endif
 
 

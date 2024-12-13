@@ -29,3 +29,9 @@ To generate Verilog:
 ```bash
 make verilog
 ```
+## TODO
+
+- [ ] 重构 AXI 总线接口
+- [ ] 重构 CPU，进行设计解耦
+- [ ] 实现乘法器
+- [ ] 实现 FPGA PL RVCPU 访问 PS DDR3

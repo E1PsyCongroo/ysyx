@@ -2,7 +2,7 @@ ENTRY(_start)
 PHDRS { entry PT_LOAD; text PT_LOAD; rodata PT_LOAD; data PT_LOAD; bss PT_LOAD; }
 
 MEMORY {
-  bram(rwx)   : ORIGIN = 0x0f000000, LENGTH = 512K
+  bram(rwx)   : ORIGIN = 0x0f000000, LENGTH = 256K
 }
 
 SECTIONS {

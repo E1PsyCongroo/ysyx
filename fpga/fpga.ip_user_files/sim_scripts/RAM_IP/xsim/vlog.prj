@@ -1,4 +1,4 @@
-verilog xil_defaultlib  \
+verilog xil_defaultlib --include "/opt/Xilinx/Vivado/2024.2/data/xilinx_vip/include" \
 "../../../../fpga.gen/sources_1/ip/RAM_IP/sim/RAM_IP.v" \
 
 verilog xil_defaultlib "glbl.v"

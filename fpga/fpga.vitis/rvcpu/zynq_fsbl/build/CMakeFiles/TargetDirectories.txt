@@ -1,0 +1,3 @@
+/home/focused_xy/cs/ysyx/fpga/fpga.vitis/rvcpu/zynq_fsbl/build/CMakeFiles/fsbl.elf.dir
+/home/focused_xy/cs/ysyx/fpga/fpga.vitis/rvcpu/zynq_fsbl/build/CMakeFiles/edit_cache.dir
+/home/focused_xy/cs/ysyx/fpga/fpga.vitis/rvcpu/zynq_fsbl/build/CMakeFiles/rebuild_cache.dir

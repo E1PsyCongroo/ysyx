@@ -1,6 +1,6 @@
-IVERILOG_DIR       := $(WORK_DIR)/iverilog
-IVERILOG_RTL        := $(wildcard $(IVERILOG_DIR)/vsrc/*.sv)
-IVERILOG_SIM_RTL    := $(wildcard $(IVERILOG_DIR)/vsim/*.sv)
+IVERILOG_DIR        := $(WORK_DIR)/iverilog
+IVERILOG_RTL        ?= $(wildcard $(IVERILOG_DIR)/vsrc/*.sv)
+IVERILOG_SIM_RTL    ?= $(wildcard $(IVERILOG_DIR)/vsim/*.sv)
 IVERILOG_SIM_MODELS :=
 
 IVERILOG            := iverilog

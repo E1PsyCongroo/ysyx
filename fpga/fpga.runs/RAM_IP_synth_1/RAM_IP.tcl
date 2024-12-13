@@ -55,24 +55,7 @@ if {$::dispatch::connected} {
   }
 }
 
-proc create_report { reportName command } {
-  set status "."
-  append status $reportName ".fail"
-  if { [file exists $status] } {
-    eval file delete [glob $status]
-  }
-  send_msg_id runtcl-4 info "Executing : $command"
-  set retval [eval catch { $command } msg]
-  if { $retval != 0 } {
-    set fp [open $status w]
-    close $fp
-    send_msg_id runtcl-5 warning "$msg"
-  }
-}
 OPTRACE "RAM_IP_synth_1" START { ROLLUP_AUTO }
-set_param xicom.use_bs_reader 1
-set_param chipscope.maxJobs 5
-set_msg_config -id {Common 17-41} -limit 10000000
 set_param project.vivado.isBlockSynthRun true
 set_msg_config -msgmgr_mode ooc_run
 OPTRACE "Creating in-memory project" START { }
@@ -87,6 +70,10 @@ set_property parent.project_path /home/focused_xy/cs/ysyx/fpga/fpga.xpr [current
 set_property XPM_LIBRARIES {XPM_CDC XPM_MEMORY} [current_project]
 set_property default_lib xil_defaultlib [current_project]
 set_property target_language Verilog [current_project]
+set_property board_part_repo_paths {/home/focused_xy/cs/fpga/board_files} [current_project]
+set_property board_part tul.com.tw:pynq-z2:part0:1.0 [current_project]
+set_property ip_repo_paths /home/focused_xy/cs/fpga/vivado-library-master [current_project]
+update_ip_catalog
 set_property ip_output_repo /home/focused_xy/cs/ysyx/fpga/fpga.cache/ip [current_project]
 set_property ip_cache_permissions {read write} [current_project]
 OPTRACE "Creating in-memory project" END { }
@@ -159,7 +146,7 @@ set_param constraints.enableBinaryConstraints false
 write_checkpoint -force -noxdef RAM_IP.dcp
 OPTRACE "write_checkpoint" END { }
 OPTRACE "synth reports" START { REPORT }
-create_report "RAM_IP_synth_1_synth_report_utilization_0" "report_utilization -file RAM_IP_utilization_synth.rpt -pb RAM_IP_utilization_synth.pb"
+generate_parallel_reports -reports { "report_utilization -file RAM_IP_utilization_synth.rpt -pb RAM_IP_utilization_synth.pb"  } 
 OPTRACE "synth reports" END { }
 
 if { [catch {

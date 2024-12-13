@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2024.2 (64-bit)
+# SW Build 5239630 on Fri Nov 08 22:34:34 MST 2024
+# IP Build 5239520 on Sun Nov 10 16:12:51 MST 2024
+# SharedData Build 5239561 on Fri Nov 08 14:39:27 MST 2024
+# Start of session at: Tue Dec 10 13:47:40 2024
+# Process ID         : 34880
+# Current directory  : /home/focused_xy/cs/ysyx/fpga/fpga.runs/TOP_axi_interconnect_upgraded_ipi_imp_xbar_0_synth_1
+# Command line       : vivado -log TOP_axi_interconnect_upgraded_ipi_imp_xbar_0.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source TOP_axi_interconnect_upgraded_ipi_imp_xbar_0.tcl
+# Log file           : /home/focused_xy/cs/ysyx/fpga/fpga.runs/TOP_axi_interconnect_upgraded_ipi_imp_xbar_0_synth_1/TOP_axi_interconnect_upgraded_ipi_imp_xbar_0.vds
+# Journal file       : /home/focused_xy/cs/ysyx/fpga/fpga.runs/TOP_axi_interconnect_upgraded_ipi_imp_xbar_0_synth_1/vivado.jou
+# Running On         : FocusedXYArchlinuxLaptop
+# Platform           : Arch
+# Operating System   : Arch Linux
+# Processor Detail   : 12th Gen Intel(R) Core(TM) i7-12700H
+# CPU Frequency      : 3500.000 MHz
+# CPU Physical cores : 14
+# CPU Logical cores  : 20
+# Host memory        : 16457 MB
+# Swap memory        : 17179 MB
+# Total Virtual      : 33637 MB
+# Available Virtual  : 25295 MB
+#-----------------------------------------------------------
+source TOP_axi_interconnect_upgraded_ipi_imp_xbar_0.tcl -notrace

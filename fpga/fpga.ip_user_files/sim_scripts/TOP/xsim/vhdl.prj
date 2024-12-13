@@ -1,0 +1,7 @@
+vhdl xil_defaultlib  \
+"../../../bd/TOP/ip/TOP_axi_uartlite_0_0/sim/TOP_axi_uartlite_0_0.vhd" \
+"../../../bd/TOP/ip/TOP_axi_gpio_0_0/sim/TOP_axi_gpio_0_0.vhd" \
+"../../../bd/TOP/ip/TOP_rst_clk_wiz_0_100M_0/sim/TOP_rst_clk_wiz_0_100M_0.vhd" \
+
+# Do not sort compile order
+nosort

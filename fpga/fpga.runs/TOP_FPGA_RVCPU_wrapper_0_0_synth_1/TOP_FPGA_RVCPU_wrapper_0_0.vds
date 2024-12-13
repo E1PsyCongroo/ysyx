@@ -1,0 +1,312 @@
+#-----------------------------------------------------------
+# Vivado v2024.2 (64-bit)
+# SW Build 5239630 on Fri Nov 08 22:34:34 MST 2024
+# IP Build 5239520 on Sun Nov 10 16:12:51 MST 2024
+# SharedData Build 5239561 on Fri Nov 08 14:39:27 MST 2024
+# Start of session at: Tue Dec 10 13:47:39 2024
+# Process ID         : 34874
+# Current directory  : /home/focused_xy/cs/ysyx/fpga/fpga.runs/TOP_FPGA_RVCPU_wrapper_0_0_synth_1
+# Command line       : vivado -log TOP_FPGA_RVCPU_wrapper_0_0.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source TOP_FPGA_RVCPU_wrapper_0_0.tcl
+# Log file           : /home/focused_xy/cs/ysyx/fpga/fpga.runs/TOP_FPGA_RVCPU_wrapper_0_0_synth_1/TOP_FPGA_RVCPU_wrapper_0_0.vds
+# Journal file       : /home/focused_xy/cs/ysyx/fpga/fpga.runs/TOP_FPGA_RVCPU_wrapper_0_0_synth_1/vivado.jou
+# Running On         : FocusedXYArchlinuxLaptop
+# Platform           : Arch
+# Operating System   : Arch Linux
+# Processor Detail   : 12th Gen Intel(R) Core(TM) i7-12700H
+# CPU Frequency      : 3128.952 MHz
+# CPU Physical cores : 14
+# CPU Logical cores  : 20
+# Host memory        : 16457 MB
+# Swap memory        : 17179 MB
+# Total Virtual      : 33637 MB
+# Available Virtual  : 25921 MB
+#-----------------------------------------------------------
+source TOP_FPGA_RVCPU_wrapper_0_0.tcl -notrace
+create_project: Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 1484.453 ; gain = 18.867 ; free physical = 1620 ; free virtual = 20631
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1700] Loaded user IP repository '/home/focused_xy/cs/fpga/vivado-library-master/ip'.
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/opt/Xilinx/Vivado/2024.2/data/ip'.
+Command: synth_design -top TOP_FPGA_RVCPU_wrapper_0_0 -part xc7z020clg400-1 -incremental_mode off -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7z020'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7z020'
+INFO: [Device 21-403] Loading part xc7z020clg400-1
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 35655
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:07 . Memory (MB): peak = 2164.859 ; gain = 419.828 ; free physical = 123 ; free virtual = 10892
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'TOP_FPGA_RVCPU_wrapper_0_0' [/home/focused_xy/cs/ysyx/fpga/fpga.gen/sources_1/bd/TOP/ip/TOP_FPGA_RVCPU_wrapper_0_0/synth/TOP_FPGA_RVCPU_wrapper_0_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'FPGA_RVCPU_wrapper' [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/new/FPGA_RVCPU_wrapper.v:23]
+INFO: [Synth 8-6157] synthesizing module 'FPGA_RVCPU' [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:3643]
+INFO: [Synth 8-6157] synthesizing module 'IFU' [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:82]
+INFO: [Synth 8-6155] done synthesizing module 'IFU' (0#1) [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:82]
+INFO: [Synth 8-6157] synthesizing module 'ICache' [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:122]
+INFO: [Synth 8-6155] done synthesizing module 'ICache' (0#1) [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:122]
+INFO: [Synth 8-6157] synthesizing module 'IDU' [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:447]
+INFO: [Synth 8-6155] done synthesizing module 'IDU' (0#1) [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:447]
+INFO: [Synth 8-6157] synthesizing module 'EXU' [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:886]
+INFO: [Synth 8-6155] done synthesizing module 'EXU' (0#1) [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:886]
+INFO: [Synth 8-6157] synthesizing module 'LSU' [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:3213]
+INFO: [Synth 8-6155] done synthesizing module 'LSU' (0#1) [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:3213]
+INFO: [Synth 8-6157] synthesizing module 'WBU' [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:3372]
+INFO: [Synth 8-6155] done synthesizing module 'WBU' (0#1) [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:3372]
+INFO: [Synth 8-6157] synthesizing module 'RegFile' [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:3394]
+INFO: [Synth 8-6155] done synthesizing module 'RegFile' (0#1) [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:3394]
+INFO: [Synth 8-6157] synthesizing module 'CLINT' [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:3564]
+INFO: [Synth 8-6155] done synthesizing module 'CLINT' (0#1) [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:3564]
+INFO: [Synth 8-6155] done synthesizing module 'FPGA_RVCPU' (0#1) [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/imports/fpga/FPGA_RVCPU.sv:3643]
+INFO: [Synth 8-6155] done synthesizing module 'FPGA_RVCPU_wrapper' (0#1) [/home/focused_xy/cs/ysyx/fpga/fpga.srcs/sources_1/new/FPGA_RVCPU_wrapper.v:23]
+INFO: [Synth 8-6155] done synthesizing module 'TOP_FPGA_RVCPU_wrapper_0_0' (0#1) [/home/focused_xy/cs/ysyx/fpga/fpga.gen/sources_1/bd/TOP/ip/TOP_FPGA_RVCPU_wrapper_0_0/synth/TOP_FPGA_RVCPU_wrapper_0_0.v:53]
+WARNING: [Synth 8-7129] Port io_araddr[1] in module CLINT is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_araddr[0] in module CLINT is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_bresp[1] in module LSU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_bresp[0] in module LSU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rresp[1] in module LSU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rresp[0] in module LSU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rresp[1] in module ICache is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rresp[0] in module ICache is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_interrupt in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_bid[3] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_bid[2] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_bid[1] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_bid[0] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rid[3] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rid[2] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rid[1] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rid[0] in module FPGA_RVCPU is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:05 ; elapsed = 00:00:09 . Memory (MB): peak = 2254.828 ; gain = 509.797 ; free physical = 154 ; free virtual = 10406
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:05 ; elapsed = 00:00:09 . Memory (MB): peak = 2269.672 ; gain = 524.641 ; free physical = 119 ; free virtual = 10376
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:05 ; elapsed = 00:00:09 . Memory (MB): peak = 2269.672 ; gain = 524.641 ; free physical = 119 ; free virtual = 10376
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2269.672 ; gain = 0.000 ; free physical = 160 ; free virtual = 10320
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2393.410 ; gain = 0.000 ; free physical = 364 ; free virtual = 9740
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.11 ; elapsed = 00:00:00.06 . Memory (MB): peak = 2393.410 ; gain = 0.000 ; free physical = 304 ; free virtual = 9698
+INFO: [Designutils 20-5008] Incremental synthesis strategy off
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:13 ; elapsed = 00:00:17 . Memory (MB): peak = 2393.410 ; gain = 648.379 ; free physical = 193 ; free virtual = 9177
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7z020clg400-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:13 ; elapsed = 00:00:17 . Memory (MB): peak = 2401.414 ; gain = 656.383 ; free physical = 180 ; free virtual = 9173
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:13 ; elapsed = 00:00:17 . Memory (MB): peak = 2401.414 ; gain = 656.383 ; free physical = 141 ; free virtual = 9149
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:14 ; elapsed = 00:00:18 . Memory (MB): peak = 2401.414 ; gain = 656.383 ; free physical = 294 ; free virtual = 9067
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   3 Input   33 Bit       Adders := 1     
+	   2 Input   32 Bit       Adders := 5     
+	   2 Input    4 Bit       Adders := 1     
++---XORs : 
+	   2 Input     32 Bit         XORs := 2     
+	   2 Input      1 Bit         XORs := 2     
++---Registers : 
+	               32 Bit    Registers := 45    
+	               26 Bit    Registers := 2     
+	                4 Bit    Registers := 5     
+	                3 Bit    Registers := 5     
+	                2 Bit    Registers := 3     
+	                1 Bit    Registers := 37    
++---Muxes : 
+	   2 Input   32 Bit        Muxes := 81    
+	   4 Input   32 Bit        Muxes := 1     
+	   5 Input   32 Bit        Muxes := 1     
+	   2 Input   26 Bit        Muxes := 2     
+	   2 Input   11 Bit        Muxes := 1     
+	   2 Input    8 Bit        Muxes := 2     
+	   2 Input    6 Bit        Muxes := 1     
+	   2 Input    4 Bit        Muxes := 4     
+	   2 Input    3 Bit        Muxes := 3     
+	   2 Input    2 Bit        Muxes := 10    
+	   3 Input    2 Bit        Muxes := 1     
+	   4 Input    2 Bit        Muxes := 1     
+	   2 Input    1 Bit        Muxes := 43    
+	   4 Input    1 Bit        Muxes := 161   
+	   5 Input    1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 220 (col length:60)
+BRAMs: 280 (col length: RAMB18 60 RAMB36 30)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7080] Parallel synthesis criteria is not met
+WARNING: [Synth 8-7129] Port io_araddr[1] in module CLINT is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_araddr[0] in module CLINT is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_bresp[1] in module LSU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_bresp[0] in module LSU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rresp[1] in module LSU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rresp[0] in module LSU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rresp[1] in module ICache is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rresp[0] in module ICache is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_interrupt in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_bid[3] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_bid[2] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_bid[1] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_bid[0] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rid[3] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rid[2] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rid[1] in module FPGA_RVCPU is either unconnected or has no load
+WARNING: [Synth 8-7129] Port io_master_rid[0] in module FPGA_RVCPU is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:25 ; elapsed = 00:00:33 . Memory (MB): peak = 2425.422 ; gain = 680.391 ; free physical = 71 ; free virtual = 3527
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:29 ; elapsed = 00:00:41 . Memory (MB): peak = 2431.422 ; gain = 686.391 ; free physical = 213 ; free virtual = 2541
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:29 ; elapsed = 00:00:41 . Memory (MB): peak = 2434.422 ; gain = 689.391 ; free physical = 151 ; free virtual = 2539
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:30 ; elapsed = 00:00:43 . Memory (MB): peak = 2487.477 ; gain = 742.445 ; free physical = 336 ; free virtual = 2411
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:32 ; elapsed = 00:01:01 . Memory (MB): peak = 2602.289 ; gain = 857.258 ; free physical = 187 ; free virtual = 2912
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:32 ; elapsed = 00:01:01 . Memory (MB): peak = 2602.289 ; gain = 857.258 ; free physical = 181 ; free virtual = 2909
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:32 ; elapsed = 00:01:01 . Memory (MB): peak = 2602.289 ; gain = 857.258 ; free physical = 146 ; free virtual = 2901
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:32 ; elapsed = 00:01:01 . Memory (MB): peak = 2602.289 ; gain = 857.258 ; free physical = 140 ; free virtual = 2899
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:32 ; elapsed = 00:01:01 . Memory (MB): peak = 2602.289 ; gain = 857.258 ; free physical = 121 ; free virtual = 2896
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:32 ; elapsed = 00:01:01 . Memory (MB): peak = 2602.289 ; gain = 857.258 ; free physical = 119 ; free virtual = 2897
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |CARRY4 |    56|
+|2     |LUT1   |    19|
+|3     |LUT2   |    90|
+|4     |LUT3   |   109|
+|5     |LUT4   |   163|
+|6     |LUT5   |   787|
+|7     |LUT6   |   874|
+|8     |MUXF7  |   192|
+|9     |MUXF8  |    45|
+|10    |FDRE   |  1615|
+|11    |FDSE   |    12|
++------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:32 ; elapsed = 00:01:01 . Memory (MB): peak = 2602.289 ; gain = 857.258 ; free physical = 115 ; free virtual = 2895
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 18 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:30 ; elapsed = 00:00:59 . Memory (MB): peak = 2602.289 ; gain = 733.520 ; free physical = 191 ; free virtual = 3197
+Synthesis Optimization Complete : Time (s): cpu = 00:00:33 ; elapsed = 00:01:02 . Memory (MB): peak = 2602.297 ; gain = 857.258 ; free physical = 186 ; free virtual = 3197
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2602.297 ; gain = 0.000 ; free physical = 166 ; free virtual = 3192
+INFO: [Netlist 29-17] Analyzing 293 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2658.316 ; gain = 0.000 ; free physical = 157 ; free virtual = 3330
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: f628e0fa
+INFO: [Common 17-83] Releasing license: Synthesis
+40 Infos, 35 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:42 ; elapsed = 00:01:12 . Memory (MB): peak = 2658.316 ; gain = 1143.145 ; free physical = 176 ; free virtual = 3498
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 1177.604; main = 1034.023; forked = 143.580
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 3495.191; main = 2658.320; forked = 918.711
+INFO: [Coretcl 2-1174] Renamed 9 cell refs.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2682.328 ; gain = 0.000 ; free physical = 146 ; free virtual = 3493
+INFO: [Common 17-1381] The checkpoint '/home/focused_xy/cs/ysyx/fpga/fpga.runs/TOP_FPGA_RVCPU_wrapper_0_0_synth_1/TOP_FPGA_RVCPU_wrapper_0_0.dcp' has been generated.
+INFO: [Vivado 12-24828] Executing command : report_utilization -file TOP_FPGA_RVCPU_wrapper_0_0_utilization_synth.rpt -pb TOP_FPGA_RVCPU_wrapper_0_0_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Tue Dec 10 13:49:04 2024...
