@@ -1,4 +1,3 @@
-#include "debug.h"
 #include "local-include/verilating.h"
 #include <common.h>
 #include <cpu/cpu.h>

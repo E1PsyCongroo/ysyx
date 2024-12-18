@@ -7,7 +7,7 @@ import chisel3.util._
 import scala.math._
 
 class DividerIn(dwidth: Int) extends Bundle {
-  val signed   = Bool
+  val signed   = Bool()
   val dividend = UInt(dwidth.W)
   val divisor  = UInt(dwidth.W)
 }
@@ -19,8 +19,8 @@ class DividerOut(dwidth: Int) extends Bundle {
 
 class DividerIO(dwidth: Int) extends Bundle {
   val flush = Input(Bool())
-  val in    = Flipped(DecoupledIO(new MultiplierIn(dwidth)))
-  val out   = DecoupledIO(new MultiplierOut(dwidth))
+  val in    = Flipped(DecoupledIO(new DividerIn(dwidth)))
+  val out   = DecoupledIO(new DividerOut(dwidth))
 }
 
 abstract class Divider(dwidth: Int) extends Module {
@@ -28,52 +28,37 @@ abstract class Divider(dwidth: Int) extends Module {
 }
 
 class BoothDivider(dwidth: Int) extends Divider(dwidth) {
-  require(dwidth % 2 == 0)
+  val in      = io.in.bits
+  val divZero = in.divisor === 0.U
+  val needNeg = RegEnable(
+    Fill(2, in.signed && !divZero) & Cat(in.dividend(dwidth - 1), in.dividend(dwidth - 1) ^ in.divisor(dwidth - 1)),
+    io.in.fire
+  )
+  val negDiviDend  = in.signed && in.dividend(dwidth - 1)
+  val result       = Reg(UInt((dwidth * 2).W))
+  val negDivisor   = in.signed && in.divisor(dwidth - 1)
+  val divisor_r    = RegEnable((Fill(dwidth, negDivisor) ^ in.divisor) + negDivisor, io.in.fire)
+  val divisor      = WireDefault(0.U(1.W) ## divisor_r)
+  val nextResult   = Wire(result.cloneType)
+  val cycleCounter = Reg(UInt(log2Ceil(dwidth).W))
+  val last         = WireDefault(cycleCounter === (dwidth - 1).U)
 
-  val in = io.in.bits
-  def GenPartialProduct(y_add: Bool, y: Bool, y_sub: Bool, multiplicand: UInt): UInt = {
-    val width               = multiplicand.getWidth
-    val sel_negative        = WireDefault(y_add & (y & ~y_sub | ~y & y_sub))
-    val sel_positive        = WireDefault(~y_add & (y & ~y_sub | ~y & y_sub))
-    val sel_double_negative = WireDefault(y_add & ~y & ~y_sub)
-    val sel_double_positive = WireDefault(~y_add & y & y_sub)
-    val x                   = multiplicand(width - 1) ## multiplicand ## 0.U
-    val partialProduct = for (i <- 1 to width + 1) yield {
-      WireDefault(
-        (sel_negative & ~x(i)) | (sel_double_negative & ~x(i - 1)) |
-          (sel_positive & x(i)) | (sel_double_positive & x(i - 1))
-      )
-    }
-    val result = Cat(partialProduct.toSeq.reverse) + (sel_negative || sel_double_negative)
-    require(result.getWidth == width + 1)
-    result
-  }
-  val multiplicandSigned = RegEnable(in.signed(1), io.in.fire)
-  val multiplierWidth    = dwidth + 2
-  // 乘数双符号/零扩展 和 最低位补0 需要 3 bits
-  val result     = Reg(UInt((dwidth + multiplierWidth + 1).W))
-  val nextResult = Wire(result.cloneType)
-  // 被乘数符号/零扩展 需要 1 bit
-  val multiplicand_r = RegEnable(Mux(in.signed(1), in.multiplicand(dwidth - 1), 0.U) ## in.multiplicand, io.in.fire)
-  // 部分积 宽度为 dwidth + 2(可能的左移与符号扩展)
-  val partialProduct = WireDefault(GenPartialProduct(result(2), result(1), result(0), multiplicand_r))
-  val cycleCounter   = Reg(UInt(log2Ceil(multiplierWidth / 2).W))
-  val last           = WireDefault(cycleCounter === (multiplierWidth / 2 - 1).U)
+  val sIdle :: sDiv :: sSend :: sDivZeroSend :: Nil = Enum(4)
 
-  val sIdle :: sMul :: sSend :: Nil = Enum(3)
-
-  val state  = RegInit(sIdle)
-  val isIdle = state === sIdle
-  val isMul  = state === sMul
-  val isSend = state === sSend
+  val state         = RegInit(sIdle)
+  val isIdle        = state === sIdle
+  val isDiv         = state === sDiv
+  val isSend        = state === sSend
+  val isDivZeroSend = state === sDivZeroSend
   state := Mux(
     io.flush,
     sIdle,
     MuxLookup(state, sIdle)(
       Seq(
-        sIdle -> Mux(io.in.fire, sMul, sIdle),
-        sMul -> Mux(last, sSend, sMul),
-        sSend -> Mux(io.out.fire, sIdle, sSend)
+        sIdle -> Mux(io.in.fire, Mux(divZero, sDivZeroSend, sDiv), sIdle),
+        sDiv -> Mux(last, sSend, sDiv),
+        sSend -> Mux(io.out.fire, sIdle, sSend),
+        sDivZeroSend -> Mux(io.out.fire, sIdle, sSend)
       )
     )
   )
@@ -81,25 +66,45 @@ class BoothDivider(dwidth: Int) extends Divider(dwidth) {
   result := MuxCase(
     DontCare,
     Seq(
-      io.in.fire -> Fill(2, Mux(in.signed(0), in.multiplier(dwidth - 1), 0.U(1.W))) ## in.multiplier ## 0.U(1.W),
-      isMul -> nextResult,
-      isSend -> result
+      io.in.fire -> Mux(
+        divZero,
+        in.dividend ## Fill(dwidth, 1.U(1.W)),
+        ((Fill(dwidth, negDiviDend) ^ in.dividend) + negDiviDend)
+      ),
+      isDiv -> nextResult,
+      isSend -> result,
+      isDivZeroSend -> result
     )
   )
-  nextResult := (partialProduct + (Fill(2, result(dwidth + multiplierWidth)) ## result(
-    dwidth + multiplierWidth,
-    multiplierWidth + 1
-  ))) ## result(multiplierWidth, 2)
+  val partialRemainder = result(dwidth * 2 - 1, dwidth - 1) + ~divisor + 1.U
+  val partialQuotient  = ~partialRemainder(dwidth)
+  nextResult := Mux(
+    partialRemainder(dwidth),
+    result(dwidth * 2 - 2, 0) ## partialQuotient,
+    partialRemainder(dwidth - 1, 0) ## result(dwidth - 2, 0) ## partialQuotient
+  )
   cycleCounter := MuxCase(
     DontCare,
     Seq(
       io.in.fire -> 0.U,
-      isMul -> (cycleCounter + 1.U)
+      isDiv -> (cycleCounter + 1.U)
     )
   )
 
   io.in.ready           := isIdle
-  io.out.valid          := isSend && !io.flush
-  io.out.bits.result_lo := result(dwidth, 1)
-  io.out.bits.result_hi := result(dwidth * 2, dwidth + 1)
+  io.out.valid          := (isSend || isDivZeroSend) && !io.flush
+  io.out.bits.quotient  := (Fill(dwidth, needNeg(0)) ^ result(dwidth - 1, 0)) + needNeg(0)
+  io.out.bits.remainder := (Fill(dwidth, needNeg(1)) ^ result(dwidth * 2 - 1, dwidth)) + needNeg(1)
+
+  // when(io.in.fire) {
+  //   printf(cf"dividend: ${in.dividend}%b, divisor: ${in.divisor}%b\n")
+  // }
+  // when(isDiv) {
+  //   printf(
+  //     cf"cycle: ${cycleCounter}, partialRemainder: ${partialRemainder}%b,  result: ${result}%b, nextResult: ${nextResult}%b\n"
+  //   )
+  // }
+  // when(io.out.fire) {
+  //   printf(cf"needNeg: ${needNeg}%b, result: ${result}%b\n")
+  // }
 }

@@ -14,7 +14,7 @@ module DPIMem(
   input [3:0] wmask
 );
 
-  always @(*) begin
+  always @(negedge clock) begin
     if (ren && !reset) begin
       rdata = rvcpu_pmem_read(raddr);
     end

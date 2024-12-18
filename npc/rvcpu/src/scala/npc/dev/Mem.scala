@@ -162,7 +162,7 @@ class AXI4Mem(params: AXI4BundleParameters, useDPIC: Boolean) extends Module {
   Mem.io.wmask := wstrb
   Mem.io.wen   := bfire
   Mem.io.raddr := (araddr >> 2.U) + readCount
-  Mem.io.ren   := isSendRresp
+  Mem.io.ren   := isSendRresp && isFetch
 
   /* io.bind */
   io.aw.ready    := awready

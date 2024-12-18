@@ -8,44 +8,72 @@ import chisel3.experimental.BundleLiterals._
 
 import ALUOutSel._
 
+class ALUControl extends Bundle {
+  val aluSel     = UInt(ALUOutSel.getWidth.W)
+  val isArith    = Bool()
+  val isLeft     = Bool()
+  val isUnsigned = UInt(2.W)
+  val isSub      = Bool()
+}
+
 class ALUIn(cpuConfig: CPUConfig) extends Bundle {
-  val aluSel = Input(UInt(ALUOutSel.getWidth.W))
-  val isArith = Input(Bool())
-  val isLeft = Input(Bool())
-  val isUnsigned = Input(Bool())
-  val isSub = Input(Bool())
-  val inA = Input(UInt(cpuConfig.xlen.W))
-  val inB = Input(UInt(cpuConfig.xlen.W))
+  val control = new ALUControl
+  val inA     = UInt(cpuConfig.xlen.W)
+  val inB     = UInt(cpuConfig.xlen.W)
 }
 
 class ALUOut(cpuConfig: CPUConfig) extends Bundle {
-  val result  = Output(UInt(cpuConfig.xlen.W))
-  val less = Output(Bool())
-  val zero = Output(Bool())
+  val result = UInt(cpuConfig.xlen.W)
+  val less   = Bool()
+  val zero   = Bool()
 }
 
 class ALU(cpuConfig: CPUConfig) extends Module {
   val io = IO(new Bundle {
-    val in = new ALUIn(cpuConfig)
-    val out = new ALUOut(cpuConfig)
+    val flush = Input(Bool())
+    val in    = Flipped(DecoupledIO(new ALUIn(cpuConfig)))
+    val out   = DecoupledIO(new ALUOut(cpuConfig))
   })
 
-  val adder = Adder(io.in.inA, io.in.inB, io.in.isSub)
+  val in    = io.in.bits
+  val adder = Adder(in.inA, in.inB, in.control.isSub)
+  val mul   = Module(new WallaceMultiplier(cpuConfig.xlen, 4))
+  val div   = Module(new BoothDivider(cpuConfig.xlen))
+
+  mul.io.flush := io.flush
+  mul.io.in.valid := io.in.valid && (in.control.aluSel === selectMul ||
+    in.control.aluSel === selectMulh1 || in.control.aluSel === selectMulh2)
+  mul.io.in.bits.signed       := ~in.control.isUnsigned
+  mul.io.in.bits.multiplicand := in.inA
+  mul.io.in.bits.multiplier   := in.inB
+  mul.io.out.ready            := io.out.ready
+
+  div.io.flush            := io.flush
+  div.io.in.valid         := io.in.valid && (in.control.aluSel === selectDiv || in.control.aluSel === selectRem)
+  div.io.in.bits.signed   := ~(in.control.isUnsigned.orR)
+  div.io.in.bits.dividend := in.inA
+  div.io.in.bits.divisor  := in.inB
+  div.io.out.ready        := io.out.ready
+
   val less = Mux(
-    io.in.isUnsigned,
-    adder.carry ^ io.in.isSub,
+    in.control.isUnsigned.orR,
+    adder.carry ^ in.control.isSub,
     adder.overflow ^ adder.result(cpuConfig.xlen - 1).asBool
   )
   val zero     = adder.zero
   val adderOut = adder.result.asUInt
-  val shiftOut = BarrelShifter(io.in.inA, io.in.inB(4, 0), io.in.isLeft, io.in.isArith)
-  // val shiftOut = Shifter(io.in.inA, io.in.inB(4, 0), io.in.isLeft, io.in.isArith)
-  val sltOut = 0.U((cpuConfig.xlen - 1).W) ## less.asUInt
-  val BOut   = io.in.inB
-  val xorOut = io.in.inA ^ io.in.inB
-  val orOut  = io.in.inA | io.in.inB
-  val andOut = io.in.inA & io.in.inB
-  io.out.result := MuxCase(
+  val shiftOut = BarrelShifter(in.inA, in.inB(4, 0), in.control.isLeft, in.control.isArith)
+  val sltOut   = 0.U((cpuConfig.xlen - 1).W) ## less.asUInt
+  val BOut     = in.inB
+  val xorOut   = in.inA ^ in.inB
+  val orOut    = in.inA | in.inB
+  val andOut   = in.inA & in.inB
+  val mulOut   = mul.io.out.bits.result_lo
+  val mulhOut  = mul.io.out.bits.result_hi
+  val divOut   = div.io.out.bits.quotient
+  val remOut   = div.io.out.bits.remainder
+  io.in.ready := mul.io.out.ready && div.io.out.ready
+  io.out.bits.result := MuxCase(
     DontCare,
     Seq(
       selectAdder -> adderOut,
@@ -54,9 +82,24 @@ class ALU(cpuConfig: CPUConfig) extends Module {
       selectB -> BOut,
       selectXor -> xorOut,
       selectOr -> orOut,
-      selectAnd -> andOut
-    ).map { case (key, data) => (io.in.aluSel === key, data) }
+      selectAnd -> andOut,
+      selectMul -> mulOut,
+      selectMulh1 -> mulhOut,
+      selectMulh2 -> mulhOut,
+      selectDiv -> divOut,
+      selectRem -> remOut
+    ).map { case (key, data) => (in.control.aluSel === key, data) }
   )
-  io.out.less := less
-  io.out.zero := zero
+  io.out.bits.less := less
+  io.out.bits.zero := zero
+  io.out.valid := MuxCase(
+    io.in.valid,
+    Seq(
+      selectMul -> mul.io.out.valid,
+      selectMulh1 -> mul.io.out.valid,
+      selectMulh2 -> mul.io.out.valid,
+      selectDiv -> div.io.out.valid,
+      selectRem -> div.io.out.valid
+    ).map { case (key, data) => (in.control.aluSel === key, data) }
+  )
 }

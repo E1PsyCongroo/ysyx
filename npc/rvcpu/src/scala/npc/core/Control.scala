@@ -113,32 +113,30 @@ object ALUBSrcControlField extends DecodeField[Instruction, UInt] {
   }
 }
 
-class ALUControlOutput extends Bundle {
-  val aluSel     = Output(UInt(ALUOutSel.getWidth.W))
-  val isArith    = Output(Bool())
-  val isLeft     = Output(Bool())
-  val isUnsigned = Output(Bool())
-  val isSub      = Output(Bool())
-}
-
-object ALUControlField extends DecodeField[Instruction, ALUControlOutput] {
+object ALUControlField extends DecodeField[Instruction, ALUControl] {
   def name = "ALU Control Field"
-  def chiselType: ALUControlOutput = new ALUControlOutput
+  def chiselType: ALUControl = new ALUControl
   def genTable(op: Instruction): BitPat = {
     import InstructionMap._
     import InstructionType._
     import ALUOutSel._
     val aluSel = op match {
-      case ADD | ADDI | SUB | JAL | JALR | AUIPC            => selectAdder
-      case LB | LH | LW | LBU | LHU                         => selectAdder
-      case SH | SB | SW                                     => selectAdder
-      case SLL | SLLI | SRL | SRLI | SRA | SRAI             => selectShift
-      case SLT | SLTU | BEQ | BNE | BLT | BGE | BLTU | BGEU => selectSlt
-      case LUI                                              => selectB
-      case XOR | XORI                                       => selectXor
-      case OR | ORI                                         => selectOr
-      case AND | ANDI                                       => selectAnd
-      case _                                                => BitPat.dontCare(ALUOutSel.getWidth)
+      case ADD | ADDI | SUB | AUIPC             => selectAdder
+      case JAL | JALR                           => selectAdder
+      case LB | LH | LW | LBU | LHU             => selectAdder
+      case SH | SB | SW                         => selectAdder
+      case SLL | SLLI | SRL | SRLI | SRA | SRAI => selectShift
+      case SLT | SLTI | SLTU | SLTIU            => selectSlt
+      case LUI                                  => selectB
+      case XOR | XORI                           => selectXor
+      case OR | ORI                             => selectOr
+      case AND | ANDI                           => selectAnd
+      case MUL                                  => selectMul
+      case MULH                                 => selectMulh1
+      case MULHSU | MULHU                       => selectMulh2
+      case DIV | DIVU                           => selectDiv
+      case REM | REMU                           => selectRem
+      case _                                    => BitPat.N(1) ## BitPat.dontCare(ALUOutSel.getWidth - 1)
     }
     val isArith = op match {
       case SRL | SRLI => BitPat.N(1)
@@ -151,9 +149,12 @@ object ALUControlField extends DecodeField[Instruction, ALUControlOutput] {
       case _                       => BitPat.dontCare(1)
     }
     val isUnsigned = op match {
-      case SLT | SLTI | BLT | BGE     => BitPat.N(1)
-      case SLTU | SLTIU | BLTU | BGEU => BitPat.Y(1)
-      case _                          => BitPat.dontCare(1)
+      case SLT | SLTI | BLT | BGE     => BitPat.N(2)
+      case SLTU | SLTIU | BLTU | BGEU => BitPat.Y(2)
+      case MULH | DIV | REM           => BitPat.N(2)
+      case MULHSU                     => BitPat("b01")
+      case MULHU | DIVU | REMU        => BitPat.Y(2)
+      case _                          => BitPat.dontCare(2)
     }
     val isSub = op match {
       case ADD | ADDI | JAL | JALR             => BitPat.N(1)
@@ -337,153 +338,151 @@ object EndControlField extends DecodeField[Instruction, Bool] {
 }
 
 class ControlOut(cpuConfig: CPUConfig) extends Bundle {
-  val immType = Output(UInt(ImmType.getWidth.W))
+  val immType = UInt(ImmType.getWidth.W)
 
-  val needRd1 = Output(Bool())
-  val needRd2 = Output(Bool())
-  val regWe   = Output(Bool())
-  val wbSrc   = Output(UInt(WBSrcFrom.getWidth.W))
+  val needRd1 = Bool()
+  val needRd2 = Bool()
+  val regWe   = Bool()
+  val wbSrc   = UInt(WBSrcFrom.getWidth.W)
 
-  val aluASrc    = Output(UInt(ALUASrcFrom.getWidth.W))
-  val aluBSrc    = Output(UInt(ALUBSrcFrom.getWidth.W))
-  val aluSel     = Output(UInt(ALUOutSel.getWidth.W))
-  val isArith    = Output(Bool())
-  val isLeft     = Output(Bool())
-  val isUnsigned = Output(Bool())
-  val isSub      = Output(Bool())
+  val aluASrc    = UInt(ALUASrcFrom.getWidth.W)
+  val aluBSrc    = UInt(ALUBSrcFrom.getWidth.W)
+  val aluControl = new ALUControl
 
-  val csrSrc = Output(UInt(CSRSrcFrom.getWidth.W))
-  val csrCtr = Output(UInt(CSRCtr.getWidth.W))
+  val csrSrc = UInt(CSRSrcFrom.getWidth.W)
+  val csrCtr = UInt(CSRCtr.getWidth.W)
 
-  val jumpASrc = Output(UInt(JumpASrcFrom.getWidth.W))
-  val jumpBSrc = Output(UInt(JumpBSrcFrom.getWidth.W))
-  val brType   = Output(UInt(BrType.getWidth.W))
-  val pcSrc    = Output(UInt(PCSrcFrom.getWidth.W))
+  val jumpASrc = UInt(JumpASrcFrom.getWidth.W)
+  val jumpBSrc = UInt(JumpBSrcFrom.getWidth.W)
+  val brType   = UInt(BrType.getWidth.W)
+  val pcSrc    = UInt(PCSrcFrom.getWidth.W)
 
-  val memRen = Output(Bool())
-  val memWen = Output(Bool())
-  val memOp  = Output(UInt(MemOp.getWidth.W))
+  val memRen = Bool()
+  val memWen = Bool()
+  val memOp  = UInt(MemOp.getWidth.W)
 
-  val fence_i = Output(Bool())
+  val fence_i = Bool()
 
-  val isEnd = if (cpuConfig.sim) Some(Output(Bool())) else None
+  val isEnd = if (cpuConfig.sim) Some(Bool()) else None
 }
 
 class Control(cpuConfig: CPUConfig) extends Module {
   val io = IO(new Bundle {
     val instruction = Input(UInt(32.W))
-    val control = new ControlOut(cpuConfig)
+    val control     = new ControlOut(cpuConfig)
   })
 
-    import InstructionMap._
-    val possiblePatterns = Seq(
-      LUI,
-      AUIPC,
-      JAL,
-      JALR,
-      BEQ,
-      BNE,
-      BLT,
-      BGE,
-      BLTU,
-      BGEU,
-      LB,
-      LH,
-      LW,
-      LBU,
-      LHU,
-      SB,
-      SH,
-      SW,
-      ADDI,
-      SLTI,
-      SLTIU,
-      XORI,
-      ORI,
-      ANDI,
-      SLLI,
-      SRLI,
-      SRAI,
-      ADD,
-      SUB,
-      SLL,
-      SLT,
-      SLTU,
-      XOR,
-      SRL,
-      SRA,
-      OR,
-      AND,
-      FENCE,
-      ECALL,
-      EBREAK,
-      FENCE_I,
-      CSRRW,
-      CSRRS,
-      CSRRC,
-      CSRRWI,
-      CSRRSI,
-      CSRRCI,
-      MRET
+  import InstructionMap._
+  val possiblePatterns = Seq(
+    LUI,
+    AUIPC,
+    JAL,
+    JALR,
+    BEQ,
+    BNE,
+    BLT,
+    BGE,
+    BLTU,
+    BGEU,
+    LB,
+    LH,
+    LW,
+    LBU,
+    LHU,
+    SB,
+    SH,
+    SW,
+    ADDI,
+    SLTI,
+    SLTIU,
+    XORI,
+    ORI,
+    ANDI,
+    SLLI,
+    SRLI,
+    SRAI,
+    ADD,
+    SUB,
+    SLL,
+    SLT,
+    SLTU,
+    XOR,
+    SRL,
+    SRA,
+    OR,
+    AND,
+    FENCE,
+    ECALL,
+    EBREAK,
+    FENCE_I,
+    CSRRW,
+    CSRRS,
+    CSRRC,
+    CSRRWI,
+    CSRRSI,
+    CSRRCI,
+    MUL,
+    MULH,
+    MULHSU,
+    MULHU,
+    DIV,
+    DIVU,
+    REM,
+    REMU,
+    MRET
+  )
+  val decodeTable = new DecodeTable(
+    possiblePatterns,
+    Seq(
+      ImmControlField,
+      needRd1ControlField,
+      needRd2ControlField,
+      RegWeControlField,
+      WBSrcControlField,
+      ALUASrcControlField,
+      ALUBSrcControlField,
+      ALUControlField,
+      CSRSrcControlField,
+      CSRControlField,
+      JumpASrcControlField,
+      JumpBSrcControlField,
+      BrControlField,
+      PCSrcControlField,
+      MemRenControlField,
+      MemWenControlField,
+      MemOpControlField,
+      FENCE_IField,
+      EndControlField
     )
-    val decodeTable = new DecodeTable(
-      possiblePatterns,
-      Seq(
-        ImmControlField,
-        needRd1ControlField,
-        needRd2ControlField,
-        RegWeControlField,
-        WBSrcControlField,
-        ALUASrcControlField,
-        ALUBSrcControlField,
-        ALUControlField,
-        CSRSrcControlField,
-        CSRControlField,
-        JumpASrcControlField,
-        JumpBSrcControlField,
-        BrControlField,
-        PCSrcControlField,
-        MemRenControlField,
-        MemWenControlField,
-        MemOpControlField,
-        FENCE_IField,
-        EndControlField
-      )
-    )
-    val decodeResult = decodeTable.decode(io.instruction)
+  )
+  val decodeResult = decodeTable.decode(io.instruction)
 
-    io.control.immType := decodeResult(ImmControlField)
+  io.control.immType := decodeResult(ImmControlField)
 
-    io.control.needRd1 := decodeResult(needRd1ControlField)
-    io.control.needRd2 := decodeResult(needRd2ControlField)
-    io.control.regWe   := decodeResult(RegWeControlField)
-    io.control.wbSrc   := decodeResult(WBSrcControlField)
+  io.control.needRd1 := decodeResult(needRd1ControlField)
+  io.control.needRd2 := decodeResult(needRd2ControlField)
+  io.control.regWe   := decodeResult(RegWeControlField)
+  io.control.wbSrc   := decodeResult(WBSrcControlField)
 
-    val aluCtr = decodeResult(ALUControlField)
-    io.control.aluASrc    := decodeResult(ALUASrcControlField)
-    io.control.aluBSrc    := decodeResult(ALUBSrcControlField)
-    io.control.aluSel     := aluCtr.aluSel
-    io.control.isArith    := aluCtr.isArith
-    io.control.isLeft     := aluCtr.isLeft
-    io.control.isUnsigned := aluCtr.isUnsigned
-    io.control.isSub      := aluCtr.isSub
+  io.control.aluASrc    := decodeResult(ALUASrcControlField)
+  io.control.aluBSrc    := decodeResult(ALUBSrcControlField)
+  io.control.aluControl := decodeResult(ALUControlField)
 
-    io.control.csrSrc := decodeResult(CSRSrcControlField)
-    io.control.csrCtr := decodeResult(CSRControlField)
+  io.control.csrSrc := decodeResult(CSRSrcControlField)
+  io.control.csrCtr := decodeResult(CSRControlField)
 
-    io.control.jumpASrc := decodeResult(JumpASrcControlField)
-    io.control.jumpBSrc := decodeResult(JumpBSrcControlField)
-    io.control.brType   := decodeResult(BrControlField)
-    io.control.pcSrc    := decodeResult(PCSrcControlField)
+  io.control.jumpASrc := decodeResult(JumpASrcControlField)
+  io.control.jumpBSrc := decodeResult(JumpBSrcControlField)
+  io.control.brType   := decodeResult(BrControlField)
+  io.control.pcSrc    := decodeResult(PCSrcControlField)
 
-    io.control.memRen := decodeResult(MemRenControlField)
-    io.control.memWen := decodeResult(MemWenControlField)
-    io.control.memOp  := decodeResult(MemOpControlField)
+  io.control.memRen := decodeResult(MemRenControlField)
+  io.control.memWen := decodeResult(MemWenControlField)
+  io.control.memOp  := decodeResult(MemOpControlField)
 
-    io.control.fence_i := decodeResult(FENCE_IField)
+  io.control.fence_i := decodeResult(FENCE_IField)
 
-    if (cpuConfig.sim) {
-      io.control.isEnd.get := decodeResult(EndControlField)
-    }
+  if (cpuConfig.sim) {
+    io.control.isEnd.get := decodeResult(EndControlField)
   }
-
+}

@@ -13,11 +13,7 @@ class IDUOut(cpuConfig: CPUConfig) extends Bundle {
   val control = new Bundle {
     val regWe      = Bool()
     val wbSrc      = UInt(WBSrcFrom.getWidth.W)
-    val aluSel     = UInt(ALUOutSel.getWidth.W)
-    val isArith    = Bool()
-    val isLeft     = Bool()
-    val isUnsigned = Bool()
-    val isSub      = Bool()
+    val aluControl = new ALUControl
     val csrSrc     = UInt(CSRSrcFrom.getWidth.W)
     val csrCtr     = UInt(CSRCtr.getWidth.W)
     val brType     = UInt(BrType.getWidth.W)
@@ -112,11 +108,7 @@ class IDU(cpuConfig: CPUConfig) extends Module {
   io.out.bits.ra1                := ra1
   io.out.bits.control.regWe      := control.io.control.regWe
   io.out.bits.control.wbSrc      := control.io.control.wbSrc
-  io.out.bits.control.aluSel     := control.io.control.aluSel
-  io.out.bits.control.isArith    := control.io.control.isArith
-  io.out.bits.control.isLeft     := control.io.control.isLeft
-  io.out.bits.control.isUnsigned := control.io.control.isUnsigned
-  io.out.bits.control.isSub      := control.io.control.isSub
+  io.out.bits.control.aluControl := control.io.control.aluControl
   io.out.bits.control.csrSrc     := control.io.control.csrSrc
   io.out.bits.control.csrCtr     := control.io.control.csrCtr
   io.out.bits.control.brType     := control.io.control.brType

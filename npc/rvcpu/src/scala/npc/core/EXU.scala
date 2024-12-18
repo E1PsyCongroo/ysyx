@@ -45,17 +45,16 @@ class EXU(cpuConfig: CPUConfig) extends Module {
   val uimm     = in.ra1.pad(cpuConfig.xlen)
   val control  = in.control
 
-  alu.io.in.aluSel     := control.aluSel
-  alu.io.in.isArith    := control.isArith
-  alu.io.in.isLeft     := control.isLeft
-  alu.io.in.isUnsigned := control.isUnsigned
-  alu.io.in.isSub      := control.isSub
-  alu.io.in.inA        := aluASrc
-  alu.io.in.inB        := aluBSrc
+  alu.io.flush           := !io.in.valid
+  alu.io.in.valid        := io.in.valid
+  alu.io.in.bits.control := control.aluControl
+  alu.io.in.bits.inA     := aluASrc
+  alu.io.in.bits.inB     := aluBSrc
+  alu.io.out.ready       := io.out.ready
 
   br.io.brType := control.brType
-  br.io.less   := alu.io.out.less
-  br.io.zero   := alu.io.out.zero
+  br.io.less   := alu.io.out.bits.less
+  br.io.zero   := alu.io.out.bits.zero
   val jump   = io.in.valid && (br.io.jump || (control.pcSrc === PCSrcFrom.fromCSR))
   val jumped = RegNext(!io.out.fire && jump)
   val npc    = jumpASrc + jumpBSrc
@@ -83,9 +82,9 @@ class EXU(cpuConfig: CPUConfig) extends Module {
   csr.io.in.pc      := jumpASrc
 
   io.in.ready                := !io.in.valid || io.out.fire
-  io.out.valid               := io.in.valid
+  io.out.valid               := io.in.valid && alu.io.out.valid
   io.out.bits.wa             := in.wa
-  io.out.bits.alu_csr_out    := Mux(control.wbSrc(1), csr.io.out.csrout, alu.io.out.result)
+  io.out.bits.alu_csr_out    := Mux(control.wbSrc(1), csr.io.out.csrout, alu.io.out.bits.result)
   io.out.bits.wdata          := jumpBSrc
   io.out.bits.control.regWe  := control.regWe(0)
   io.out.bits.control.wbSrc  := control.wbSrc

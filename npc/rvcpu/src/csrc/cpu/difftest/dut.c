@@ -89,7 +89,8 @@ static void checkregs(CPU_state *ref, vaddr_t pc) {
   if (!isa_difftest_checkregs(ref, pc)) {
     npc_state.state = NPC_ABORT;
     npc_state.halt_pc = pc;
-    isa_reg_display();
+    extern void assert_fail_msg();
+    assert_fail_msg();
   }
 }
 

@@ -1,13 +1,10 @@
-AM_SRCS := riscv/npc/start.S \
-           riscv/npc/trm.c \
-           riscv/npc/ioe/ioe.c \
-           riscv/npc/ioe/timer.c \
-           riscv/npc/ioe/audio.c \
-           riscv/npc/ioe/gpu.c \
-           riscv/npc/ioe/input.c \
-           riscv/npc/ioe/disk.c \
-           riscv/npc/cte.c \
-           riscv/npc/trap.S \
+AM_SRCS := platform/npc/trm.c \
+           platform/npc/ioe/ioe.c \
+           platform/npc/ioe/timer.c \
+           platform/npc/ioe/input.c \
+           platform/npc/ioe/gpu.c \
+           platform/npc/ioe/audio.c \
+           platform/npc/ioe/disk.c \
            platform/dummy/vme.c \
            platform/dummy/mpe.c
 
@@ -19,13 +16,13 @@ override NPCFLAGS += -l $(shell dirname $(IMAGE).elf)/npc-log.txt
 # override NPCFLAGS += -w $(shell dirname $(IMAGE).elf)/npc-wave.vcd
 
 CFLAGS += -DMAINARGS=\"$(mainargs)\"
-CFLAGS += -I$(AM_HOME)/am/src/riscv/npc/include
-.PHONY: $(AM_HOME)/am/src/riscv/npc/trm.c
+CFLAGS += -I$(AM_HOME)/am/src/platform/npc/include
+.PHONY: $(AM_HOME)/am/src/platform/npc/trm.c
 
 image: $(IMAGE).elf
 	@$(OBJDUMP) -d $(IMAGE).elf > $(IMAGE).txt
 	@echo + OBJCOPY "->" $(IMAGE_REL).bin
-	@$(OBJCOPY) -S --set-section-flags .bss=alloc,contents -O binary $(IMAGE).elf $(IMAGE).bin
+	@$(OBJCOPY) -S -O binary --set-section-flags .bss=alloc,contents $(IMAGE).elf $(IMAGE).bin
 
 run: image
 	$(MAKE) -C $(NPC_HOME) run ARGS="$(NPCFLAGS)" IMG=$(IMAGE).bin ELF=$(IMAGE).elf

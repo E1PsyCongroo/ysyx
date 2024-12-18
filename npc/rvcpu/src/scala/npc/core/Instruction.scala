@@ -159,11 +159,10 @@ object ALUOutSel {
   val selectOr    = BitPat("b0110")
   val selectAnd   = BitPat("b0111")
   val selectMul   = BitPat("b1000")
-  val selectMulh  = BitPat("b101?")
+  val selectMulh1 = BitPat("b1001")
+  val selectMulh2 = BitPat("b101?")
   val selectDiv   = BitPat("b1100")
-  val selectDivh  = BitPat("b1101")
   val selectRem   = BitPat("b1110")
-  val selectRemh  = BitPat("b1111")
 }
 
 object ALUASrcFrom {
