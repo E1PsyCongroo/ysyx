@@ -39,7 +39,7 @@ class ALU(cpuConfig: CPUConfig) extends Module {
   val zero     = adder.zero
   val adderOut = adder.result.asUInt
   val shiftOut = BarrelShifter(io.in.inA, io.in.inB(4, 0), io.in.isLeft, io.in.isArith)
-  // val shiftOut = Shifter(inA, inB(4, 0), isLeft, isArith)
+  // val shiftOut = Shifter(io.in.inA, io.in.inB(4, 0), io.in.isLeft, io.in.isArith)
   val sltOut = 0.U((cpuConfig.xlen - 1).W) ## less.asUInt
   val BOut   = io.in.inB
   val xorOut = io.in.inA ^ io.in.inB

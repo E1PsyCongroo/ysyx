@@ -150,14 +150,20 @@ object ImmType {
 }
 
 object ALUOutSel {
-  def getWidth    = 3
-  val selectAdder = BitPat("b000")
-  val selectShift = BitPat("b?01")
-  val selectSlt   = BitPat("b010")
-  val selectB     = BitPat("b011")
-  val selectXor   = BitPat("b100")
-  val selectOr    = BitPat("b110")
-  val selectAnd   = BitPat("b111")
+  def getWidth    = 4
+  val selectAdder = BitPat("b0000")
+  val selectShift = BitPat("b0?01")
+  val selectSlt   = BitPat("b0010")
+  val selectB     = BitPat("b0011")
+  val selectXor   = BitPat("b0100")
+  val selectOr    = BitPat("b0110")
+  val selectAnd   = BitPat("b0111")
+  val selectMul   = BitPat("b1000")
+  val selectMulh  = BitPat("b101?")
+  val selectDiv   = BitPat("b1100")
+  val selectDivh  = BitPat("b1101")
+  val selectRem   = BitPat("b1110")
+  val selectRemh  = BitPat("b1111")
 }
 
 object ALUASrcFrom {
