@@ -1,5 +1,5 @@
 YOSYS_DIR           := $(WORK_DIR)/yosys
-YOSYS_V_FILE_GEN    := $(YOSYS_DIR)/RVCPU.sv
+YOSYS_V_FILE_GEN    := $(YOSYS_DIR)/SoCCore.sv
 
 # Generating Verilog
 $(YOSYS_V_FILE_GEN): $(CHISELSRCS) $(RESOURCES)

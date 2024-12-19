@@ -16,7 +16,7 @@ module simtop();
       dut.mem.Mem.mem_ext.Memory[i] = 0;
     end
     $readmemh(
-      "/home/focused_xy/cs/ysyx/npc/iverilog/hex/hello-riscv32e-npc.hex",
+      "/home/focused_xy/cs/ysyx/npc/iverilog/hex/microbench-riscv32e-npc.hex",
       dut.mem.Mem.mem_ext.Memory
     );
     repeat(10) @(posedge clk);

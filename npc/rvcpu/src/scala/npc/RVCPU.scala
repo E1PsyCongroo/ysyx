@@ -40,7 +40,7 @@ case class ICacheConfig(
   totalWidth:         Int,
   blockWidth:         Int,
   associativityWidth: Int,
-  icacheNeed:         AddressSet)
+  icacheNeed:         Seq[AddressSet])
 
 case class CPUConfig(
   frequency:    BigInt,

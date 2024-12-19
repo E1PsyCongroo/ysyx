@@ -35,7 +35,7 @@ object NPCConfig {
       totalWidth         = 6,
       blockWidth         = 5,
       associativityWidth = 0,
-      icacheNeed         = Dev.npc.PMEMAddr
+      icacheNeed         = Seq(Dev.npc.PMEMAddr)
     ),
     sim = true
   )

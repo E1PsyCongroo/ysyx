@@ -130,9 +130,9 @@ module StateSyncer(
       if (icacheNeed) rvcpu_trace_cache({31'b0, icacheHit}, icacheCostCycle - icacheMissCost, icacheMissCost);
       if (simEnd) rvcpu_sim_end(exitCode);
       if (skipDifftest) rvcpu_difftest_skip_ref();
+      rvcpu_trace_read(pc, 4, inst);
       if (memRen) rvcpu_trace_read(memAddr, {29'b0, memAccessSize}, memData);
       if (memWen) rvcpu_trace_write(memAddr, {29'b0, memAccessSize}, memData);
-      rvcpu_trace_read(pc, 4, inst);
       rvcpu_decode_inst(inst, npc, icacheCostCycle, iduCostCycle, exuCostCycle, lsuCostCycle, wbuCostCycle);
       rvcpu_sync_csrs(csrState);
       rvcpu_sync_gprs(gprState);

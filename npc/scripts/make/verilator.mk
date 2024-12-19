@@ -1,8 +1,4 @@
 ifdef CONFIG_ISA_riscv_ysyxsoc
-CXXSRC             += $(OBJ_DIR)/$(PRJ)_auto_bind.cc
-endif
-ARCHIVES           += $(VERILATOR_DIR)/lib$(PRJ).so $(NVBOARD_ARCHIVE)
-ifdef CONFIG_ISA_riscv_ysyxsoc
 TOP_MODULE          := ysyxSoCFull
 else ifdef CONFIG_ISA_riscv_npc
 TOP_MODULE          := NPC
@@ -48,12 +44,12 @@ $(VERILATOR_DIR)/lib$(PRJ).%: $(BUILD_DIR)/.stamp.verilog$(PLATFORM) $(VSRCS)
 		--lib-create $(PRJ) --Mdir $(VERILATOR_DIR)
 
 # NVBOARD
-$(OBJ_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
+$(CONSTR_DIR)/$(PRJ)_auto_bind.cc: $(CONSTR_DIR)/$(PRJ).nxdc
 	@echo + AUTO-BIND $<
 	@mkdir -p $(dir $@)
 	@python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 ifdef CONFIG_ISA_riscv_ysyxsoc
-CXXSRC             += $(OBJ_DIR)/$(PRJ)_auto_bind.cc
+CXXSRC             += $(CONSTR_DIR)/$(PRJ)_auto_bind.cc
 endif
 ARCHIVES           += $(VERILATOR_DIR)/lib$(PRJ).so $(NVBOARD_ARCHIVE)

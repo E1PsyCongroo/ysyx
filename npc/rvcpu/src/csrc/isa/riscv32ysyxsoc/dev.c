@@ -133,7 +133,7 @@ void init_isa_dev() {
 #undef ISA_DEV_INIT_RANGE
 }
 
-void isa_trace_read(paddr_t addr, int len, word_t data) {
+void rvcpu_trace_read(paddr_t addr, int len, word_t data) {
 #define ISA_DEV_TRACE_READ(DEV)                                                \
   IFDEF(                                                                       \
       CONFIG_ISA_HAS_##DEV, if (in_dev_##DEV(addr)) {                          \
@@ -151,7 +151,7 @@ void isa_trace_read(paddr_t addr, int len, word_t data) {
   out_of_bound(addr);
 }
 
-void isa_trace_write(paddr_t addr, int len, word_t data) {
+void rvcpu_trace_write(paddr_t addr, int len, word_t data) {
 #define ISA_DEV_TRACE_WRITE(DEV)                                               \
   IFDEF(                                                                       \
       CONFIG_ISA_HAS_##DEV, if (in_dev_##DEV(addr)) {                          \

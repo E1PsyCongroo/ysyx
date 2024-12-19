@@ -1,21 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.120 (w)1999-2024 BSI
-[*] Sat Nov 30 11:54:44 2024
+[*] Thu Dec 19 14:33:04 2024
 [*]
 [dumpfile] "/home/focused_xy/cs/ysyx/npc/build/npc-wave.fst"
-[dumpfile_mtime] "Sat Nov 30 06:22:20 2024"
-[dumpfile_size] 746974098
+[dumpfile_mtime] "Thu Dec 19 14:33:04 2024"
+[dumpfile_size] 105647084
 [savefile] "/home/focused_xy/cs/ysyx/npc/wave/gtkwave.gtkw"
-[timestart] 124139888
-[size] 2880 1510
+[timestart] 1254113
+[size] 1920 997
 [pos] -1 -1
-*-4.800000 124140151 23136186 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-4.800000 1254152 23136186 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.ysyxSoCFull.
 [treeopen] TOP.ysyxSoCFull.asic.
 [treeopen] TOP.ysyxSoCFull.asic.cpu.
 [treeopen] TOP.ysyxSoCFull.asic.cpu.cpu.
-[treeopen] TOP.ysyxSoCFull.asic.cpu.cpu.EXU.
+[treeopen] TOP.ysyxSoCFull.asic.cpu.cpu.core.
 [treeopen] TOP.ysyxSoCFull.asic.lkeyboard.
 [treeopen] TOP.ysyxSoCFull.asic.lpsram.mpsram.u0.
 [treeopen] TOP.ysyxSoCFull.asic.lsdram_axi.
@@ -27,7 +27,7 @@
 [sst_width] 381
 [signals_width] 514
 [sst_expanded] 1
-[sst_vpaned_height] 611
+[sst_vpaned_height] 512
 @28
 TOP.clock
 @200
@@ -37,84 +37,61 @@ TOP.ysyxSoCFull.asic.cpu.reset
 @200
 -IFU
 @28
-TOP.ysyxSoCFull.asic.cpu.cpu.IFU.io_jump
+TOP.ysyxSoCFull.asic.cpu.cpu.core.IFU.io_jump
 @22
-TOP.ysyxSoCFull.asic.cpu.cpu.IFU.io_nextPC[31:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.IFU.pc[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.IFU.pc[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.IFU.io_nextPC[31:0]
 @200
--Cache
+-ICache
 @28
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.state[1:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_in_valid
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_out_valid
-@22
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_out_bits_pc[31:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_out_bits_instruction[31:0]
-@28
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_master_rresp[1:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.ICache.state[1:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.ICache.io_in_valid
+TOP.ysyxSoCFull.asic.cpu.cpu.core.ICache.io_out_valid
 @29
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_master_rvalid
+TOP.ysyxSoCFull.asic.cpu.cpu.core.ICache.need
 @28
-TOP.ysyxSoCFull.asic.cpu.cpu.ICache.io_master_arvalid
-@200
--AXIConnection
-@28
-TOP.ysyxSoCFull.asic.cpu.cpu.writeState
-TOP.ysyxSoCFull.asic.cpu.cpu.writeOutSelect
-TOP.ysyxSoCFull.asic.cpu.cpu.writeSelectedReg
-TOP.ysyxSoCFull.asic.cpu.cpu.readState
-TOP.ysyxSoCFull.asic.cpu.cpu.readSelectedReg
-TOP.ysyxSoCFull.asic.cpu.cpu.readOutSelect
-TOP.ysyxSoCFull.asic.cpu.cpu.io_master_arvalid
-TOP.ysyxSoCFull.asic.cpu.cpu.io_master_rvalid
-TOP.ysyxSoCFull.asic.cpu.cpu.io_master_rready
-TOP.ysyxSoCFull.asic.cpu.cpu.io_master_rlast
+TOP.ysyxSoCFull.asic.cpu.cpu.core.ICache.io_master_ar_valid
+TOP.ysyxSoCFull.asic.cpu.cpu.core.ICache.io_master_r_valid
+@22
+TOP.ysyxSoCFull.asic.cpu.cpu.core.ICache.io_out_bits_pc[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.ICache.io_out_bits_instruction[31:0]
 @200
 -IDU
 @28
-TOP.ysyxSoCFull.asic.cpu.cpu.IDU.io_in_valid
-TOP.ysyxSoCFull.asic.cpu.cpu.IDU.io_out_valid
+TOP.ysyxSoCFull.asic.cpu.cpu.core.IDU.io_in_valid
+TOP.ysyxSoCFull.asic.cpu.cpu.core.IDU.io_out_valid
+@22
+TOP.ysyxSoCFull.asic.cpu.cpu.core.IDU.io_in_bits_state_inst[31:0]
 @200
 -EXU
 @28
-TOP.ysyxSoCFull.asic.cpu.cpu.EXU.io_in_valid
-TOP.ysyxSoCFull.asic.cpu.cpu.EXU.io_out_valid
+TOP.ysyxSoCFull.asic.cpu.cpu.core.EXU.io_in_valid
+TOP.ysyxSoCFull.asic.cpu.cpu.core.EXU.io_out_valid
+@22
+TOP.ysyxSoCFull.asic.cpu.cpu.core.EXU.io_in_bits_aluASrc[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.EXU.io_in_bits_aluBSrc[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.EXU.io_out_bits_alu_csr_out[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.EXU.io_in_bits_state_inst[31:0]
 @200
 -LSU
 @28
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_in_valid
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_out_valid
-@22
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_awaddr[31:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_wdata[31:0]
-@28
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_wstrb[3:0]
-@22
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_araddr[31:0]
-@28
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_arsize[2:0]
-@22
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rdata[31:0]
-@28
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_awvalid
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_wvalid
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_bvalid
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_arvalid
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rvalid
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rresp[1:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.LSU.io_master_rready
+TOP.ysyxSoCFull.asic.cpu.cpu.core.LSU.io_in_valid
+TOP.ysyxSoCFull.asic.cpu.cpu.core.LSU.io_out_valid
 @200
 -WBU
 @28
-TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_in_valid
-TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_out_valid
+TOP.ysyxSoCFull.asic.cpu.cpu.core.WBU.io_in_valid
+TOP.ysyxSoCFull.asic.cpu.cpu.core.WBU.io_out_valid
+@200
+-RegFile
 @22
-TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_RegFileAccess_wa[3:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.RegFile.io_in_wa[3:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.RegFile.io_in_wd[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.RegFile.reg_13[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.RegFile.reg_14[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.RegFile.reg_15[31:0]
 @28
-TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_RegFileAccess_we
-@22
-TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_out_bits_nextPC[31:0]
-TOP.ysyxSoCFull.asic.cpu.cpu.WBU.io_out_bits_inst[31:0]
+TOP.ysyxSoCFull.asic.cpu.cpu.core.RegFile.io_in_we
 @200
 -Dev
 @28

@@ -55,7 +55,7 @@ class ICache(cpuConfig: CPUConfig, params: AXI4BundleParameters) extends Module 
 
   val arfire = io.master.ar.fire
   val rfire  = io.master.r.fire
-  val rlast  = io.master.r.bits.last
+  val rlast  = io.master.r.bits.last(0)
   val rdata  = io.master.r.bits.data
 
   val sCheck :: sSetAddr :: sWaitResp :: Nil = Enum(3)
@@ -70,7 +70,7 @@ class ICache(cpuConfig: CPUConfig, params: AXI4BundleParameters) extends Module 
   val offset = if (offsetWidth != 0) raddr(offsetWidth + wordWidth - 1, wordWidth) else 0.U
   val set    = if (setWidth != 0) raddr(setWidth + blockWidth - 1, blockWidth) else 0.U
   val tag    = raddr(tagWidth + setWidth + blockWidth - 1, setWidth + blockWidth)
-  val need   = WireDefault(icacheNeed.contains(raddr))
+  val need   = WireDefault(icacheNeed.foldLeft(false.B)(_ || _.contains(raddr)))
   val cacheSelSet =
     for (i <- 0 until associativity)
       yield {
@@ -101,7 +101,7 @@ class ICache(cpuConfig: CPUConfig, params: AXI4BundleParameters) extends Module 
   for (setIndex <- 0 until setNum) {
     for (index <- 0 until associativity) {
       cacheBlocksTag(setIndex)(index) := Mux(
-        rfire && rlast(0) && need && setIndex.U === set && index.U === availableIndex,
+        rfire && rlast && need && setIndex.U === set && index.U === availableIndex,
         tag,
         cacheBlocksTag(setIndex)(index)
       )
@@ -109,7 +109,7 @@ class ICache(cpuConfig: CPUConfig, params: AXI4BundleParameters) extends Module 
         io.clear,
         false.B,
         Mux(
-          rfire && rlast(0) && need && setIndex.U === set && index.U === availableIndex,
+          rfire && rlast && need && setIndex.U === set && index.U === availableIndex,
           true.B,
           cacheBlocksValid(setIndex)(index)
         )
@@ -123,15 +123,15 @@ class ICache(cpuConfig: CPUConfig, params: AXI4BundleParameters) extends Module 
   }
 
   val rdataValid = RegInit(false.B)
-  rdataValid := Mux(io.out.fire, false.B, Mux(rfire && rlast(0), true.B, rdataValid))
-  val rdataReg  = RegEnable(rdata, rfire && rlast(0))
+  rdataValid := !io.out.fire && io.in.valid && (rfire && rlast || rdataValid)
+  val rdataReg  = RegEnable(rdata, rfire && rlast)
   val dataValid = Mux(need, cacheHit, rdataValid)
 
   nextState := MuxLookup(state, sCheck)(
     Seq(
       sCheck -> Mux(io.in.valid && !dataValid, sSetAddr, sCheck),
       sSetAddr -> Mux(arfire, sWaitResp, sSetAddr),
-      sWaitResp -> Mux(rfire && rlast(0), sCheck, sWaitResp)
+      sWaitResp -> Mux(rfire && rlast, sCheck, sWaitResp)
     )
   )
   state := nextState

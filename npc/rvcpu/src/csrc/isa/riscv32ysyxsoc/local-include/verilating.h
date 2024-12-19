@@ -27,7 +27,11 @@ enum {
 typedef struct {
   const char *inst_type;
   uint64_t total_inst_count;
-  uint64_t total_exec_cycle;
+  uint64_t total_icache_cost_cycle;
+  uint64_t total_idu_cost_cycle;
+  uint64_t total_exu_cost_cycle;
+  uint64_t total_lsu_cost_cycle;
+  uint64_t total_wbu_cost_cycle;
 } InstStatistic;
 
 extern uint32_t cur_inst;
@@ -37,9 +41,6 @@ extern uint64_t g_nr_fetch_inst;
 
 extern uint64_t g_nr_inst;
 extern InstStatistic g_insts[RISCV_TOTAL_TYPE];
-
-extern uint64_t g_nr_fetch_data;
-extern uint64_t g_fetch_data_cycle;
 
 extern uint64_t g_nr_cache_access;
 extern uint64_t g_nr_cache_hit;

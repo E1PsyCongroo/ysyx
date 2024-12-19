@@ -15,79 +15,25 @@ extern "C" {
 #include <memory/paddr.h>
 }
 
-void nvboard_bind_all_pins(VysyxSoCFull *top);
+extern void nvboard_bind_all_pins(VysyxSoCFull* top);
 
 extern "C" {
-
 static VysyxSoCFull *rvcpu = nullptr;
 static VerilatedContext *contextp = nullptr;
 static VerilatedFstC *tfp = nullptr;
-
 uint32_t cur_inst;
 
 uint64_t g_guest_cycle = 0;
 uint64_t g_nr_fetch_inst = 0;
 
-InstStatistic g_insts[RISCV_TOTAL_TYPE] = {
-    {"JMP", 0, 0}, {"BRANCH", 0, 0}, {"LOAD", 0, 0}, {"STORE", 0, 0},
-    {"AL", 0, 0},  {"ECALL", 0, 0},  {"CSR", 0, 0},  {"FENCE_I", 0, 0}};
-
-uint64_t g_nr_fetch_data = 0;
-uint64_t g_fetch_data_cycle = 0;
+InstStatistic g_insts[RISCV_TOTAL_TYPE] = {{"JMP"},   {"BRANCH"}, {"LOAD"},
+                                           {"STORE"}, {"AL"},     {"ECALL"},
+                                           {"CSR"},   {"FENCE_I"}};
 
 uint64_t g_nr_cache_access = 0;
 uint64_t g_nr_cache_hit = 0;
 uint64_t g_cache_access_time = 0;
 uint64_t g_cache_miss_penalty = 0;
-
-static void rvcpu_sync(void) {
-  /* synchronizing cpu with rvcpu */
-  cpu.gpr[1] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_1;
-  cpu.gpr[2] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_2;
-  cpu.gpr[3] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_3;
-  cpu.gpr[4] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_4;
-  cpu.gpr[5] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_5;
-  cpu.gpr[6] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_6;
-  cpu.gpr[7] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_7;
-  cpu.gpr[8] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_8;
-  cpu.gpr[9] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_9;
-  cpu.gpr[10] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_10;
-  cpu.gpr[11] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_11;
-  cpu.gpr[12] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_12;
-  cpu.gpr[13] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_13;
-  cpu.gpr[14] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_14;
-  cpu.gpr[15] =
-      rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__RegFile__DOT__reg_15;
-}
 
 void rvcpu_init(const char *wave_file, int argc, char **argv) {
   contextp = new VerilatedContext;
@@ -108,7 +54,6 @@ void rvcpu_init(const char *wave_file, int argc, char **argv) {
   cpu.mstatus = 0x1800;
   cpu.mcause = 11;
   cpu.priv = static_cast<decltype(cpu.priv)>(0b11);
-  rvcpu_sync();
   /* Exit */
   atexit(rvcpu_exit);
 }
@@ -118,35 +63,74 @@ void rvcpu_exit(void) {
   delete rvcpu;
   delete contextp;
   delete tfp;
-  nvboard_quit();
   setlocale(LC_NUMERIC, "");
 #define NUMBERIC_FMT MUXDEF(CONFIG_TARGET_AM, "%", "%'") PRIu64
+  double cpi = (double)g_guest_cycle / g_nr_fetch_inst;
+  double ipc = (double)g_nr_fetch_inst / g_guest_cycle;
+  uint64_t icache_total_cost = 0, idu_total_cost = 0, exu_total_cost = 0,
+           lsu_total_cost = 0, wbu_total_cost = 0;
+  for (int i = 0; i < RISCV_TOTAL_TYPE; i++) {
+    icache_total_cost += g_insts[i].total_icache_cost_cycle;
+    idu_total_cost += g_insts[i].total_idu_cost_cycle;
+    exu_total_cost += g_insts[i].total_exu_cost_cycle;
+    lsu_total_cost += g_insts[i].total_lsu_cost_cycle;
+    wbu_total_cost += g_insts[i].total_wbu_cost_cycle;
+  }
+  double icache_avg_cost = (double)icache_total_cost / g_nr_fetch_inst;
+  double idu_avg_cost = (double)idu_total_cost / g_nr_fetch_inst;
+  double exu_avg_cost = (double)exu_total_cost / g_nr_fetch_inst;
+  double lsu_avg_cost = (double)lsu_total_cost / g_nr_fetch_inst;
+  double wbu_avg_cost = (double)wbu_total_cost / g_nr_fetch_inst;
+  double icache_hit_ratio = (double)g_nr_cache_hit / g_nr_cache_access * 100;
+  double avg_icache_access_cycle =
+      (double)g_cache_access_time / g_nr_cache_access;
+  double avg_icache_miss_penalty =
+      (double)g_cache_miss_penalty / (g_nr_cache_access - g_nr_cache_hit);
+  double icache_amat =
+      (double)(g_cache_access_time + g_cache_miss_penalty) / g_nr_cache_access;
   Log("total guest cycles = " NUMBERIC_FMT, g_guest_cycle);
   Log("total fetch instructions = " NUMBERIC_FMT, g_nr_fetch_inst);
-  Log("CPI(cycle per instruction) = %f",
-      (double)g_guest_cycle / g_nr_fetch_inst);
-  Log("IPC(instruction per cycle) = %f",
-      (double)g_nr_fetch_inst / g_guest_cycle);
+  Log("CPI(cycle per instruction) = %f", cpi);
+  Log("IPC(instruction per cycle) = %f", ipc);
+  Log("average icache cost cycle = %f", icache_avg_cost);
+  Log("average idu cost cycle = %f", idu_avg_cost);
+  Log("average exu cost cycle = %f", exu_avg_cost);
+  Log("average lsu cost cycle = %f", lsu_avg_cost);
+  Log("average wbu cost cycle = %f", wbu_avg_cost);
   Log("total cache access = " NUMBERIC_FMT, g_nr_cache_access);
   Log("total cache hit = " NUMBERIC_FMT, g_nr_cache_hit);
-  Log("cache hit ratio = %f%%",
-      (double)g_nr_cache_hit / g_nr_cache_access * 100);
-  Log("average cache access time = %f",
-      (double)g_cache_access_time / g_nr_cache_access);
-  Log("average cache miss penalty = %f",
-      (double)g_cache_miss_penalty / (g_nr_cache_access - g_nr_cache_hit));
-  Log("cache AMAT = %f",
-      ((double)g_cache_access_time + g_cache_miss_penalty) / g_nr_cache_access);
-  Log("total fetch data = " NUMBERIC_FMT, g_nr_fetch_data);
-  Log("average cycle of fetch data = %f",
-      (double)g_fetch_data_cycle / g_nr_fetch_data);
+  Log("icache hit ratio = %f%%", icache_hit_ratio);
+  Log("average icache access cycle = %f", avg_icache_access_cycle);
+  Log("average icache miss penalty = %f", avg_icache_miss_penalty);
+  Log("icache AMAT = %f", icache_amat);
   for (int i = 0; i < RISCV_TOTAL_TYPE; i++) {
-    Log("instructions for %s type (total = " NUMBERIC_FMT
-        ", average exec cycle = %f)",
+    Log("instructions for %s type (\ntotal = " NUMBERIC_FMT ", "
+        "\naverage icache cost cycle = %f, "
+        "\naverage idu cost cycle = %f, "
+        "\naverage exu cost cycle = %f, "
+        "\naverage lsu cost cycle = %f, "
+        "\naverage wbu cost cycle = %f)",
         g_insts[i].inst_type, g_insts[i].total_inst_count,
-        g_insts[i].total_inst_count ? ((double)g_insts[i].total_exec_cycle /
-                                       g_insts[i].total_inst_count)
-                                    : 0);
+        g_insts[i].total_icache_cost_cycle
+            ? ((double)g_insts[i].total_icache_cost_cycle /
+               g_insts[i].total_inst_count)
+            : 0,
+        g_insts[i].total_idu_cost_cycle
+            ? ((double)g_insts[i].total_idu_cost_cycle /
+               g_insts[i].total_inst_count)
+            : 0,
+        g_insts[i].total_exu_cost_cycle
+            ? ((double)g_insts[i].total_exu_cost_cycle /
+               g_insts[i].total_inst_count)
+            : 0,
+        g_insts[i].total_lsu_cost_cycle
+            ? ((double)g_insts[i].total_lsu_cost_cycle /
+               g_insts[i].total_inst_count)
+            : 0,
+        g_insts[i].total_wbu_cost_cycle
+            ? ((double)g_insts[i].total_wbu_cost_cycle /
+               g_insts[i].total_inst_count)
+            : 0);
   }
 }
 
@@ -171,14 +155,13 @@ void rvcpu_single_exec(void) {
   g_nr_fetch_inst++;
   while (
       !rvcpu->rootp
-           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU_io_in_valid_REG) {
+           ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__core__DOT___WBU_io_out_valid) {
     rvcpu_single_cycle();
   }
   if (rvcpu->rootp
-          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__WBU_io_in_valid_REG) {
+          ->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__core__DOT___WBU_io_out_valid) {
     rvcpu_single_cycle();
   }
-  rvcpu_sync();
 }
 
 void rvcpu_reset(void) {
